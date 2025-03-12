@@ -15,7 +15,7 @@ services:
     command:
       - odoo
       - "--init"
-      - l10n_fr_account
+      - contacts,l10n_fr_account
       - "-d"
       - mydb
       - "--without-demo"

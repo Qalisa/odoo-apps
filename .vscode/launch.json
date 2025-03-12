@@ -24,6 +24,7 @@
             "request": "launch",
             "command": "docker compose up",
             "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Ensure right permissions for .pgpass",
             "postDebugTask": "Cleanup",
             "serverReadyAction": {
                 "action": "startDebugging",

@@ -1,0 +1,22 @@
+<odoo>
+    <!-- Update default company settings -->
+    <record id="base.main_company" model="res.company">
+        <field name="name">Ma Société</field>
+        <field name="country_id" ref="base.fr"/>  <!-- Country: France -->
+        <field name="currency_id" ref="base.EUR"/>  <!-- Currency: EUR -->
+    </record>
+
+    <!-- Update default language -->
+    <record id="default_lang_fr" model="ir.config_parameter">
+        <field name="key">base.default_lang</field>
+        <field name="value">fr_FR</field>
+    </record>
+
+    <!-- Udapte Charts of Accounts to French -->
+    <function model="account.chart.template" name="try_loading">
+        <value eval="[]"/>
+        <value>fr</value>
+        <value model="res.company" search="[('partner_id.country_id.code', 'in', ['FR', False])]"/>
+        <value name="install_demo" eval="True"/>
+    </function>
+</odoo>
