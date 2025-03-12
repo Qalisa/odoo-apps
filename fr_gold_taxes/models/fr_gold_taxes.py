@@ -1,4 +1,3 @@
-from odoo import api, SUPERUSER_ID
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -157,13 +156,3 @@ class GoldTaxCreator:
             f"Contribution au Remboursement de la Dette Sociale. Fixé à {abs(config['crds_rate'])}%.",
             tax_group.id
         )
-
-# Hooks pour l'initialisation
-def create_gold_tax_groups(cr):
-    """Hook d'initialisation principal pour créer les groupes de taxes pour l'or."""
-    env = api.Environment(cr, SUPERUSER_ID, {})
-    
-    # Utilisation de savepoint pour assurer l'atomicité
-    with env.cr.savepoint():
-        creator = GoldTaxCreator(env)
-        creator.create_all_tax_groups()
