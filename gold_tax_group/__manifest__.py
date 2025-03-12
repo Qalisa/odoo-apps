@@ -23,7 +23,7 @@ Fonctionnalités :
     'images': ['static/description/icon.png'],
     'post_init_hook': 'create_gold_tax_groups',
     'installable': True,
-    'application': False,
+    'application': True,
     'auto_install': False,
     'external_dependencies': {
         'python': [],
