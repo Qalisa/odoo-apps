@@ -1,0 +1,35 @@
+{
+    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+    // Pointez pour afficher la description des attributs existants.
+    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:8069",
+            "name": "Launch Browser",
+            "presentation": {
+                "hidden": true,
+                "group": "",
+                "order": 1
+            },
+            "cascadeTerminateToConfigurations": [
+                "Debug: Docker Compose"
+            ]
+        },
+        {
+            "name": "Debug: Docker Compose",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "docker compose up",
+            "cwd": "${workspaceFolder}",
+            "serverReadyAction": {
+                "action": "startDebugging",
+                "name": "Launch Browser",
+                "pattern": "Registry loaded",
+                "killOnServerStop": true,
+            },
+        },
+    ]
+}

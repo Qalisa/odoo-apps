@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "donjayamanne.python-extension-pack",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker"
+    ]
+}
