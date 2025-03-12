@@ -19,7 +19,6 @@ Fonctionnalités :
     'data': [
         # 'security/ir.model.access.csv',
         # 'views/templates.xml',
-        'data/company_settings.xml'
     ],
     'images': ['static/description/icon.png'],
     'post_init_hook': 'create_gold_tax_groups',
