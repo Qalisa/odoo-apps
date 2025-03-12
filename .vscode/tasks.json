@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Cleanup",
+            "type": "shell",
+            "command": "docker compose rm -v -f -s && docker volume rm odoo-apps_data && docker volume rm odoo-apps_db",
+            "problemMatcher": []
+        },
+    ]
+}

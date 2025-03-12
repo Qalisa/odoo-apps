@@ -6,7 +6,7 @@ services:
       - POSTGRES_PASSWORD=odoo
       - POSTGRES_USER=odoo
     volumes:
-      - odoo-db-data:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
 
   odoo:
     image: odoo:18.0
@@ -25,12 +25,12 @@ services:
       - "8069:8069"
     volumes:
       - ./fr_gold_taxes:/mnt/extra-addons/fr_gold_taxes
-      - odoo-web-data:/var/lib/odoo
+      - data:/var/lib/odoo
     environment:
       - HOST=db
       - USER=odoo
       - PASSWORD=odoo
 
 volumes:
-  odoo-db-data:
-  odoo-web-data:
+  db:
+  data:

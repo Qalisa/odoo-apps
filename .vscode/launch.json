@@ -24,6 +24,7 @@
             "request": "launch",
             "command": "docker compose up",
             "cwd": "${workspaceFolder}",
+            "postDebugTask": "Cleanup",
             "serverReadyAction": {
                 "action": "startDebugging",
                 "name": "Launch Browser",
