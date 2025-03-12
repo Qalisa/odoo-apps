@@ -7,5 +7,11 @@
             "command": "docker compose rm -v -f -s && docker volume rm odoo-apps_data && docker volume rm odoo-apps_db",
             "problemMatcher": []
         },
+        {
+            "label": "Ensure right permissions for .pgpass",
+            "type": "shell",
+            "command": "chmod 600 .pgpass",
+            "problemMatcher": []
+        },
     ]
 }
