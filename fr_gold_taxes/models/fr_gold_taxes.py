@@ -84,7 +84,7 @@ class GoldTaxCreator:
             })
         return tax_group
     
-    def create_tax(self, name, amount, description, tax_group_id, type_tax_use='sale', 
+    def create_tax(self, name, amount, description, tax_group_id, 
                   amount_type='percent', children_tax_ids=None):
         """Crée une taxe si elle n'existe pas déjà."""
         existing_tax = self.Tax.search([
@@ -98,7 +98,7 @@ class GoldTaxCreator:
                 'name': name,
                 'amount': amount,
                 'amount_type': amount_type,
-                'type_tax_use': type_tax_use,
+                'type_tax_use': 'sale' if amount_type != 'percent' else 'none',
                 'description': description,
                 'tax_group_id': tax_group_id,
                 'price_include': False,
@@ -141,7 +141,7 @@ class GoldTaxCreator:
             
             # Création des taxes avec les groupes spécifiques
             impot_tax = self.create_tax(
-                f"Impôt Plus-value Or ({years_label}, {percentage}%)",
+                f"Plus-value - Impôt ({years_label}, {total_rate}%)",
                 -impots_rate,  # Négatif car c'est une déduction
                 f"Impôt sur la plus-value de la revente d'or physique après {years_label} de détention. "
                 f"Base: {config['impots_rate']}%, appliqué à {percentage}%.",
@@ -149,7 +149,7 @@ class GoldTaxCreator:
             )
             
             prelevements_tax = self.create_tax(
-                f"Prélèvements Sociaux Plus-value Or ({years_label}, {percentage}%)",
+                f"Plus-value - URSSAF ({years_label}, {total_rate}%)",
                 -prelevements_rate,  # Négatif car c'est une déduction
                 f"Prélèvements sociaux sur la plus-value de la revente d'or physique après {years_label} de détention. "
                 f"Base: {config['prelevements_rate']}%, appliqué à {percentage}%.",
@@ -159,7 +159,7 @@ class GoldTaxCreator:
             # Création de la taxe parent qui regroupe les deux sous-taxes
             # Pour la taxe parent, nous utilisons également un des groupes principaux
             # ou créons un groupe de taxe spécifique pour les taxes combinées si nécessaire
-            parent_tax_name = f"Plus-value Or - {years_label} ({percentage}%) - {total_rate}%"
+            parent_tax_name = f"Plus-value - {years_label} ({total_rate}%)"
             self.create_tax(
                 parent_tax_name,
                 0.0,  # Le montant est calculé à partir des sous-taxes
@@ -195,7 +195,7 @@ class GoldTaxCreator:
         # Création de la taxe parent forfaitaire
         total_rate = config['tmp_rate'] + config['crds_rate']
         self.create_tax(
-            f"Taxe Forfaitaire Or - {total_rate}%",
+            f"Forfaitaire - {total_rate}%",
             0.0,  # Le montant est calculé à partir des sous-taxes
             f"Taxation forfaitaire complète sur la revente d'or physique. "
             f"Taux d'imposition total: {total_rate}%.",
