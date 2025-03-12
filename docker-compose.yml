@@ -15,7 +15,7 @@ services:
     command:
       - odoo
       - "--init"
-      - base,account,fr_gold_taxes
+      - base,account
       - "-d"
       - mydb
       - "--without-demo=all"

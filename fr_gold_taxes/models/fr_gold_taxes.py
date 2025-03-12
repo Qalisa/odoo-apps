@@ -5,16 +5,32 @@ _logger = logging.getLogger(__name__)
 # Configuration centralisée
 TAX_CONFIG = {
     'plus_value': {
-        'impots_rate': -19.0,
-        'prelevements_rate': -17.2,
-        'parent_group_name': 'Métaux Précieux - Plus-value',
-        'parent_sequence': 10,
+        'impots_rate': 19.0,
+        'prelevements_rate': 17.2,
+        'sequence': 10,
     },
     'forfaitaire': {
-        'tmp_rate': -11.0,
-        'crds_rate': -0.5,
-        'group_name': 'Métaux Précieux - Forfaitaire - 11,5%',
+        'tmp_rate': 11.0,
+        'crds_rate': 0.5,
         'sequence': 5,
+    },
+    'tax_groups': {
+        'impot': {
+            'name': 'Impôt',
+            'sequence': 1,
+        },
+        'prelevements_sociaux': {
+            'name': 'Prélèvements sociaux',
+            'sequence': 2,
+        },
+        'crds': {
+            'name': 'CRDS',
+            'sequence': 3,
+        },
+        'tmp': {
+            'name': 'TMP',
+            'sequence': 4,
+        },
     }
 }
 
@@ -25,31 +41,51 @@ class GoldTaxCreator:
         self.env = env
         self.Tax = env['account.tax']
         self.TaxGroup = env['account.tax.group']
+        self.tax_groups = {}  # Pour stocker les groupes de taxes créés
+        
+        # Récupération de la France depuis les pays
+        self.france_id = self.env.ref('base.fr').id
     
     def create_all_tax_groups(self):
         """Crée tous les groupes de taxes pour l'or."""
         try:
             _logger.info("Début de la création des groupes de taxes pour l'or")
-            self.create_added_value_tax_groups()
-            self.create_fixed_tax_group()
+            
+            # Création des groupes de taxes principaux
+            self._create_main_tax_groups()
+            
+            # Création des taxes
+            self.create_added_value_taxes()
+            self.create_fixed_taxes()
+            
             _logger.info("Fin de la création des groupes de taxes pour l'or")
             return True
         except Exception as e:
             _logger.error(f"Erreur lors de la création des groupes de taxes: {e}")
-            return False
+            raise e  # Rethrow pour voir l'erreur complète
     
-    def get_or_create_tax_group(self, name, sequence, parent_id=False):
+    def _create_main_tax_groups(self):
+        """Crée les groupes de taxes principaux."""
+        for key, group_config in TAX_CONFIG['tax_groups'].items():
+            self.tax_groups[key] = self.get_or_create_tax_group(
+                group_config['name'],
+                group_config['sequence']
+            )
+    
+    def get_or_create_tax_group(self, name, sequence):
         """Récupère ou crée un groupe de taxes."""
         tax_group = self.TaxGroup.search([('name', '=', name)], limit=1)
         if not tax_group:
             _logger.info(f"Création du groupe de taxes: {name}")
-            values = {'name': name, 'sequence': sequence}
-            if parent_id:
-                values['parent_id'] = parent_id
-            tax_group = self.TaxGroup.create(values)
+            tax_group = self.TaxGroup.create({
+                'name': name, 
+                'sequence': sequence,
+                'country_id': self.france_id,
+            })
         return tax_group
     
-    def create_tax(self, name, amount, description, tax_group_id, type_tax_use='sale'):
+    def create_tax(self, name, amount, description, tax_group_id, type_tax_use='sale', 
+                  amount_type='percent', children_tax_ids=None):
         """Crée une taxe si elle n'existe pas déjà."""
         existing_tax = self.Tax.search([
             ('name', '=', name),
@@ -58,31 +94,35 @@ class GoldTaxCreator:
         
         if not existing_tax:
             _logger.info(f"Création de la taxe: {name}")
-            self.Tax.create({
+            vals = {
                 'name': name,
                 'amount': amount,
-                'amount_type': 'percent',
+                'amount_type': amount_type,
                 'type_tax_use': type_tax_use,
                 'description': description,
                 'tax_group_id': tax_group_id,
-            })
+                'price_include': False,
+                'include_base_amount': False,
+                'tax_scope': 'consu',
+                'country_id': self.france_id,  # Ajout du country_id pour la France
+            }
+            
+            if amount_type == 'group' and children_tax_ids:
+                vals['children_tax_ids'] = [(6, 0, children_tax_ids)]
+                
+            return self.Tax.create(vals)
+        return existing_tax
     
-    def create_added_value_tax_groups(self):
+    def create_added_value_taxes(self):
         """
-        Crée 21 groupes de taxes pour la plus-value sur l'or.
-        Chaque groupe contient 2 taxes : Impôts (19%) et Prélèvements Sociaux (17.2%).
+        Crée les taxes pour la plus-value sur l'or avec 21 niveaux
+        d'ancienneté différents.
         """
-        _logger.info("Création des groupes de taxes pour la plus-value")
+        _logger.info("Création des taxes pour la plus-value")
         
         config = TAX_CONFIG['plus_value']
         
-        # Création du groupe parent
-        parent_group = self.get_or_create_tax_group(
-            config['parent_group_name'], 
-            config['parent_sequence']
-        )
-        
-        # Création des 21 groupes de taxes
+        # Pour chaque niveau d'ancienneté
         for i in range(1, 22):
             percentage = 100 - (i - 1) * 5  # 100, 95, 90, ..., 0
             
@@ -97,62 +137,69 @@ class GoldTaxCreator:
             # Calcul des taux effectifs
             impots_rate = round(config['impots_rate'] * (percentage / 100.0), 2)
             prelevements_rate = round(config['prelevements_rate'] * (percentage / 100.0), 2)
-            total_rate = round(abs(impots_rate) + abs(prelevements_rate), 2)
+            total_rate = round(impots_rate + prelevements_rate, 2)
             
-            # Nom du groupe
-            group_name = f"{config['parent_group_name']} - {years_label} / {percentage}% / {total_rate}%"
-            
-            # Création ou récupération du groupe
-            tax_group = self.get_or_create_tax_group(
-                group_name, 
-                config['parent_sequence'] + i,
-                parent_group.id
+            # Création des taxes avec les groupes spécifiques
+            impot_tax = self.create_tax(
+                f"Impôt Plus-value Or ({years_label}, {percentage}%)",
+                -impots_rate,  # Négatif car c'est une déduction
+                f"Impôt sur la plus-value de la revente d'or physique après {years_label} de détention. "
+                f"Base: {config['impots_rate']}%, appliqué à {percentage}%.",
+                self.tax_groups['impot'].id
             )
             
-            # Création des taxes
-            self.create_tax(
-                f"Impôts ({percentage}%)",
-                impots_rate,
-                f"Partie impôt du régime de la plus-value sur la revente d'or physique, "
-                f"correspondant à {years_label} de détention. "
-                f"Base: {abs(config['impots_rate'])}%, appliqué à {percentage}%.",
-                tax_group.id
+            prelevements_tax = self.create_tax(
+                f"Prélèvements Sociaux Plus-value Or ({years_label}, {percentage}%)",
+                -prelevements_rate,  # Négatif car c'est une déduction
+                f"Prélèvements sociaux sur la plus-value de la revente d'or physique après {years_label} de détention. "
+                f"Base: {config['prelevements_rate']}%, appliqué à {percentage}%.",
+                self.tax_groups['prelevements_sociaux'].id
             )
             
+            # Création de la taxe parent qui regroupe les deux sous-taxes
+            # Pour la taxe parent, nous utilisons également un des groupes principaux
+            # ou créons un groupe de taxe spécifique pour les taxes combinées si nécessaire
+            parent_tax_name = f"Plus-value Or - {years_label} ({percentage}%) - {total_rate}%"
             self.create_tax(
-                f"Prélèvements Sociaux ({percentage}%)",
-                prelevements_rate,
-                f"Partie prélèvements sociaux du régime de la plus-value sur la revente d'or physique, "
-                f"correspondant à {years_label} de détention. "
-                f"Base: {abs(config['prelevements_rate'])}%, appliqué à {percentage}%.",
-                tax_group.id
+                parent_tax_name,
+                0.0,  # Le montant est calculé à partir des sous-taxes
+                f"Taxation complète sur la plus-value de la revente d'or physique "
+                f"après {years_label} de détention. "
+                f"Taux d'imposition total: {total_rate}% ({percentage}% de la base).",
+                self.tax_groups['impot'].id,  # Utilisation du groupe 'Impôt' pour la taxe parent
+                amount_type='group',
+                children_tax_ids=[impot_tax.id, prelevements_tax.id]
             )
     
-    def create_fixed_tax_group(self):
-        """Crée le groupe de taxe forfaitaire pour l'or."""
-        _logger.info("Création du groupe de taxe forfaitaire")
+    def create_fixed_taxes(self):
+        """Crée les taxes forfaitaires pour l'or."""
+        _logger.info("Création des taxes forfaitaires")
         
         config = TAX_CONFIG['forfaitaire']
         
-        # Création du groupe
-        tax_group = self.get_or_create_tax_group(
-            config['group_name'],
-            config['sequence']
-        )
-        
-        # Création des taxes
-        self.create_tax(
+        # Création des taxes avec les groupes spécifiques
+        tmp_tax = self.create_tax(
             "TMP (11%)",
-            config['tmp_rate'],
-            f"Partie de la taxe forfaitaire sur la revente d'or physique liée à la "
-            f"Taxe sur les Métaux Précieux. Fixé à {abs(config['tmp_rate'])}%.",
-            tax_group.id
+            -config['tmp_rate'],  # Négatif car c'est une déduction
+            f"Taxe sur les Métaux Précieux. Fixé à {config['tmp_rate']}%.",
+            self.tax_groups['tmp'].id
         )
         
-        self.create_tax(
+        crds_tax = self.create_tax(
             "CRDS (0.5%)",
-            config['crds_rate'],
-            f"Partie de la taxe forfaitaire sur la revente d'or physique liée à la "
-            f"Contribution au Remboursement de la Dette Sociale. Fixé à {abs(config['crds_rate'])}%.",
-            tax_group.id
+            -config['crds_rate'],  # Négatif car c'est une déduction
+            f"Contribution au Remboursement de la Dette Sociale. Fixé à {config['crds_rate']}%.",
+            self.tax_groups['crds'].id
+        )
+        
+        # Création de la taxe parent forfaitaire
+        total_rate = config['tmp_rate'] + config['crds_rate']
+        self.create_tax(
+            f"Taxe Forfaitaire Or - {total_rate}%",
+            0.0,  # Le montant est calculé à partir des sous-taxes
+            f"Taxation forfaitaire complète sur la revente d'or physique. "
+            f"Taux d'imposition total: {total_rate}%.",
+            self.tax_groups['tmp'].id,  # Utilisation du groupe 'TMP' pour la taxe parent
+            amount_type='group',
+            children_tax_ids=[tmp_tax.id, crds_tax.id]
         )
