@@ -159,7 +159,7 @@ class GoldTaxCreator:
         )
 
 # Hooks pour l'initialisation
-def create_gold_tax_groups(cr, registry):
+def create_gold_tax_groups(cr):
     """Hook d'initialisation principal pour créer les groupes de taxes pour l'or."""
     env = api.Environment(cr, SUPERUSER_ID, {})
     
