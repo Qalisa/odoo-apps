@@ -15,7 +15,7 @@ Fonctionnalités :
     'website': "https://www.qalisa.fr",
     'license': "AGPL-3",
     'version': "1.0.0",
-    'depends': ['account'],
+    'depends': ['l10n_fr_account'],
     'data': [
         # 'security/ir.model.access.csv',
         # 'views/templates.xml',
