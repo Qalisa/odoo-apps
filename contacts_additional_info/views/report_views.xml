@@ -1,16 +1,16 @@
 <odoo>
-    <template id="custom_partner_fields_invoice" inherit_id="account.report_invoice_document">
-        <xpath expr="//address" position="after">
+    <template id="custom_partner_fields_invoice" inherit_id="web.address_layout">
+        <xpath expr="//div[@name='address']/t[1]" position="after">
             <t t-if="o.partner_id.birthdate or o.partner_id.birthplace or o.partner_id.national_id_card_number">
                 <div class="custom-information">
                     <t t-if="o.partner_id.birthdate">
-                        <p><strong>Date de Naissance :</strong> <t t-esc="o.partner_id.birthdate"/></p>
+                        <p>Date de Naissance: <span t-field="o.partner_id.birthdate">10/10/2010</span></p>
                     </t>
                     <t t-if="o.partner_id.birthplace">
-                        <p><strong>Lieu de Naissance :</strong> <t t-esc="o.partner_id.birthplace"/></p>
+                        <p>Lieu de Naissance: <t t-esc="o.partner_id.birthplace"/></p>
                     </t>
                     <t t-if="o.partner_id.national_id_card_number">
-                        <p><strong>Numéro CNI :</strong> <t t-esc="o.partner_id.national_id_card_number"/></p>
+                        <p>Numéro CNI: <t t-esc="o.partner_id.national_id_card_number"/></p>
                     </t>
                 </div>
             </t>
