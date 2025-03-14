@@ -16,11 +16,7 @@ Fonctionnalités :
     'license': "AGPL-3",
     'version': "1.0.0",
     'depends': ['l10n_fr_account'],
-    'data': [
-        # 'security/ir.model.access.csv',
-        # 'views/templates.xml',
-    ],
-    'images': ['static/description/icon.png'],
+    'data': [],
     'post_init_hook': 'create_gold_tax_groups',
     'installable': True,
     'application': True,
