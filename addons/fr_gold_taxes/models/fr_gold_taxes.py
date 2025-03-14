@@ -55,8 +55,8 @@ class GoldTaxCreator:
             self._create_main_tax_groups()
             
             # Création des taxes
-            self.create_added_value_taxes()
             self.create_fixed_taxes()
+            self.create_added_value_taxes()
             
             _logger.info("Fin de la création des groupes de taxes pour l'or")
             return True
@@ -141,7 +141,7 @@ class GoldTaxCreator:
             
             # Création des taxes avec les groupes spécifiques
             impot_tax = self.create_tax(
-                f"Plus-value - Impôt ({years_label}, {total_rate}%)",
+                f"Plus-value - Impôt ({years_label}, {impots_rate}%)",
                 -impots_rate,  # Négatif car c'est une déduction
                 f"Impôt sur la plus-value de la revente d'or physique après {years_label} de détention. "
                 f"Base: {config['impots_rate']}%, appliqué à {percentage}%.",
@@ -149,7 +149,7 @@ class GoldTaxCreator:
             )
             
             prelevements_tax = self.create_tax(
-                f"Plus-value - URSSAF ({years_label}, {total_rate}%)",
+                f"Plus-value - URSSAF ({years_label}, {prelevements_rate}%)",
                 -prelevements_rate,  # Négatif car c'est une déduction
                 f"Prélèvements sociaux sur la plus-value de la revente d'or physique après {years_label} de détention. "
                 f"Base: {config['prelevements_rate']}%, appliqué à {percentage}%.",
