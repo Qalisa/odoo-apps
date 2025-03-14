@@ -1,34 +1,53 @@
-<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="report_invoice_document_inherit_custom_fields" inherit_id="account.report_invoice_document">
-        <xpath expr="//div[@name='invoice_address']" position="after">
-            <div t-if="o.partner_id.birthdate or o.partner_id.birthplace or o.partner_id.id_number" class="mt-2">
-                <div t-if="o.partner_id.birthdate">
-                    <strong>Date de naissance:</strong> <span t-field="o.partner_id.birthdate"/>
-                </div>
-                <div t-if="o.partner_id.birthplace">
-                    <strong>Lieu de naissance:</strong> <span t-field="o.partner_id.birthplace"/>
-                </div>
-                <div t-if="o.partner_id.id_number">
-                    <strong>Numéro CNI:</strong> <span t-field="o.partner_id.id_number"/>
-                </div>
-            </div>
-        </xpath>
-    </template>
-    
-    <template id="report_saleorder_document_inherit_custom_fields" inherit_id="sale.report_saleorder_document">
-        <xpath expr="//div[@name='customer_address']" position="after">
-            <div t-if="doc.partner_id.birthdate or doc.partner_id.birthplace or doc.partner_id.id_number" class="mt-2">
-                <div t-if="doc.partner_id.birthdate">
-                    <strong>Date de naissance:</strong> <span t-field="doc.partner_id.birthdate"/>
-                </div>
-                <div t-if="doc.partner_id.birthplace">
-                    <strong>Lieu de naissance:</strong> <span t-field="doc.partner_id.birthplace"/>
-                </div>
-                <div t-if="doc.partner_id.id_number">
-                    <strong>Numéro CNI:</strong> <span t-field="doc.partner_id.id_number"/>
-                </div>
-            </div>
-        </xpath>
-    </template>
+    <!-- Vue du formulaire contact améliorée (non modifiée, pas d'attributs "attrs") -->
+    <record id="view_partner_form_inherit_custom_fields" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.custom.fields</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='contact_addresses']" position="after">
+                <page string="Informations Supplémentaires" name="additional_info">
+                    <group>
+                        <field name="birthdate"/>
+                        <field name="birthplace"/>
+                        <field name="national_id_card_number"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Vue de facture améliorée -->
+    <record id="view_move_form_inherit_custom_fields" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.custom.fields</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="before">
+                <group name="partner_additional_info" string="Informations complémentaires" 
+                       invisible="partner_id == False or partner_birthdate == False or partner_birthplace == False or partner_national_id_card_number == False">
+                    <field name="partner_birthdate" invisible="partner_birthdate == False"/>
+                    <field name="partner_birthplace" invisible="partner_birthplace == False"/>
+                    <field name="partner_national_id_card_number" invisible="partner_national_id_card_number == False"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Vue de commande client améliorée -->
+    <record id="view_order_form_inherit_custom_fields" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.custom.fields</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="before">
+                <group name="partner_additional_info" string="Informations complémentaires" 
+                       invisible="partner_id == False or partner_birthdate == False or partner_birthplace == False or partner_national_id_card_number == False">
+                    <field name="partner_birthdate" invisible="partner_birthdate == False"/>
+                    <field name="partner_birthplace" invisible="partner_birthplace == False"/>
+                    <field name="partner_national_id_card_number" invisible="partner_national_id_card_number == False"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
 </odoo>

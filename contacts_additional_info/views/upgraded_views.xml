@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_move_form_inherit_custom_fields" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.custom.fields</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='partner_details']" position="after">
+                <div class="d-flex" t-if="record.partner_id.birthdate or record.partner_id.birthplace or record.partner_id.national_id_card_number">
+                    <div class="w-100">
+                        <strong>Informations supplémentaires:</strong>
+                        <div class="d-flex">
+                            <div class="o_address_format">
+                                <div t-if="record.partner_id.birthdate">
+                                    <strong>Date de naissance:</strong> <field name="partner_id" widget="field_partner_attribute" context="{'field': 'birthdate'}" options="{'always_reload': True}"/>
+                                </div>
+                                <div t-if="record.partner_id.birthplace">
+                                    <strong>Lieu de naissance:</strong> <field name="partner_id" widget="field_partner_attribute" context="{'field': 'birthplace'}" options="{'always_reload': True}"/>
+                                </div>
+                                <div t-if="record.partner_id.national_id_card_number">
+                                    <strong>Numéro CNI:</strong> <field name="partner_id" widget="field_partner_attribute" context="{'field': 'national_id_card_number'}" options="{'always_reload': True}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
