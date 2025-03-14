@@ -1,0 +1,16 @@
+<odoo>
+    <record id="view_res_partner_form_inherit" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='partner_address_country']" position="after">
+                <div class="o_address_format">
+                    <field name="national_id_card_number" invisible="is_company" placeholder="N° de Carte Nationale d'Identité" />
+                    <field name="birthdate" invisible="is_company" placeholder="Date de naissance" />
+                    <field name="birthplace" invisible="is_company" placeholder="Lieu de naissance" />
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
