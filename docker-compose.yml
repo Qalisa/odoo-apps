@@ -26,6 +26,9 @@ services:
       - "8069:8069"
     volumes:
       - ./fr_gold_taxes:/mnt/extra-addons/fr_gold_taxes
+      - ./contacts_additional_info:/mnt/extra-addons/contacts_additional_info
+      - ./fr_startup_enforced:/mnt/extra-addons/fr_startup_enforced
+      #
       - data:/var/lib/odoo
     environment:
       - HOST=db

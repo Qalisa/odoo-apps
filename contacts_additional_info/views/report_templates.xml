@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_invoice_document_inherit_custom_fields" inherit_id="account.report_invoice_document">
+        <xpath expr="//div[@name='invoice_address']" position="after">
+            <div t-if="o.partner_id.birthdate or o.partner_id.birthplace or o.partner_id.id_number" class="mt-2">
+                <div t-if="o.partner_id.birthdate">
+                    <strong>Date de naissance:</strong> <span t-field="o.partner_id.birthdate"/>
+                </div>
+                <div t-if="o.partner_id.birthplace">
+                    <strong>Lieu de naissance:</strong> <span t-field="o.partner_id.birthplace"/>
+                </div>
+                <div t-if="o.partner_id.id_number">
+                    <strong>Numéro CNI:</strong> <span t-field="o.partner_id.id_number"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+    
+    <template id="report_saleorder_document_inherit_custom_fields" inherit_id="sale.report_saleorder_document">
+        <xpath expr="//div[@name='customer_address']" position="after">
+            <div t-if="doc.partner_id.birthdate or doc.partner_id.birthplace or doc.partner_id.id_number" class="mt-2">
+                <div t-if="doc.partner_id.birthdate">
+                    <strong>Date de naissance:</strong> <span t-field="doc.partner_id.birthdate"/>
+                </div>
+                <div t-if="doc.partner_id.birthplace">
+                    <strong>Lieu de naissance:</strong> <span t-field="doc.partner_id.birthplace"/>
+                </div>
+                <div t-if="doc.partner_id.id_number">
+                    <strong>Numéro CNI:</strong> <span t-field="doc.partner_id.id_number"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>
