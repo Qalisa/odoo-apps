@@ -14,7 +14,7 @@ Fonctionnalités :
     'author': "Qalisa",
     'website': "https://www.qalisa.fr",
     'license': "AGPL-3",
-    'version': "1.0.0",
+    'version': "1.0.1",
     'depends': ['l10n_fr_account'],
     'data': [],
     'post_init_hook': 'create_gold_tax_groups',
