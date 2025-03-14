@@ -15,11 +15,11 @@ Ce module ajoute les champs suivants aux contacts:
 Ces informations sont également affichées sur les avoirs, factures et commandes.
     """,
     'category': 'Contacts',
-    'author': 'Votre Nom',
-    'website': 'https://www.votresite.com',
-    'depends': ['base', 'contacts', 'account', 'sale'],
+    'author': 'Qalisa',
+    'website': 'https://www.qalisa.fr',
+    'depends': ['base', 'contacts'],
     'data': [
-        'views/report_views.xml',
+        # 'views/report_views.xml',
         'views/views.xml'
     ],
     'installable': True,

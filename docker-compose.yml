@@ -30,6 +30,11 @@ services:
       - ./fr_startup_enforced:/mnt/extra-addons/fr_startup_enforced
       #
       - data:/var/lib/odoo
+    develop:
+      watch:
+        - action: sync
+          path: ./contacts_additional_info
+          target: /mnt/extra-addons/contacts_additional_info
     environment:
       - HOST=db
       - USER=odoo
