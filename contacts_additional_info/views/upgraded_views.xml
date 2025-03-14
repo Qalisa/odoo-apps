@@ -1,27 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="view_partner_form_inherit_custom_fields" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.custom.fields</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='contact_addresses']" position="after">
+                <page string="Informations Supplémentaires" name="additional_info">
+                    <group>
+                        <field name="birthdate"/>
+                        <field name="birthplace"/>
+                        <field name="national_id_card_number"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
     <record id="view_move_form_inherit_custom_fields" model="ir.ui.view">
         <field name="name">account.move.form.inherit.custom.fields</field>
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//div[@name='invoice_address_right']" position="after">
+                <div class="o_address_format" t-if="record.partner_id.birthdate or record.partner_id.birthplace or record.partner_id.national_id_card_number">
+                    <div class="o_address_line" t-if="record.partner_id.birthdate">
+                        <strong>Date de naissance:</strong> <field name="partner_id.birthdate"/>
+                    </div>
+                    <div class="o_address_line" t-if="record.partner_id.birthplace">
+                        <strong>Lieu de naissance:</strong> <field name="partner_id.birthplace"/>
+                    </div>
+                    <div class="o_address_line" t-if="record.partner_id.national_id_card_number">
+                        <strong>Numéro CNI:</strong> <field name="partner_id.national_id_card_number"/>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_order_form_inherit_custom_fields" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.custom.fields</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
             <xpath expr="//div[@name='partner_details']" position="after">
-                <div class="d-flex" t-if="record.partner_id.birthdate or record.partner_id.birthplace or record.partner_id.national_id_card_number">
-                    <div class="w-100">
-                        <strong>Informations supplémentaires:</strong>
-                        <div class="d-flex">
-                            <div class="o_address_format">
-                                <div t-if="record.partner_id.birthdate">
-                                    <strong>Date de naissance:</strong> <field name="partner_id" widget="field_partner_attribute" context="{'field': 'birthdate'}" options="{'always_reload': True}"/>
-                                </div>
-                                <div t-if="record.partner_id.birthplace">
-                                    <strong>Lieu de naissance:</strong> <field name="partner_id" widget="field_partner_attribute" context="{'field': 'birthplace'}" options="{'always_reload': True}"/>
-                                </div>
-                                <div t-if="record.partner_id.national_id_card_number">
-                                    <strong>Numéro CNI:</strong> <field name="partner_id" widget="field_partner_attribute" context="{'field': 'national_id_card_number'}" options="{'always_reload': True}"/>
-                                </div>
-                            </div>
-                        </div>
+                <div class="o_address_format" t-if="record.partner_id.birthdate or record.partner_id.birthplace or record.partner_id.national_id_card_number">
+                    <div class="o_address_line" t-if="record.partner_id.birthdate">
+                        <strong>Date de naissance:</strong> <field name="partner_id.birthdate"/>
+                    </div>
+                    <div class="o_address_line" t-if="record.partner_id.birthplace">
+                        <strong>Lieu de naissance:</strong> <field name="partner_id.birthplace"/>
+                    </div>
+                    <div class="o_address_line" t-if="record.partner_id.national_id_card_number">
+                        <strong>Numéro CNI:</strong> <field name="partner_id.national_id_card_number"/>
                     </div>
                 </div>
             </xpath>
