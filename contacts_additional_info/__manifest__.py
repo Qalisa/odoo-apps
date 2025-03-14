@@ -19,7 +19,7 @@ Ces informations sont également affichées sur les avoirs, factures et commande
     'website': 'https://www.qalisa.fr',
     'depends': ['base', 'contacts'],
     'data': [
-        # 'views/report_views.xml',
+        'views/report_views.xml',
         'views/views.xml'
     ],
     'installable': True,

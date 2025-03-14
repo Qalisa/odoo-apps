@@ -1,6 +1,6 @@
 <odoo>
-    <template id="custom_partner_fields_in_report" inherit_id="account.report_invoice">
-        <xpath expr="//div[@class='address']" position="after">
+    <template id="custom_partner_fields_invoice" inherit_id="account.report_invoice_document">
+        <xpath expr="//address" position="after">
             <t t-if="o.partner_id.birthdate or o.partner_id.birthplace or o.partner_id.national_id_card_number">
                 <div class="custom-information">
                     <t t-if="o.partner_id.birthdate">
@@ -10,43 +10,7 @@
                         <p><strong>Lieu de Naissance :</strong> <t t-esc="o.partner_id.birthplace"/></p>
                     </t>
                     <t t-if="o.partner_id.national_id_card_number">
-                        <p><strong>N° CNI :</strong> <t t-esc="o.partner_id.national_id_card_number"/></p>
-                    </t>
-                </div>
-            </t>
-        </xpath>
-    </template>
-
-    <template id="custom_partner_fields_in_report" inherit_id="account.report_invoice_with_payments">
-        <xpath expr="//div[@class='address']" position="after">
-            <t t-if="o.partner_id.birthdate or o.partner_id.birthplace or o.partner_id.national_id_card_number">
-                <div class="custom-information">
-                    <t t-if="o.partner_id.birthdate">
-                        <p><strong>Date de Naissance :</strong> <t t-esc="o.partner_id.birthdate"/></p>
-                    </t>
-                    <t t-if="o.partner_id.birthplace">
-                        <p><strong>Lieu de Naissance :</strong> <t t-esc="o.partner_id.birthplace"/></p>
-                    </t>
-                    <t t-if="o.partner_id.national_id_card_number">
-                        <p><strong>N° CNI :</strong> <t t-esc="o.partner_id.national_id_card_number"/></p>
-                    </t>
-                </div>
-            </t>
-        </xpath>
-    </template>
-
-    <template id="custom_partner_fields_in_report" inherit_id="account.report_original_vendor_bill">
-        <xpath expr="//div[@class='address']" position="after">
-            <t t-if="o.partner_id.birthdate or o.partner_id.birthplace or o.partner_id.national_id_card_number">
-                <div class="custom-information">
-                    <t t-if="o.partner_id.birthdate">
-                        <p><strong>Date de Naissance :</strong> <t t-esc="o.partner_id.birthdate"/></p>
-                    </t>
-                    <t t-if="o.partner_id.birthplace">
-                        <p><strong>Lieu de Naissance :</strong> <t t-esc="o.partner_id.birthplace"/></p>
-                    </t>
-                    <t t-if="o.partner_id.national_id_card_number">
-                        <p><strong>N° CNI :</strong> <t t-esc="o.partner_id.national_id_card_number"/></p>
+                        <p><strong>Numéro CNI :</strong> <t t-esc="o.partner_id.national_id_card_number"/></p>
                     </t>
                 </div>
             </t>
