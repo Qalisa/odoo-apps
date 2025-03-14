@@ -1,5 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Vue du formulaire contact améliorée (non modifiée, pas d'attributs "attrs") -->
+    <!-- Vue du formulaire des contacts (res.partner) -->
     <record id="view_partner_form_inherit_custom_fields" model="ir.ui.view">
         <field name="name">res.partner.form.inherit.custom.fields</field>
         <field name="model">res.partner</field>
@@ -17,35 +18,33 @@
         </field>
     </record>
 
-    <!-- Vue de facture améliorée -->
+    <!-- Vue du formulaire des factures (account.move) -->
     <record id="view_move_form_inherit_custom_fields" model="ir.ui.view">
         <field name="name">account.move.form.inherit.custom.fields</field>
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="before">
-                <group name="partner_additional_info" string="Informations complémentaires" 
-                       invisible="partner_id == False or partner_birthdate == False or partner_birthplace == False or partner_national_id_card_number == False">
-                    <field name="partner_birthdate" invisible="partner_birthdate == False"/>
-                    <field name="partner_birthplace" invisible="partner_birthplace == False"/>
-                    <field name="partner_national_id_card_number" invisible="partner_national_id_card_number == False"/>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <group name="partner_additional_info" string="Informations complémentaires">
+                    <field name="partner_birthdate" invisible="not partner_birthdate"/>
+                    <field name="partner_birthplace" invisible="not partner_birthplace"/>
+                    <field name="partner_national_id_card_number" invisible="not partner_national_id_card_number"/>
                 </group>
             </xpath>
         </field>
     </record>
 
-    <!-- Vue de commande client améliorée -->
+    <!-- Vue du formulaire des commandes (sale.order) -->
     <record id="view_order_form_inherit_custom_fields" model="ir.ui.view">
         <field name="name">sale.order.form.inherit.custom.fields</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="before">
-                <group name="partner_additional_info" string="Informations complémentaires" 
-                       invisible="partner_id == False or partner_birthdate == False or partner_birthplace == False or partner_national_id_card_number == False">
-                    <field name="partner_birthdate" invisible="partner_birthdate == False"/>
-                    <field name="partner_birthplace" invisible="partner_birthplace == False"/>
-                    <field name="partner_national_id_card_number" invisible="partner_national_id_card_number == False"/>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <group name="partner_additional_info" string="Informations complémentaires">
+                    <field name="partner_birthdate" invisible="not partner_birthdate"/>
+                    <field name="partner_birthplace" invisible="not partner_birthplace"/>
+                    <field name="partner_national_id_card_number" invisible="not partner_national_id_card_number"/>
                 </group>
             </xpath>
         </field>

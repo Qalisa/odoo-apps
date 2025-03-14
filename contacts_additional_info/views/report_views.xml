@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Rapport de facture personnalisé -->
+    <template id="report_invoice_custom" inherit_id="account.report_invoice_document">
+        <xpath expr="//div[@class='page']//t[@t-if='o.partner_id']" position="after">
+            <div class="row mt-2">
+                <div class="col-12" t-if="o.partner_birthdate">
+                    <strong>Date de Naissance :</strong> <span t-field="o.partner_birthdate"/>
+                </div>
+                <div class="col-12" t-if="o.partner_birthplace">
+                    <strong>Lieu de Naissance :</strong> <span t-field="o.partner_birthplace"/>
+                </div>
+                <div class="col-12" t-if="o.partner_national_id_card_number">
+                    <strong>N° CNI :</strong> <span t-field="o.partner_national_id_card_number"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
+    <!-- Rapport de devis/commande personnalisé -->
+    <template id="report_saleorder_custom" inherit_id="sale.report_saleorder_document">
+        <xpath expr="//div[@class='page']//t[@t-if='o.partner_id']" position="after">
+            <div class="row mt-2">
+                <div class="col-12" t-if="o.partner_birthdate">
+                    <strong>Date de Naissance :</strong> <span t-field="o.partner_birthdate"/>
+                </div>
+                <div class="col-12" t-if="o.partner_birthplace">
+                    <strong>Lieu de Naissance :</strong> <span t-field="o.partner_birthplace"/>
+                </div>
+                <div class="col-12" t-if="o.partner_national_id_card_number">
+                    <strong>N° CNI :</strong> <span t-field="o.partner_national_id_card_number"/>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

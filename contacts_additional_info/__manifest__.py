@@ -19,8 +19,8 @@ Ces informations sont également affichées sur les avoirs, factures et commande
     'website': 'https://www.votresite.com',
     'depends': ['base', 'contacts', 'account', 'sale'],
     'data': [
-        'views/report_templates.xml',
-        'views/upgraded_views.xml'
+        'views/report_views.xml',
+        'views/views.xml'
     ],
     'installable': True,
     'application': True,
