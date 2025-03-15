@@ -47,7 +47,7 @@ service:
 github:
   syncActionsSecrets:
     enabled: true
-    repository: Qalisa/odoo-docs
+    repository: Qalisa/odoo-apps
     defaultSyncRefs:
       - default
 
