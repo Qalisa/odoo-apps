@@ -8,7 +8,7 @@
             "type": "chrome",
             "request": "launch",
             "url": "http://localhost:8069",
-            "name": "Launch Browser",
+            "name": "Launch Browser (Odoo Apps)",
             "presentation": {
                 "hidden": true,
                 "group": "",
@@ -19,25 +19,26 @@
             ]
         },
         {
-            "name": "Debug: Docker Compose",
+            "name": "Debug: Docker Compose (Odoo Apps)",
             "type": "node-terminal",
             "request": "launch",
             "command": "docker compose up",
-            "cwd": "${workspaceFolder}",
-            "preLaunchTask": "Ensure right permissions for .pgpass",
-            "postDebugTask": "Cleanup",
+            "cwd": "${workspaceFolder}/dev/addons",
+            "preLaunchTask": "Ensure right permissions for .pgpass (Odoo Apps)",
+            "postDebugTask": "Cleanup (Odoo Apps)",
             "serverReadyAction": {
                 "action": "startDebugging",
-                "name": "Launch Browser",
+                "name": "Launch Browser (Odoo Apps)",
                 "pattern": "Registry loaded",
                 "killOnServerStop": true,
             },
         },
         {
             "command": "./node_modules/.bin/astro dev",
-            "name": "Development server",
+            "name": "Debug: Astro Dev (docs)",
             "request": "launch",
             "type": "node-terminal",
+            "cwd": "${workspaceFolder}/docs",
             "serverReadyAction": {
               "action": "debugWithChrome",
               "pattern": "Local",
@@ -47,15 +48,15 @@
             }
           },
           {
-            "name": "Debug: Docker Compose",
+            "name": "Debug: Docker Compose (docs)",
             "type": "node-terminal",
             "request": "launch",
             "command": "docker compose up --build",
-            "cwd": "${workspaceFolder}/dev",
+            "cwd": "${workspaceFolder}/dev/docs",
             "serverReadyAction": {
                 "action": "debugWithChrome",
                 "uriFormat": "http://localhost:4321",
-                "pattern": "local:",
+                "pattern": "httpd -D FOREGROUND",
                 "killOnServerStop": true
             }
         },

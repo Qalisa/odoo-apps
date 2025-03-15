@@ -2,15 +2,18 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Cleanup",
+            "label": "Cleanup (Odoo Apps)",
             "type": "shell",
             "command": "docker compose rm -v -f -s && docker volume rm odoo-apps_data && docker volume rm odoo-apps_db",
             "problemMatcher": []
         },
         {
-            "label": "Ensure right permissions for .pgpass",
+            "label": "Ensure right permissions for .pgpass (Odoo Apps)",
             "type": "shell",
             "command": "chmod 600 .pgpass",
+            "options": {
+                "cwd": "${workspaceFolder}/dev/addons"
+            },
             "problemMatcher": []
         },
     ]
