@@ -69,6 +69,6 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         #
-        cache-from: type=registry,ref=${{ steps.meta-pre.outputs.full_image_location }}:cache
-        cache-to: type=registry,ref=${{ steps.meta-pre.outputs.full_image_location }}:cache,image-manifest=true,oci-mediatypes=true,mode=max
+        # cache-from: type=registry,ref=${{ steps.meta-pre.outputs.full_image_location }}:cache
+        # cache-to: type=registry,ref=${{ steps.meta-pre.outputs.full_image_location }}:cache,image-manifest=true,oci-mediatypes=true,mode=max
         outputs: type=image,push=true
