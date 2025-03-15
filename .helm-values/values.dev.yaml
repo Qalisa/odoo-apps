@@ -1,0 +1,6 @@
+ingress:
+  hosts:
+    - odoo-docs-dev.qalisa.fr
+cloudflare:
+  zeroTrustAccess:
+    enabled: true

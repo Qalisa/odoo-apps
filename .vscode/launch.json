@@ -33,5 +33,31 @@
                 "killOnServerStop": true,
             },
         },
+        {
+            "command": "./node_modules/.bin/astro dev",
+            "name": "Development server",
+            "request": "launch",
+            "type": "node-terminal",
+            "serverReadyAction": {
+              "action": "debugWithChrome",
+              "pattern": "Local",
+              "uriFormat": "http://localhost:4321",
+              "webRoot": "${workspaceFolder}",
+              "killOnServerStop": true
+            }
+          },
+          {
+            "name": "Debug: Docker Compose",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "docker compose up --build",
+            "cwd": "${workspaceFolder}/dev",
+            "serverReadyAction": {
+                "action": "debugWithChrome",
+                "uriFormat": "http://localhost:4321",
+                "pattern": "local:",
+                "killOnServerStop": true
+            }
+        },
     ]
 }

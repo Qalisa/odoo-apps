@@ -1,7 +1,9 @@
 {
     "recommendations": [
         "ms-python.python",
-        "ms-python.vscode-pylance",
-        "ms-azuretools.vscode-docker"
-    ]
+        "ms-azuretools.vscode-docker",
+        "astro-build.astro-vscode",
+        "gruntfuggly.todo-tree"
+    ],
+    "unwantedRecommendations": []
 }
