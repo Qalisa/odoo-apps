@@ -2,7 +2,7 @@ services:
   web:
     image: odoo-docs
     build:
-      context: ..
+      context: ../../docs
       args:
         K8S_APP__VERSION: "0.dev-compose"
         CANONICAL_URL: http://localhost

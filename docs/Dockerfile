@@ -19,10 +19,13 @@ COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm run build
 
-FROM base AS lean
-COPY --from=build /app/dist ./dist
+FROM httpd:alpine AS lean
+ARG CANONICAL_URL="http://define-me.pls"
 
-ENV HOST=0.0.0.0
-ENV PORT=80
+ENV CANONICAL_URL=$CANONICAL_URL
+
+RUN SERVER_NAME=$(echo "$CANONICAL_URL" | sed -E 's|https?://||' | cut -d'/' -f1) && \
+    echo "ServerName ${SERVER_NAME}" >> /usr/local/apache2/conf/httpd.conf
+
+COPY --from=build /app/dist /usr/local/apache2/htdocs/
 EXPOSE 80
-CMD ["node", "./dist/server/entry.mjs"]
