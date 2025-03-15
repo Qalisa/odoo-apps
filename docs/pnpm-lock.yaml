@@ -17,6 +17,10 @@ importers:
       sharp:
         specifier: ^0.32.5
         version: 0.32.6
+    devDependencies:
+      astro-vtbot:
+        specifier: ^2.1.1
+        version: 2.1.1
 
 packages:
 
@@ -556,6 +560,21 @@ packages:
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
 
+  '@vtbag/cam-shaft@1.0.6':
+    resolution: {integrity: sha512-Xy1bmJJLXuCqxmY2agwPfhGNv1XZViqh54H0VGK4mouGsItFsh8Mz/wWAP6mZwAOEuu9bEOJ1mJ+oNoaczZ1zw==}
+
+  '@vtbag/element-crossing@1.1.0':
+    resolution: {integrity: sha512-1YL609KPwhHUKRrVNfoogQCVJPfFrE5DubOLcCJZLHVCjWZ2ZAPcaq1wR2OP6nXD0Ok9JLX41YsEtYBYzw6CxQ==}
+
+  '@vtbag/inspection-chamber@1.0.21':
+    resolution: {integrity: sha512-7TWv9W7Nx5Dkp6Uak9gcLuaF3v10ErEuCcSiUbkN8GTvgjuAIHuV5EKTg+dI1wd7JRoWU840Jf4Avxa+yNyUmw==}
+
+  '@vtbag/turn-signal@1.3.1':
+    resolution: {integrity: sha512-6rWkG+ik3U+KQGI94yNOrOh5QedB9zmP/8H51X5WQwrJz8m2MAU5YwGRRcweO/dJ6wW/Bn7OsgC1vRURnwrvCg==}
+
+  '@vtbag/utensil-drawer@1.2.0':
+    resolution: {integrity: sha512-o1LoA2QtXesonezCoVVXK0irvGymGu+JFxlyr4knu0tRKenaBoIilMt2W1eTfarWp8X1JTK88oHSIVnXUA1odw==}
+
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -606,6 +625,9 @@ packages:
     resolution: {integrity: sha512-yJMQId0yXSAbW9I6yqvJ3FcjKzJ8zRL7elbJbllkv1ZJPlsI0NI83Pxn1YL1IapEM347EvOOkSW2GL+2+NO61w==}
     peerDependencies:
       astro: ^4.0.0-beta || ^5.0.0-beta || ^3.3.0
+
+  astro-vtbot@2.1.1:
+    resolution: {integrity: sha512-S50LeeQeHTt7oDrwylixi1FU1sAcHKY354vKyl0Q+QBwHYzaZBylfyQ2KSVgOU/PSX3WKWs3iwN97/Gw+fvUpw==}
 
   astro@5.5.2:
     resolution: {integrity: sha512-SOTJxB8mqxe/KEYEJiLIot0YULiCffyfTEclwmdeaASitDJ7eLM/KYrJ9sx3U5hq9GVI17Z4Y0P/1T2aQ0ZN3A==}
@@ -2344,6 +2366,16 @@ snapshots:
 
   '@ungap/structured-clone@1.3.0': {}
 
+  '@vtbag/cam-shaft@1.0.6': {}
+
+  '@vtbag/element-crossing@1.1.0': {}
+
+  '@vtbag/inspection-chamber@1.0.21': {}
+
+  '@vtbag/turn-signal@1.3.1': {}
+
+  '@vtbag/utensil-drawer@1.2.0': {}
+
   acorn-jsx@5.3.2(acorn@8.14.1):
     dependencies:
       acorn: 8.14.1
@@ -2379,6 +2411,14 @@ snapshots:
     dependencies:
       astro: 5.5.2(rollup@4.35.0)(typescript@5.8.2)
       rehype-expressive-code: 0.40.2
+
+  astro-vtbot@2.1.1:
+    dependencies:
+      '@vtbag/cam-shaft': 1.0.6
+      '@vtbag/element-crossing': 1.1.0
+      '@vtbag/inspection-chamber': 1.0.21
+      '@vtbag/turn-signal': 1.3.1
+      '@vtbag/utensil-drawer': 1.2.0
 
   astro@5.5.2(rollup@4.35.0)(typescript@5.8.2):
     dependencies:
