@@ -1,0 +1,13 @@
+services:
+  web:
+    image: odoo-docs
+    build:
+      context: ..
+      args:
+        K8S_APP__VERSION: "0.dev-compose"
+        CANONICAL_URL: http://localhost
+      dockerfile: Dockerfile
+      tags:
+        - latest
+    ports:
+      - "4321:80"

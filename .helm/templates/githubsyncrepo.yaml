@@ -1,0 +1,12 @@
+{{- if .Values.github.syncActionsSecrets.enabled -}}
+apiVersion: qalisa.github.io/v1alpha1
+kind: GithubSyncRepo
+metadata:
+  name: {{ include "helpers.fullname" . }}
+spec:
+  repository: {{ .Values.github.syncActionsSecrets.repository | quote }}
+  secretsSyncRefs:
+  {{- range .Values.github.syncActionsSecrets.defaultSyncRefs }} 
+    - {{ . }}
+  {{- end }}
+{{- end }}

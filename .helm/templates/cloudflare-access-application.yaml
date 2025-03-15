@@ -1,0 +1,34 @@
+{{- if .Values.cloudflare.zeroTrustAccess.enabled -}}
+{{- range .Values.ingress.hosts }}
+---
+apiVersion: cloudflare.zelic.io/v1alpha1
+kind: CloudflareAccessApplication
+metadata:
+  name: {{ . | quote }}
+  namespace: {{ $.Values.cloudflare.zeroTrustAccess.namespace | quote }}
+  annotations:
+    # (optional) default: "false"
+    #   ensures that the resource isn't removed from cloudflare if the CR is deleted
+    cloudflare.zelic.io/prevent-destroy: "false"
+spec:
+  name: {{ . | quote }}
+  domain: {{ . | quote }}
+  autoRedirectToIdentity: false # allow multiple providers to be displayed on appLauncher 
+  appLauncherVisible: true
+  type: self_hosted
+  sessionDuration: 24h
+  enableBindingCookie: true
+  httpOnlyCookieAttribute: true
+  logoUrl: "https://www.cloudflare.com/img/logo-web-badges/cf-logo-on-white-bg.svg"
+  policies:
+  {{- range $.Values.cloudflare.zeroTrustAccess.policies }}
+    - name: {{ .description | quote }}
+      decision: allow
+      include:
+        - accessGroups:
+          - valueFrom:
+              name: {{ .groupId | quote }}
+              namespace: {{ $.Values.cloudflare.zeroTrustAccess.namespace | quote }}
+  {{- end }}              
+{{- end }}
+{{- end }}
