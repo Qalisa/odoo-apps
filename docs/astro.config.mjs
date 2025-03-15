@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import { viewTransitions } from "astro-vtbot/starlight-view-transitions";
 
 //
 const site = (() => {
@@ -15,22 +16,49 @@ export default defineConfig({
 	site,
 	integrations: [
 		starlight({
-			title: 'My Docs',
+			title: 'Odoo - Procédures et Aide',
+			locales: {
+				root: {
+					label: 'Français',
+					lang: 'fr'
+				},
+			},
+
+			logo: {
+				src: './public/favicon.svg',
+			},
+
+			plugins: [viewTransitions()],
+
 			social: {
 				github: 'https://github.com/Qalisa/odoo-apps',
+				linkedin: 'https://www.linkedin.com/company/qalisa',
 			},
 			sidebar: [
 				{
-					label: 'Guides',
-					items: [
-						// Each item here is one entry in the navigation menu.
-						{ label: 'Example Guide', slug: 'guides/example' },
-					],
+					label: 'Accéder à Odoo',
+					autogenerate: { directory: 'odoo' },
 				},
 				{
-					label: 'Reference',
-					autogenerate: { directory: 'reference' },
+					label: 'Gestion des clients',
+					autogenerate: { directory: 'customers' },
 				},
+				{
+					label: 'Produits',
+					autogenerate: { directory: 'product' },
+				},
+				{
+					label: 'Vendre à un client',
+					autogenerate: { directory: 'sell' },
+				},
+				{
+					label: 'Rachat à un client',
+					autogenerate: { directory: 'buy' },
+				},
+				{
+					label: 'Bien utiliser les taxes',
+					autogenerate: { directory: 'tax' },
+				}
 			],
 		}),
 	],
