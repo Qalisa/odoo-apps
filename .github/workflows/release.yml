@@ -31,16 +31,17 @@ jobs:
       run: |
         APP_VERSION=$(yq e '.appVersion' .helm/Chart.yaml)
         CANONICAL_URL=$(yq -r '.ingress.hosts[0]' .helm-values/values.${{ github.ref_name }}.yaml)
+        IMAGE_NAME=$(basename "$(yq -r '.image.repository' .helm/values.yaml)")
         echo "appVersion=${APP_VERSION}" >> $GITHUB_OUTPUT
         echo "canonicalUrl=${CANONICAL_URL}" >> $GITHUB_OUTPUT
+        echo "imageName=${IMAGE_NAME}" >> $GITHUB_OUTPUT
         
     #
     - name: Compute full image location
       id: meta-pre
       run: |
         ORG_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-        REPO_NAME=$(basename "${{ github.repository }}")
-        echo "full_image_location=${{ vars.DOCKER_PRIVATE_REGISTRY_DOMAIN }}/${ORG_LOWER}/${REPO_NAME}" >> $GITHUB_OUTPUT
+        echo "full_image_location=${{ vars.DOCKER_PRIVATE_REGISTRY_DOMAIN }}/${ORG_LOWER}/${{ steps.data-from-helm.outputs.imageName }}" >> $GITHUB_OUTPUT
    
    #
     - name: Extract metadata (tags, labels) for Docker
