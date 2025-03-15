@@ -60,7 +60,7 @@ jobs:
       id: build_image
       uses: docker/build-push-action@v6
       with:
-        context: .
+        context: ./docs
         push: true
         target: lean
         build-args: |
