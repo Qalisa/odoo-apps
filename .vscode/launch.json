@@ -23,7 +23,7 @@
             "type": "node-terminal",
             "request": "launch",
             "command": "docker compose up",
-            "cwd": "${workspaceFolder}/dev/addons",
+            "cwd": "${workspaceFolder}/.dev/addons",
             "preLaunchTask": "Ensure right permissions for .pgpass (Odoo Apps)",
             "postDebugTask": "Cleanup (Odoo Apps)",
             "serverReadyAction": {
@@ -52,7 +52,7 @@
             "type": "node-terminal",
             "request": "launch",
             "command": "docker compose up --build",
-            "cwd": "${workspaceFolder}/dev/docs",
+            "cwd": "${workspaceFolder}/.dev/docs",
             "serverReadyAction": {
                 "action": "debugWithChrome",
                 "uriFormat": "http://localhost:4321",
