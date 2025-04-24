@@ -12,7 +12,7 @@
             "type": "shell",
             "command": "chmod 600 .pgpass",
             "options": {
-                "cwd": "${workspaceFolder}/dev/addons"
+                "cwd": "${workspaceFolder}/.dev/addons"
             },
             "problemMatcher": []
         },
