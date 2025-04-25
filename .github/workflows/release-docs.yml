@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - .helm/Chart.yaml # on maybe new app version
-      - .github/workflows/release.yml
+      - .github/workflows/release-docs.yml
 
 jobs:
   build-and-push:
