@@ -5,7 +5,7 @@
     'author': "Qalisa",
     'website': "https://www.qalisa.fr",
     'license': "AGPL-3",
-    'version': "1.0.0",
+    'version': "1.0.1",
     'depends': ['l10n_fr'],
     'data': [
         'data/company_settings.xml'
@@ -17,5 +17,6 @@
     'external_dependencies': {
         'python': [],
     },
+    'images': ['static/description/icon.png'],
     'odoo_version': '18.0', # Ceci n'est pas un paramètre standard, mais peut être utile pour indiquer la version
 }

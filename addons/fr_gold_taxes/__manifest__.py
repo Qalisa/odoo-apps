@@ -14,7 +14,7 @@ Fonctionnalités :
     'author': "Qalisa",
     'website': "https://www.qalisa.fr",
     'license': "AGPL-3",
-    'version': "1.0.1",
+    'version': "1.0.2",
     'depends': ['l10n_fr_account'],
     'data': [],
     'post_init_hook': 'create_gold_tax_groups',
@@ -24,5 +24,6 @@ Fonctionnalités :
     'external_dependencies': {
         'python': [],
     },
+    'images': ['static/description/icon.png'],
     'odoo_version': '18.0', # Ceci n'est pas un paramètre standard, mais peut être utile pour indiquer la version
 }
