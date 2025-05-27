@@ -1,3 +1,5 @@
+name: odoo-apps
+
 services:
   db:
     image: postgres:15
@@ -6,7 +8,7 @@ services:
       - POSTGRES_PASSWORD=odoo
       - POSTGRES_USER=odoo
     volumes:
-      - db:/var/lib/postgresql/data
+      - odoo-pg-db:/var/lib/postgresql/data
 
   odoo:
     image: odoo:18.0
@@ -26,7 +28,7 @@ services:
       - "8069:8069"
     volumes:
       - ../../addons:/mnt/extra-addons
-      - data:/var/lib/odoo
+      - odoo-data:/var/lib/odoo
     environment:
       - HOST=db
       - USER=odoo
@@ -47,6 +49,6 @@ services:
       - "5050:80"
 
 volumes:
-  db:
-  data:
+  odoo-pg-db:
+  odoo-data:
   pgadmin-data:
