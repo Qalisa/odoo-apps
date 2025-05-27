@@ -2,8 +2,8 @@
 
 {
     'name': 'Contacts - Informations Supplémentaires',
-    'version': '1.0',
-    'summary': 'Ajoute des informations supplémentaires aux contacts',
+    'version': '1.0.1',
+    'summary': 'Ajoute des informations supplémentaires aux contacts (Date et lieu de naissance, No CNI)',
     'description': """
 Champs Supplémentaires pour Contacts
 ====================================
