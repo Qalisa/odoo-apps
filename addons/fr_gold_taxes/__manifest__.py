@@ -8,13 +8,13 @@ liée à la revente d'or physique en France, selon la législation en vigueur.
 
 Fonctionnalités :
 - Création de 21 groupes de taxes pour la plus-value sur l'or (de 0 à 22+ ans de détention)
-- Création du groupe de taxe forfaitaire (11,5%)
+- Création du groupe de taxe forfaitaire pour les métaux préciex (11,5%) et pour les objets précieux (6,5%)
 - Configuration automatique des taux d'imposition et prélèvements sociaux
     """,
     'author': "Qalisa",
     'website': "https://www.qalisa.fr",
     'license': "AGPL-3",
-    'version': "1.0.2",
+    'version': "1.0.3",
     'depends': ['l10n_fr_account'],
     'data': [],
     'post_init_hook': 'create_gold_tax_groups',

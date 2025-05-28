@@ -32,10 +32,15 @@
                 "pattern": "Registry loaded",
                 "killOnServerStop": true,
             },
+            "presentation": {
+                "hidden": false,
+                "group": "Odoo Addons",
+                "order": 1
+            }
         },
         {
             "command": "./node_modules/.bin/astro dev",
-            "name": "Debug: Astro Dev (docs)",
+            "name": "Debug: Astro Dev (odoo-docs)",
             "request": "launch",
             "type": "node-terminal",
             "cwd": "${workspaceFolder}/docs",
@@ -45,10 +50,15 @@
               "uriFormat": "http://localhost:4321",
               "webRoot": "${workspaceFolder}",
               "killOnServerStop": true
+            },
+            "presentation": {
+                "hidden": false,
+                "group": "Odoo Docs",
+                "order": 1
             }
           },
           {
-            "name": "Debug: Docker Compose (docs)",
+            "name": "Debug: Docker Compose (odoo-docs)",
             "type": "node-terminal",
             "request": "launch",
             "command": "docker compose up --build",
@@ -58,6 +68,11 @@
                 "uriFormat": "http://localhost:4321",
                 "pattern": "httpd -D FOREGROUND",
                 "killOnServerStop": true
+            },
+            "presentation": {
+                "hidden": false,
+                "group": "Odoo Docs",
+                "order": 1
             }
         },
     ]
