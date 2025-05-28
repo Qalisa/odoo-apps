@@ -1,8 +1,70 @@
 ---
 title: Introduction / Particularités
 ---
-Les particularités de votre métier:
+import WIP from 'components/WIP.astro'
 
-- Votre métier nécéssite la possibilité d'acheter et de vendre à un client des pièces / lingots, et ce possiblement sur le même devis / facture
+# Pré-configuration
+## Taxes
+Pour vous, Qalisa met à disposition des taxes pré-configurées, que vous pouvez ensuite:
+- associer à vos lignes produits dans vos devis,
+- ou alors directement associer dans le paramétrage de vos produits
 
-- Pour vous, ces clients à qui vous effectuez un rachat ne sont pas considérés comme des "fournisseurs", mais bien comme des clients ! 
+Les voici:
+- Taxe Forfaitaire TMP (11% + 0.5% CRDS)
+- Taxe Forfaitaire Objets Précieux (6% + 0.5% CRDS)
+- Taxes "Régime des plus-values" (21 lots de taxes dégressives en fonction de la durée de détention du bien racheté)
+
+## Informations Client
+Le module Odoo Client ainsi que la génération de facture / devis profite d'une fonctionnalité enrichie:
+- Saisie du Lieu / Date de Naissance
+- Saisie du Numéro de Carte d'Identité Nationnale
+- Visualisation de ces informations sur le
+
+# Les particularités de votre métier dans Odoo
+
+## Ventes
+Votre métier nécéssite la possibilité de vendre à un client des pièces / lingots. 
+
+:::tip
+La plupart des ventes effectuées dans votre métier étant exonérées de TVA, 
+nous vous conseillons d'apposer à vos ventes une taxe "0%" qui reflétera cet état de fait plus clairement à vos clients.
+:::
+
+## Rachats
+Vous pouvez également racheter à vos clients ces mêmes types de biens; dans ce cas précis, lors de la rédaction d'un devis, vous:
+- Définirez des quantités **négatives** (et non **positives** !) pour chaque objet racheté
+- Vous assurerez que les taxes sont bien valides et appliquées sur chaque produit
+
+Se faisant, vous ne produirez non pas une **Facture**, mais un **Avoir**.
+
+Lors du rachat à vos clients et si éligible aux taxes, vos clients ont 2 possibilités; en fonction du + avantageux pour eux: 
+
+### Aquittement de la taxe forfaitaire
+Dans ce cas, vous payez la CRDS, Taxe sur les Métaux Précieux ou Taxe sur les objets précieux à leur place. Il suffit d'appliquer la taxe forfaitaire adaptée dans votre devis.
+
+### Aquittement au régime des "plus-values"
+Sur justificatifs fournis par le client, nous vous conseillons dans ce cas:
+- De créer une ligne où vous rachetez, net de taxe, le bien à son prix d'achat
+- Puis, sur une seconde ligne, de racheter la partie "plus-value", sur laquelle vous appliquerez la taxe appropriée, en fonction de la durée de possession.
+
+:::tip
+Cette taxe étant degressive en fonction de la durée de possession du bien, 
+:::
+
+### Reversement à l'administration des taxes perçues
+
+En cas de rachat où vous percevez les taxes à la place de l'Etat, vous êtes tenus d'en informer l'administration fiscale et de les reverser.
+Pour "faciliter" le suivi de ces opérations, l'Etat met à votre disposition 2 documents **Cerfa**, que vous devez lui transmettre à intervalle régulier:
+
+- [Formulaire - Aquittement de la taxe forfaitaire](https://www.service-public.fr/particuliers/vosdroits/R17176)
+- [Formulaire - Aquittement au régime des plus-values](https://www.impots.gouv.fr/formulaire/2092-sd/declaration-doption-pour-le-regime-general-de-taxation-des-plus-values)
+
+Pour accompagner la rédaction de ces documents, Vous pouvez utiliser les différentes fonctionnalités de la comptabilité analytique d'Odoo
+
+### Aide pour la taxe Forfaitaire
+
+<WIP />
+
+### Aide pour le régime des plus-values
+
+<WIP />
