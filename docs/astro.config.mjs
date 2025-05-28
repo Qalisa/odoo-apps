@@ -40,25 +40,31 @@ export default defineConfig({
 					autogenerate: { directory: 'odoo' },
 				},
 				{
-					label: 'Gestion des clients',
-					autogenerate: { directory: 'customers' },
+					label: "🪙 Numismatique",
+					items: [
+						"gold_broker/introduction",
+						{
+							label: 'Gestion des clients',
+							autogenerate: { directory: 'gold_broker/customers' },
+						},
+						{
+							label: 'Produits',
+							autogenerate: { directory: 'gold_broker/product' },
+						},
+						{
+							label: 'Vendre à un client',
+							autogenerate: { directory: 'gold_broker/sell' },
+						},
+						{
+							label: 'Rachat à un client',
+							autogenerate: { directory: 'gold_broker/buy' },
+						},
+						{
+							label: 'Bien utiliser les taxes',
+							autogenerate: { directory: 'gold_broker/tax' },
+						}
+					]
 				},
-				{
-					label: 'Produits',
-					autogenerate: { directory: 'product' },
-				},
-				{
-					label: 'Vendre à un client',
-					autogenerate: { directory: 'sell' },
-				},
-				{
-					label: 'Rachat à un client',
-					autogenerate: { directory: 'buy' },
-				},
-				{
-					label: 'Bien utiliser les taxes',
-					autogenerate: { directory: 'tax' },
-				}
 			],
 		}),
 	],

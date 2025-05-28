@@ -4,15 +4,21 @@ _logger = logging.getLogger(__name__)
 
 # Configuration centralisée
 TAX_CONFIG = {
+    'crds': 0.5,
     'plus_value': {
         'impots_rate': 19.0,
         'prelevements_rate': 17.2,
         'sequence': 10,
     },
     'forfaitaire': {
-        'tmp_rate': 11.0,
-        'crds_rate': 0.5,
+        'rate': 11.0,
+        'crds_rate': True,
         'sequence': 5,
+    },
+    'forfaitaire_art': {
+        'rate': 6.0,
+        'crds_rate': True,
+        'sequence': 6,
     },
     'tax_groups': {
         'impot': {
@@ -30,6 +36,10 @@ TAX_CONFIG = {
         'tmp': {
             'name': 'TMP',
             'sequence': 4,
+        },
+        'top': {
+            'name': "Taxe Objets Précieux",
+            'sequence': 40,
         },
     }
 }
@@ -175,31 +185,61 @@ class GoldTaxCreator:
         """Crée les taxes forfaitaires pour l'or."""
         _logger.info("Création des taxes forfaitaires")
         
-        config = TAX_CONFIG['forfaitaire']
-        
+        #
+        crdsRate = TAX_CONFIG['crds']
+        crds_tax = self.create_tax(
+            "CRDS (0.5%)",
+            -crdsRate,  # Négatif car c'est une déduction
+            f"Contribution au Remboursement de la Dette Sociale. Fixé à {crdsRate}%.",
+            self.tax_groups['crds'].id
+        )
+
+        ##
+        ## TMP
+        ##
+
         # Création des taxes avec les groupes spécifiques
+        config = TAX_CONFIG['forfaitaire']
         tmp_tax = self.create_tax(
             "TMP (11%)",
-            -config['tmp_rate'],  # Négatif car c'est une déduction
-            f"Taxe sur les Métaux Précieux. Fixé à {config['tmp_rate']}%.",
+            -config['rate'],  # Négatif car c'est une déduction
+            f"Taxe sur les Métaux Précieux. Fixé à {config['rate']}%.",
             self.tax_groups['tmp'].id
         )
         
-        crds_tax = self.create_tax(
-            "CRDS (0.5%)",
-            -config['crds_rate'],  # Négatif car c'est une déduction
-            f"Contribution au Remboursement de la Dette Sociale. Fixé à {config['crds_rate']}%.",
-            self.tax_groups['crds'].id
-        )
-        
         # Création de la taxe parent forfaitaire
-        total_rate = config['tmp_rate'] + config['crds_rate']
+        total_rate = config['rate'] + crdsRate
         self.create_tax(
-            f"Forfaitaire - {total_rate}%",
+            f"Forfaitaire TMP - {total_rate}%",
             0.0,  # Le montant est calculé à partir des sous-taxes
-            f"Taxation forfaitaire complète sur la revente d'or physique. "
+            f"Taxation forfaitaire complète sur la revente d'or physique."
             f"Taux d'imposition total: {total_rate}%.",
             self.tax_groups['tmp'].id,  # Utilisation du groupe 'TMP' pour la taxe parent
             amount_type='group',
             children_tax_ids=[tmp_tax.id, crds_tax.id]
+        )
+
+        ##
+        ## Taxe Objets d'Art
+        ##
+
+        # Création des taxes avec les groupes spécifiques
+        config = TAX_CONFIG['forfaitaire']
+        top_tax = self.create_tax(
+            "Taxe sur les Objets Précieux (6%)",
+            -config['rate'],  # Négatif car c'est une déduction
+            f"Taxe sur les bijoux, objets d'art, de collection et d'antiquité. Fixé à {config['rate']}%.",
+            self.tax_groups['top'].id
+        )
+        
+        # Création de la taxe parent forfaitaire
+        total_rate = config['rate'] + crdsRate
+        self.create_tax(
+            f"Forfaitaire TOP - {total_rate}%",
+            0.0,  # Le montant est calculé à partir des sous-taxes
+            f"Taxation forfaitaire complète sur la revente d'objets précieux."
+            f"Taux d'imposition total: {total_rate}%.",
+            self.tax_groups['top'].id,  # Utilisation du groupe 'TMP' pour la taxe parent
+            amount_type='group',
+            children_tax_ids=[top_tax.id, crds_tax.id]
         )
