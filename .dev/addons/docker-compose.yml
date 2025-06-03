@@ -17,7 +17,7 @@ services:
     command:
       - odoo
       - "--init"
-      - contacts,l10n_fr_account
+      - contacts,l10n_fr_account,sale_management,prt_report_attachment_preview,fr_startup_enforced
       - "-d"
       - mydb
       - "--without-demo"
@@ -35,7 +35,7 @@ services:
       - PASSWORD=odoo
 
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:9.4.0
     depends_on:
       - db
     environment:
@@ -43,8 +43,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: odootest
     volumes:
       - ./pgadmin.servers.json:/pgadmin4/servers.json
-      - .pgpass:/var/lib/pgadmin/storage/admin_example.com/.pgpass
       - pgadmin-data:/var/lib/pgadmin
+      # - .pgpass:/var/lib/pgadmin/storage/admin_example.com/.pgpass
     ports:
       - "5050:80"
 

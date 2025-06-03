@@ -4,45 +4,62 @@ _logger = logging.getLogger(__name__)
 
 # Configuration centralisée
 TAX_CONFIG = {
-    'crds': 0.5,
-    'plus_value': {
-        'impots_rate': 19.0,
-        'prelevements_rate': 17.2,
-        'sequence': 10,
+    'tpv_rates': {
+        'ir': 19.0,
+        'urssaf': 17.2,
     },
-    'forfaitaire': {
-        'rate': 11.0,
-        'crds_rate': True,
-        'sequence': 5,
+    'tfop_rates': {
+        'mp': 11.0, # Taux Metaux Précieux
+        'op': 6.0, # Taux Objets Précieux 
+        'crds': 0.5 # Taux CRDS
     },
-    'forfaitaire_art': {
-        'rate': 6.0,
-        'crds_rate': True,
-        'sequence': 6,
-    },
+    ##
+    ##
+    ##
     'tax_groups': {
-        'impot': {
-            'name': 'Impôt',
-            'sequence': 1,
+        ##
+        ## 2091-SD
+        ## https://entreprendre.service-public.fr/vosdroits/R17176
+        ##
+        'tfop': {
+            'name': 'Taxes Forfaitaires sur les Objets Précieux (TFOP)',
+            'sequence': 0,
+            # 447100 - TFOP due à l'administration
         },
-        'prelevements_sociaux': {
-            'name': 'Prélèvements sociaux',
-            'sequence': 2,
+        'tfop_tax': {
+            'name': 'Taxes (TFOP)',
+            'sequence': 0,
+            # 447110 - TFOP Seule due à l'administration
         },
-        'crds': {
-            'name': 'CRDS',
-            'sequence': 3,
+        'tfop_crds': {
+            'name': 'CRDS (TFOP)',
+            'sequence': 0,
+            # 447120 - CRDS sur TFOP due à l'administration
         },
-        'tmp': {
-            'name': 'TMP',
-            'sequence': 4,
+        ##
+        ## 2092-SD
+        ## https://www.impots.gouv.fr/formulaire/2092-sd/declaration-doption-pour-le-regime-general-de-taxation-des-plus-values
+        ##
+        'tpv': {
+            'name': 'Taxation sur les Plus Values réelles (TPV)',
+            'sequence': 0,
+            # 442600 - Taxe sur les plus-values mobilières due à l'administration
+        },        
+        'tpv_ir': {
+            'name': 'IR (TPV)',
+            'sequence': 0,
+            # 442600 – Impôt sur le revenu collecté
         },
-        'top': {
-            'name': "Taxe Objets Précieux",
-            'sequence': 40,
+        'tpv_urssaf': {
+            'name': 'URSSAF (TPV)',
+            'sequence': 0,
+            # 442400 – Prélèvements sociaux sur revenus du capital
         },
     }
 }
+
+# 'percent' n'applique pas la règle de la façon désirée
+default_tax_rate_type = "division" # 'percent'
 
 class GoldTaxCreator:
     """Classe utilitaire pour la création des taxes relatives à l'or."""
@@ -95,7 +112,7 @@ class GoldTaxCreator:
         return tax_group
     
     def create_tax(self, name, amount, description, tax_group_id, 
-                  amount_type='percent', children_tax_ids=None):
+                  amount_type=default_tax_rate_type, children_tax_ids=None):
         """Crée une taxe si elle n'existe pas déjà."""
         existing_tax = self.Tax.search([
             ('name', '=', name),
@@ -108,7 +125,7 @@ class GoldTaxCreator:
                 'name': name,
                 'amount': amount,
                 'amount_type': amount_type,
-                'type_tax_use': 'sale' if amount_type != 'percent' else 'none',
+                'type_tax_use': 'sale' if amount_type != default_tax_rate_type else 'none',
                 'description': description,
                 'tax_group_id': tax_group_id,
                 'price_include': False,
@@ -120,126 +137,129 @@ class GoldTaxCreator:
             if amount_type == 'group' and children_tax_ids:
                 vals['children_tax_ids'] = [(6, 0, children_tax_ids)]
                 
+            # if amount_type != 'group':
+            #     vals['price_include_override'] = 'tax_included'
+
             return self.Tax.create(vals)
         return existing_tax
     
     def create_added_value_taxes(self):
         """
-        Crée les taxes pour la plus-value sur l'or avec 21 niveaux
-        d'ancienneté différents.
+        Crée les taxes pour les plus-values mobilières, pour chaque palier d'abattement
         """
-        _logger.info("Création des taxes pour la plus-value")
+        _logger.info("Création des taxes sur les plus-values")
         
-        config = TAX_CONFIG['plus_value']
+        config = TAX_CONFIG['tpv_rates']
         
-        # Pour chaque niveau d'ancienneté
+        # Pour chaque palier d'abattement
         for i in range(1, 22):
             percentage = 100 - (i - 1) * 5  # 100, 95, 90, ..., 0
             
             # Détermination du label d'années
             if i == 1:
-                years_label = "0-2 ANS"
-            elif i == 21:
-                years_label = "22+ ANS"
+                years_label = "0 à 2+ ANS"
             else:
-                years_label = f"{i}-{i+1} ANS"
+                years_label = f"{i+1}+ ANS"
             
             # Calcul des taux effectifs
-            impots_rate = round(config['impots_rate'] * (percentage / 100.0), 2)
-            prelevements_rate = round(config['prelevements_rate'] * (percentage / 100.0), 2)
-            total_rate = round(impots_rate + prelevements_rate, 2)
+            ir_rate = round(config['ir'] * (percentage / 100.0), 2)
+            urssaf_rate = round(config['urssaf'] * (percentage / 100.0), 2)
+            total_rate = round(ir_rate + urssaf_rate, 2)
             
             # Création des taxes avec les groupes spécifiques
-            impot_tax = self.create_tax(
-                f"Plus-value - Impôt ({years_label}, {impots_rate}%)",
-                -impots_rate,  # Négatif car c'est une déduction
-                f"Impôt sur la plus-value de la revente d'or physique après {years_label} de détention. "
-                f"Base: {config['impots_rate']}%, appliqué à {percentage}%.",
-                self.tax_groups['impot'].id
+            ir_tax = self.create_tax(
+                f"TPV - IR ({years_label}, {ir_rate}%)",
+                -ir_rate,  # Négatif car c'est une déduction
+                f"Impôt sur le revenu associé à la TPV après {years_label} de détention. "
+                f"Base: {config['ir']}%, appliqué à {percentage}%.",
+                self.tax_groups['tpv_ir'].id
             )
             
-            prelevements_tax = self.create_tax(
-                f"Plus-value - URSSAF ({years_label}, {prelevements_rate}%)",
-                -prelevements_rate,  # Négatif car c'est une déduction
-                f"Prélèvements sociaux sur la plus-value de la revente d'or physique après {years_label} de détention. "
-                f"Base: {config['prelevements_rate']}%, appliqué à {percentage}%.",
-                self.tax_groups['prelevements_sociaux'].id
+            urssaf_tax = self.create_tax(
+                f"TPV - URSSAF ({years_label}, {urssaf_rate}%)",
+                -urssaf_rate,  # Négatif car c'est une déduction
+                f"Prélèvements sociaux associé à la TPV après {years_label} de détention. "
+                f"Base: {config['urssaf']}%, appliqué à {percentage}%.",
+                self.tax_groups['tpv_urssaf'].id
             )
             
             # Création de la taxe parent qui regroupe les deux sous-taxes
             # Pour la taxe parent, nous utilisons également un des groupes principaux
             # ou créons un groupe de taxe spécifique pour les taxes combinées si nécessaire
-            parent_tax_name = f"Plus-value - {years_label} ({total_rate}%)"
+            parent_tax_name = f"TPV ({years_label})"
             self.create_tax(
                 parent_tax_name,
-                0.0,  # Le montant est calculé à partir des sous-taxes
-                f"Taxation complète sur la plus-value de la revente d'or physique "
-                f"après {years_label} de détention. "
+                0.0,  # nulle, Le montant est calculé à partir des sous-taxes
+                f"Taxe sur la plus-value après {years_label} de détention d'un bien. "
                 f"Taux d'imposition total: {total_rate}% ({percentage}% de la base).",
-                self.tax_groups['impot'].id,  # Utilisation du groupe 'Impôt' pour la taxe parent
+                self.tax_groups['tpv'].id,
                 amount_type='group',
-                children_tax_ids=[impot_tax.id, prelevements_tax.id]
+                children_tax_ids=[ir_tax.id, urssaf_tax.id]
             )
     
     def create_fixed_taxes(self):
-        """Crée les taxes forfaitaires pour l'or."""
-        _logger.info("Création des taxes forfaitaires")
+        """Crée les taux de TFOP"""
+        _logger.info("Création des taxes forfaitaires pour les objets précieux")
         
+        ##
+        ## CRDS (commune aux 2 autres)
+        ##
+
         #
-        crdsRate = TAX_CONFIG['crds']
+        crdsRate = TAX_CONFIG['tfop_rates']['crds']
         crds_tax = self.create_tax(
-            "CRDS (0.5%)",
+            f"TFOP - CRDS ({crdsRate}%)",
             -crdsRate,  # Négatif car c'est une déduction
-            f"Contribution au Remboursement de la Dette Sociale. Fixé à {crdsRate}%.",
-            self.tax_groups['crds'].id
+            "Contribution au Remboursement de la Dette Sociale sur la TFOP.",
+            self.tax_groups['tfop_crds'].id
         )
 
         ##
-        ## TMP
+        ## Taxes "Métaux Précieux"
         ##
 
-        # Création des taxes avec les groupes spécifiques
-        config = TAX_CONFIG['forfaitaire']
-        tmp_tax = self.create_tax(
-            "TMP (11%)",
-            -config['rate'],  # Négatif car c'est une déduction
-            f"Taxe sur les Métaux Précieux. Fixé à {config['rate']}%.",
-            self.tax_groups['tmp'].id
-        )
-        
-        # Création de la taxe parent forfaitaire
-        total_rate = config['rate'] + crdsRate
-        self.create_tax(
-            f"Forfaitaire TMP - {total_rate}%",
-            0.0,  # Le montant est calculé à partir des sous-taxes
-            f"Taxation forfaitaire complète sur la revente d'or physique."
-            f"Taux d'imposition total: {total_rate}%.",
-            self.tax_groups['tmp'].id,  # Utilisation du groupe 'TMP' pour la taxe parent
-            amount_type='group',
-            children_tax_ids=[tmp_tax.id, crds_tax.id]
-        )
-
-        ##
-        ## Taxe Objets d'Art
-        ##
-
-        # Création des taxes avec les groupes spécifiques
-        config = TAX_CONFIG['forfaitaire']
-        top_tax = self.create_tax(
-            "Taxe sur les Objets Précieux (6%)",
-            -config['rate'],  # Négatif car c'est une déduction
-            f"Taxe sur les bijoux, objets d'art, de collection et d'antiquité. Fixé à {config['rate']}%.",
-            self.tax_groups['top'].id
+        # Sous-taxe
+        curr_tax_rate = TAX_CONFIG['tfop_rates']['mp']
+        tfmp_tax = self.create_tax(
+            f"TFOP - Métaux Précieux ({curr_tax_rate}%)",
+            -curr_tax_rate,  # Négatif car c'est une déduction
+            "Taxe Forfaitaire sur les Métaux Précieux (monnaie > 1800JC, or, argent, platine)",
+            self.tax_groups['tfop_tax'].id
         )
         
-        # Création de la taxe parent forfaitaire
-        total_rate = config['rate'] + crdsRate
+        total_rate = curr_tax_rate + crdsRate
+
+        # Groupement, incluant CRDS
         self.create_tax(
-            f"Forfaitaire TOP - {total_rate}%",
-            0.0,  # Le montant est calculé à partir des sous-taxes
-            f"Taxation forfaitaire complète sur la revente d'objets précieux."
-            f"Taux d'imposition total: {total_rate}%.",
-            self.tax_groups['top'].id,  # Utilisation du groupe 'TMP' pour la taxe parent
+            f"{total_rate}% TMP",
+            0.0,  # nulle, Le montant est calculé à partir des sous-taxes
+            f"Regroupe les taxes à appliquer lors de la revente de métaux précieux.",
+            self.tax_groups['tfop'].id,
             amount_type='group',
-            children_tax_ids=[top_tax.id, crds_tax.id]
+            children_tax_ids=[tfmp_tax.id, crds_tax.id]
+        )
+
+        ##
+        ## Taxes "Objets Précieux" (Fourre-tout, autre que Métaux Précieux) (https://www.economie.gouv.fr/particuliers/vente-objet-precieux-fiscalite-taxe)
+        ##
+
+        # Sous-taxe
+        curr_tax_rate = TAX_CONFIG['tfop_rates']['op']
+        tfop_tax = self.create_tax(
+            f"TFOP - Objets Précieux ({curr_tax_rate}%)",
+            -curr_tax_rate,  # Négatif car c'est une déduction
+            f"Taxe sur les bijoux, objets d'art, de collection et d'antiquité, si montant supérieur à 5000€.",
+            self.tax_groups['tfop_tax'].id
+        )
+        
+        total_rate = curr_tax_rate + crdsRate
+
+        # Groupement, incluant CRDS
+        self.create_tax(
+            f"{total_rate}% TFOP",
+            0.0,  # nulle, Le montant est calculé à partir des sous-taxes
+            f"Regroupe les taxes à appliquer lors de la revente d'objets précieux si montant supérieur à 5000€.",
+            self.tax_groups['tfop'].id,
+            amount_type='group',
+            children_tax_ids=[tfop_tax.id, crds_tax.id]
         )

@@ -9,7 +9,7 @@ const site = (() => {
 	if (site == null || site == "") return "http://localhost:4321"
 	if (site.startsWith('http://') || site.startsWith('https://')) return site
 	return 'https://' + site
-  })();
+})();
 
 // https://astro.build/config
 export default defineConfig({
@@ -40,29 +40,46 @@ export default defineConfig({
 					autogenerate: { directory: 'odoo' },
 				},
 				{
-					label: "🪙 Numismatique",
+					label: 'Sauvegarde / Récupération des données',
+					autogenerate: { directory: 'backups' },
+				},
+				{
+					label: "Par Métier",
 					items: [
-						"gold_broker/introduction",
 						{
-							label: 'Gestion des clients',
-							autogenerate: { directory: 'gold_broker/customers' },
+							label: "🪙 Numismatique",
+							items: [
+								"by_job/gold_broker/introduction",
+								{
+									label: 'Gestion des clients',
+									autogenerate: { directory: 'by_job/gold_broker/customers' },
+								},
+								{
+									label: 'Produits',
+									autogenerate: { directory: 'by_job/gold_broker/product' },
+								},
+								{
+									label: 'Vendre à un client',
+									autogenerate: { directory: 'by_job/gold_broker/sell' },
+								},
+								{
+									label: 'Rachat à un client',
+									autogenerate: { directory: 'by_job/gold_broker/buy' },
+								},
+								{
+									label: 'Comptabiliser les paiements',
+									autogenerate: { directory: 'by_job/gold_broker/paying' },
+								},
+								{
+									label: 'Bien utiliser les taxes',
+									autogenerate: { directory: 'by_job/gold_broker/tax' },
+								},
+																{
+									label: 'Avancé: Configuration',
+									autogenerate: { directory: 'by_job/gold_broker/configure' },
+								}
+							]
 						},
-						{
-							label: 'Produits',
-							autogenerate: { directory: 'gold_broker/product' },
-						},
-						{
-							label: 'Vendre à un client',
-							autogenerate: { directory: 'gold_broker/sell' },
-						},
-						{
-							label: 'Rachat à un client',
-							autogenerate: { directory: 'gold_broker/buy' },
-						},
-						{
-							label: 'Bien utiliser les taxes',
-							autogenerate: { directory: 'gold_broker/tax' },
-						}
 					]
 				},
 			],

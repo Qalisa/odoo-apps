@@ -1,15 +1,10 @@
 {
-    'name': "Gestion des taxes pour la revente d'or physique",
+    'name': "Taxes - TFOP et Plus-values mobilières",
     'category': "Accounting/Taxes",
-    'summary': "Création automatique de groupes de taxes pour la revente d'or physique",
+    'summary': "Taxes, comptes et groupes de taxes pour la gestion de la TFOP et de la TPV",
     'description': """
-Ce module crée automatiquement les groupes de taxes nécessaires pour gérer la fiscalité 
-liée à la revente d'or physique en France, selon la législation en vigueur.
-
-Fonctionnalités :
-- Création de 21 groupes de taxes pour la plus-value sur l'or (de 0 à 22+ ans de détention)
-- Création du groupe de taxe forfaitaire pour les métaux préciex (11,5%) et pour les objets précieux (6,5%)
-- Configuration automatique des taux d'imposition et prélèvements sociaux
+Ce module crée automatiquement les taxes, comptes et groupes de taxes nécessaires pour gérer la fiscalité 
+liée à la revente d'objets précieux en France, selon la législation en vigueur.
     """,
     'author': "Qalisa",
     'website': "https://www.qalisa.fr",

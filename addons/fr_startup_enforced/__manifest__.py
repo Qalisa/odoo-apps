@@ -5,8 +5,8 @@
     'author': "Qalisa",
     'website': "https://www.qalisa.fr",
     'license': "AGPL-3",
-    'version': "1.0.1",
-    'depends': ['l10n_fr'],
+    'version': "1.0.2",
+    'depends': ['l10n_fr', 'l10n_fr_account'],
     'data': [
         'data/company_settings.xml'
     ],
