@@ -11,12 +11,4 @@
         <field name="key">base.default_lang</field>
         <field name="value">fr_FR</field>
     </record>
-
-    <!-- Udapte Charts of Accounts to French -->
-    <function model="account.chart.template" name="try_loading">
-        <value eval="[]"/>
-        <value>fr</value>
-        <value model="res.company" search="[('partner_id.country_id.code', 'in', ['FR', False])]"/>
-        <value name="install_demo" eval="True"/>
-    </function>
 </odoo>

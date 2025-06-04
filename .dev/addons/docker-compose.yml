@@ -4,20 +4,36 @@ services:
   db:
     image: postgres:15
     environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_PASSWORD=odoo
-      - POSTGRES_USER=odoo
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_USER: odoo
     volumes:
       - odoo-pg-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   odoo:
-    image: odoo:18.0
+    image: odoo-18-debug
+    build:
+      dockerfile: ./odoo-debug/Dockerfile
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    entrypoint: [
+      "/usr/bin/python3", "-m", "debugpy", "--listen", "0.0.0.0:8888", 
+        "--wait-for-client", "--log-to-stderr",
+      "/usr/bin/odoo", 
+        "--db_host", "db", 
+        "--db_password", "odoo"
+    ]
     command:
-      - odoo
       - "--init"
-      - contacts,l10n_fr_account,sale_management,prt_report_attachment_preview,fr_startup_enforced
+      - fr_startup_enforced
+      # - contacts,l10n_fr_account,sale_management,prt_report_attachment_preview,fr_startup_enforced
       - "-d"
       - mydb
       - "--without-demo"
@@ -26,6 +42,7 @@ services:
       - "--dev=all"
     ports:
       - "8069:8069"
+      - "8888:8888" # debugger
     volumes:
       - ../../addons:/mnt/extra-addons
       - odoo-data:/var/lib/odoo

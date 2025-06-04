@@ -44,6 +44,10 @@ export default defineConfig({
 					autogenerate: { directory: 'backups' },
 				},
 				{
+					label: '⚙️ Pour les mainteneurs',
+					autogenerate: { directory: 'maintainer' }
+				},
+				{
 					label: "Par Métier",
 					items: [
 						{
@@ -55,27 +59,19 @@ export default defineConfig({
 									autogenerate: { directory: 'by_job/gold_broker/customers' },
 								},
 								{
-									label: 'Produits',
+									label: 'Gestion des Produits',
 									autogenerate: { directory: 'by_job/gold_broker/product' },
 								},
 								{
-									label: 'Vendre à un client',
-									autogenerate: { directory: 'by_job/gold_broker/sell' },
+									label: 'Devis (Acheter / Vendre)',
+									autogenerate: { directory: 'by_job/gold_broker/estimate' },
 								},
 								{
-									label: 'Rachat à un client',
-									autogenerate: { directory: 'by_job/gold_broker/buy' },
+									label: 'Factures, Paiements & Comptabilisation',
+									autogenerate: { directory: 'by_job/gold_broker/invoice' },
 								},
 								{
-									label: 'Comptabiliser les paiements',
-									autogenerate: { directory: 'by_job/gold_broker/paying' },
-								},
-								{
-									label: 'Bien utiliser les taxes',
-									autogenerate: { directory: 'by_job/gold_broker/tax' },
-								},
-																{
-									label: 'Avancé: Configuration',
+									label: '🛠️ Configuration',
 									autogenerate: { directory: 'by_job/gold_broker/configure' },
 								}
 							]

@@ -10,13 +10,33 @@
             "url": "http://localhost:8069",
             "name": "Launch Browser (Odoo Apps)",
             "presentation": {
-                "hidden": true,
-                "group": "",
-                "order": 1
+                "hidden": false,
+                "group": "Odoo Addons",
+                "order": 2
             },
             "cascadeTerminateToConfigurations": [
-                "Debug: Docker Compose"
+                "Debug: Docker Compose (Odoo Apps)"
             ]
+        },
+        {
+            "name": "Debug Addons",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 8888
+            },
+            "presentation": {
+                "hidden": true,
+                "group": "Odoo Addons",
+                "order": 3
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/addons",
+                    "remoteRoot": "/mnt/extra-addons"
+                },
+            ],
         },
         {
             "name": "Debug: Docker Compose (Odoo Apps)",
@@ -28,16 +48,24 @@
             "postDebugTask": "Cleanup (Odoo Apps)",
             "serverReadyAction": {
                 "action": "startDebugging",
-                "name": "Launch Browser (Odoo Apps)",
-                "pattern": "Registry loaded",
+                "name": "Debug Addons",
+                "pattern": "wait_for_client()",
+                // "name": "Launch Browser (Odoo Apps)",
+                // "pattern": "Registry loaded",
                 "killOnServerStop": true,
             },
             "presentation": {
                 "hidden": false,
                 "group": "Odoo Addons",
                 "order": 1
-            }
+            },
+            "cascadeTerminateToConfigurations": [
+                "Launch Browser (Odoo Apps)"
+            ]
         },
+        //
+        // Docs
+        //
         {
             "command": "./node_modules/.bin/astro dev",
             "name": "Debug: Astro Dev (odoo-docs)",
@@ -45,19 +73,19 @@
             "type": "node-terminal",
             "cwd": "${workspaceFolder}/docs",
             "serverReadyAction": {
-              "action": "debugWithChrome",
-              "pattern": "Local",
-              "uriFormat": "http://localhost:4321",
-              "webRoot": "${workspaceFolder}",
-              "killOnServerStop": true
+                "action": "debugWithChrome",
+                "pattern": "Local",
+                "uriFormat": "http://localhost:4321",
+                "webRoot": "${workspaceFolder}",
+                "killOnServerStop": true
             },
             "presentation": {
                 "hidden": false,
                 "group": "Odoo Docs",
                 "order": 1
             }
-          },
-          {
+        },
+        {
             "name": "Debug: Docker Compose (odoo-docs)",
             "type": "node-terminal",
             "request": "launch",
