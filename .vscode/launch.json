@@ -5,17 +5,32 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug: Docker Compose",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "docker compose up",
+            "cwd": "${workspaceFolder}/.dev",
+            "preLaunchTask": "Ensure right permissions for .pgpass",
+            "postDebugTask": "Cleanup",
+            "serverReadyAction": {
+                "action": "startDebugging",
+                "name": "Debug Addons",
+                "pattern": "wait_for_client()",
+                // "name": "Launch Browser",
+                // "pattern": "Registry loaded",
+                "killOnServerStop": true,
+            },
+            "cascadeTerminateToConfigurations": [
+                "Launch Browser"
+            ]
+        },
+        {
             "type": "chrome",
             "request": "launch",
             "url": "http://localhost:8069",
-            "name": "Launch Browser (Odoo Apps)",
-            "presentation": {
-                "hidden": false,
-                "group": "Odoo Addons",
-                "order": 2
-            },
+            "name": "Launch Browser",
             "cascadeTerminateToConfigurations": [
-                "Debug: Docker Compose (Odoo Apps)"
+                "Debug: Docker Compose"
             ]
         },
         {
@@ -28,8 +43,6 @@
             },
             "presentation": {
                 "hidden": true,
-                "group": "Odoo Addons",
-                "order": 3
             },
             "pathMappings": [
                 {
@@ -37,71 +50,6 @@
                     "remoteRoot": "/mnt/extra-addons"
                 },
             ],
-        },
-        {
-            "name": "Debug: Docker Compose (Odoo Apps)",
-            "type": "node-terminal",
-            "request": "launch",
-            "command": "docker compose up",
-            "cwd": "${workspaceFolder}/.dev/addons",
-            "preLaunchTask": "Ensure right permissions for .pgpass (Odoo Apps)",
-            "postDebugTask": "Cleanup (Odoo Apps)",
-            "serverReadyAction": {
-                "action": "startDebugging",
-                "name": "Debug Addons",
-                "pattern": "wait_for_client()",
-                // "name": "Launch Browser (Odoo Apps)",
-                // "pattern": "Registry loaded",
-                "killOnServerStop": true,
-            },
-            "presentation": {
-                "hidden": false,
-                "group": "Odoo Addons",
-                "order": 1
-            },
-            "cascadeTerminateToConfigurations": [
-                "Launch Browser (Odoo Apps)"
-            ]
-        },
-        //
-        // Docs
-        //
-        {
-            "command": "./node_modules/.bin/astro dev",
-            "name": "Debug: Astro Dev (odoo-docs)",
-            "request": "launch",
-            "type": "node-terminal",
-            "cwd": "${workspaceFolder}/docs",
-            "serverReadyAction": {
-                "action": "debugWithChrome",
-                "pattern": "Local",
-                "uriFormat": "http://localhost:4321",
-                "webRoot": "${workspaceFolder}",
-                "killOnServerStop": true
-            },
-            "presentation": {
-                "hidden": false,
-                "group": "Odoo Docs",
-                "order": 1
-            }
-        },
-        {
-            "name": "Debug: Docker Compose (odoo-docs)",
-            "type": "node-terminal",
-            "request": "launch",
-            "command": "docker compose up --build",
-            "cwd": "${workspaceFolder}/.dev/docs",
-            "serverReadyAction": {
-                "action": "debugWithChrome",
-                "uriFormat": "http://localhost:4321",
-                "pattern": "httpd -D FOREGROUND",
-                "killOnServerStop": true
-            },
-            "presentation": {
-                "hidden": false,
-                "group": "Odoo Docs",
-                "order": 1
-            }
         },
     ]
 }

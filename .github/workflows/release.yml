@@ -1,9 +1,9 @@
-name: Publish CLI
+name: Publish Custom Odoo Image
 
 on:
   push:
     paths:
-      - .github/workflows/release-odoo-custom.yml
+      - .github/workflows/release.yml
       - docker/Dockerfile
   workflow_dispatch: # Allows manual triggering
 
@@ -41,7 +41,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/Dockerfile # Path to the CLI Dockerfile
+          file: ./docker/Dockerfile # Path to the Custom Odoo Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
