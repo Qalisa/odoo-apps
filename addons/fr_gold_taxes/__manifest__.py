@@ -2,7 +2,7 @@
     'name': "Taxes - TFOP et Plus-values mobilières",
     'category': "Accounting/Taxes",
     'summary': "Taxes, comptes et groupes de taxes pour la gestion de la TFOP et de la TPV",
-    'description': """
+    'description': """Localisation Fiscale "France" installée requise !
 Ce module crée automatiquement les taxes, comptes et groupes de taxes nécessaires pour gérer la fiscalité 
 liée à la revente d'objets précieux en France, selon la législation en vigueur.
     """,
@@ -10,7 +10,7 @@ liée à la revente d'objets précieux en France, selon la législation en vigue
     'website': "https://www.qalisa.fr",
     'license': "AGPL-3",
     'version': "1.0.4",
-    'depends': ['l10n_fr_account', 'fr_startup_enforced'],
+    'depends': ['l10n_fr_account'],
     'data': [],
     'post_init_hook': 'create_gold_tax_groups',
     'installable': True,

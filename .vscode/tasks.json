@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "docker compose rm -v -f -s && docker volume rm odoo-apps_odoo-data && docker volume rm odoo-apps_odoo-pg-db",
             "options": {
-                "cwd": "${workspaceFolder}/.dev/addons"
+                "cwd": "${workspaceFolder}/.dev"
             },
             "problemMatcher": []
         },
@@ -15,7 +15,7 @@
             "type": "shell",
             "command": "chmod 600 .pgpass",
             "options": {
-                "cwd": "${workspaceFolder}/.dev/addons"
+                "cwd": "${workspaceFolder}/.dev"
             },
             "problemMatcher": []
         },

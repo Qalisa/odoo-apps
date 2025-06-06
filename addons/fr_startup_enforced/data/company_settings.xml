@@ -1,4 +1,4 @@
-<odoo>
+<odoo noupdate="1">
     <!-- Update default company settings -->
     <record id="base.main_company" model="res.company">
         <field name="name">Ma Société</field>

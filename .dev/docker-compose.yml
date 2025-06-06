@@ -30,21 +30,20 @@ services:
         "--db_host", "db", 
         "--db_password", "odoo"
     ]
-    command:
-      - "--init"
-      - fr_startup_enforced
-      # - contacts,l10n_fr_account,sale_management,prt_report_attachment_preview,fr_startup_enforced
-      - "-d"
-      - mydb
-      - "--without-demo"
-      - "--load-language=fr_FR"
-      - --language=fr_FR
-      - "--dev=all"
+    command: [
+      "--init", "contacts,sale_management",
+      # "--init", "contacts,l10n_fr_account,sale_management,prt_report_attachment_preview,fr_startup_enforced",
+      "-d", "mydb",
+      "--without-demo=all",
+      "--load-language=fr_FR",
+      "--language=fr_FR",
+      "--dev=all"
+    ]
     ports:
       - "8069:8069"
       - "8888:8888" # debugger
     volumes:
-      - ../../addons:/mnt/extra-addons
+      - ../addons:/mnt/extra-addons
       - odoo-data:/var/lib/odoo
     environment:
       - HOST=db

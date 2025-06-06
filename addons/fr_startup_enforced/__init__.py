@@ -5,7 +5,6 @@ def post_configure_french_lang(env):
     """Enforce French."""
     with env.cr.savepoint():
         _post_configure_french_lang(env)
-    with env.cr.savepoint():
         _switch_fiscal_localization_to_france(env)
 
 lang_to_activate = 'fr_FR'
@@ -82,7 +81,7 @@ def _post_configure_french_lang(env):
 
 
 ##
-## Note: changes done here will be automatically reverted if setting up the database using "without_demo"
+## Note: changes done here will be automatically reverted if setting up the database using "without-demo"
 ##
 def _switch_fiscal_localization_to_france(env):
     chart_template = env['account.chart.template']

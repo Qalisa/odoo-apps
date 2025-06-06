@@ -58,8 +58,19 @@ TAX_CONFIG = {
     }
 }
 
-# 'percent' n'applique pas la règle de la façon désirée
-default_tax_rate_type = "division" # 'percent'
+#
+rate_type_config = {
+    "tfop": {
+        "price_include_override": "tax_included",
+        "amount_type": "division"
+    },
+    "tpv": {
+        "price_include_override": "tax_excluded",
+        "amount_type": "percent"
+    }
+}
+
+
 
 class GoldTaxCreator:
     """Classe utilitaire pour la création des taxes relatives à l'or."""
@@ -111,34 +122,40 @@ class GoldTaxCreator:
             })
         return tax_group
     
-    def create_tax(self, name, amount, description, tax_group_id, 
-                  amount_type=default_tax_rate_type, children_tax_ids=None):
+    def create_tax(self, tax_type, 
+                   name, amount, description, tax_group_id,
+                  children_tax_ids=None):
         """Crée une taxe si elle n'existe pas déjà."""
         existing_tax = self.Tax.search([
             ('name', '=', name),
             ('tax_group_id', '=', tax_group_id)
         ], limit=1)
         
+        is_group = children_tax_ids is not None
+
         if not existing_tax:
             _logger.info(f"Création de la taxe: {name}")
             vals = {
+                #
                 'name': name,
-                'amount': amount,
-                'amount_type': amount_type,
-                'type_tax_use': 'sale' if amount_type != default_tax_rate_type else 'none',
                 'description': description,
+                'country_id': self.france_id, # nécessaire
+                #
+                'amount_type': "group" if is_group else rate_type_config[tax_type]['amount_type'],
+                'amount': 0 if is_group else amount, # amount is meaningless if group of taxes
+                #
+                'tax_scope': 'consu',
+                'type_tax_use': 'sale' if is_group else 'none',
+                #
                 'tax_group_id': tax_group_id,
                 'price_include': False,
                 'include_base_amount': False,
-                'tax_scope': 'consu',
-                'country_id': self.france_id,  # Ajout du country_id pour la France
             }
             
-            if amount_type == 'group' and children_tax_ids:
+            if children_tax_ids is not None:
                 vals['children_tax_ids'] = [(6, 0, children_tax_ids)]
-                
-            # if amount_type != 'group':
-            #     vals['price_include_override'] = 'tax_included'
+            else:
+                vals['price_include_override'] = rate_type_config[tax_type]['price_include_override']
 
             return self.Tax.create(vals)
         return existing_tax
@@ -153,8 +170,9 @@ class GoldTaxCreator:
         
         # Pour chaque palier d'abattement
         for i in range(1, 22):
-            percentage = 100 - (i - 1) * 5  # 100, 95, 90, ..., 0
-            
+            percentage_discount = (i - 1) * 5
+            percentage_paid = 100 - percentage_discount  # 100, 95, 90, ..., 0
+
             # Détermination du label d'années
             if i == 1:
                 years_label = "0 à 2+ ANS"
@@ -162,24 +180,26 @@ class GoldTaxCreator:
                 years_label = f"{i+1}+ ANS"
             
             # Calcul des taux effectifs
-            ir_rate = round(config['ir'] * (percentage / 100.0), 2)
-            urssaf_rate = round(config['urssaf'] * (percentage / 100.0), 2)
+            ir_rate = round(config['ir'] * (percentage_paid / 100.0), 2)
+            urssaf_rate = round(config['urssaf'] * (percentage_paid / 100.0), 2)
             total_rate = round(ir_rate + urssaf_rate, 2)
             
             # Création des taxes avec les groupes spécifiques
             ir_tax = self.create_tax(
-                f"TPV - IR ({years_label}, {ir_rate}%)",
+                'tpv',
+                f"TPV - IR ({years_label}, {ir_rate}%)", # affiché sur la facture par default
                 -ir_rate,  # Négatif car c'est une déduction
                 f"Impôt sur le revenu associé à la TPV après {years_label} de détention. "
-                f"Base: {config['ir']}%, appliqué à {percentage}%.",
+                f"Base: {config['ir']}% - appliqué à {percentage_paid}% | {percentage_discount}% d'abattment > {ir_rate}%",
                 self.tax_groups['tpv_ir'].id
             )
             
             urssaf_tax = self.create_tax(
-                f"TPV - URSSAF ({years_label}, {urssaf_rate}%)",
+                'tpv',
+                f"TPV - URSSAF ({years_label}, {urssaf_rate}%)", # affiché sur la facture par default
                 -urssaf_rate,  # Négatif car c'est une déduction
                 f"Prélèvements sociaux associé à la TPV après {years_label} de détention. "
-                f"Base: {config['urssaf']}%, appliqué à {percentage}%.",
+                f"Base: {config['urssaf']}% - appliqué à {percentage_paid}% | {percentage_discount}% d'abattment > {urssaf_rate}%",
                 self.tax_groups['tpv_urssaf'].id
             )
             
@@ -188,12 +208,13 @@ class GoldTaxCreator:
             # ou créons un groupe de taxe spécifique pour les taxes combinées si nécessaire
             parent_tax_name = f"TPV ({years_label})"
             self.create_tax(
+                'tpv',
                 parent_tax_name,
                 0.0,  # nulle, Le montant est calculé à partir des sous-taxes
                 f"Taxe sur la plus-value après {years_label} de détention d'un bien. "
-                f"Taux d'imposition total: {total_rate}% ({percentage}% de la base).",
+                f"Base: {config['urssaf'] + config['ir']}% - appliqué à {percentage_paid}% | {percentage_discount}% d'abattment > {total_rate}%",
                 self.tax_groups['tpv'].id,
-                amount_type='group',
+                # includes
                 children_tax_ids=[ir_tax.id, urssaf_tax.id]
             )
     
@@ -208,6 +229,7 @@ class GoldTaxCreator:
         #
         crdsRate = TAX_CONFIG['tfop_rates']['crds']
         crds_tax = self.create_tax(
+            'tfop',
             f"TFOP - CRDS ({crdsRate}%)",
             -crdsRate,  # Négatif car c'est une déduction
             "Contribution au Remboursement de la Dette Sociale sur la TFOP.",
@@ -221,6 +243,7 @@ class GoldTaxCreator:
         # Sous-taxe
         curr_tax_rate = TAX_CONFIG['tfop_rates']['mp']
         tfmp_tax = self.create_tax(
+            'tfop',
             f"TFOP - Métaux Précieux ({curr_tax_rate}%)",
             -curr_tax_rate,  # Négatif car c'est une déduction
             "Taxe Forfaitaire sur les Métaux Précieux (monnaie > 1800JC, or, argent, platine)",
@@ -231,11 +254,12 @@ class GoldTaxCreator:
 
         # Groupement, incluant CRDS
         self.create_tax(
+            'tfop',
             f"{total_rate}% TMP",
             0.0,  # nulle, Le montant est calculé à partir des sous-taxes
             f"Regroupe les taxes à appliquer lors de la revente de métaux précieux.",
             self.tax_groups['tfop'].id,
-            amount_type='group',
+            # includes
             children_tax_ids=[tfmp_tax.id, crds_tax.id]
         )
 
@@ -246,6 +270,7 @@ class GoldTaxCreator:
         # Sous-taxe
         curr_tax_rate = TAX_CONFIG['tfop_rates']['op']
         tfop_tax = self.create_tax(
+            'tfop',
             f"TFOP - Objets Précieux ({curr_tax_rate}%)",
             -curr_tax_rate,  # Négatif car c'est une déduction
             f"Taxe sur les bijoux, objets d'art, de collection et d'antiquité, si montant supérieur à 5000€.",
@@ -256,10 +281,11 @@ class GoldTaxCreator:
 
         # Groupement, incluant CRDS
         self.create_tax(
+            'tfop',
             f"{total_rate}% TFOP",
             0.0,  # nulle, Le montant est calculé à partir des sous-taxes
             f"Regroupe les taxes à appliquer lors de la revente d'objets précieux si montant supérieur à 5000€.",
             self.tax_groups['tfop'].id,
-            amount_type='group',
+            # includes
             children_tax_ids=[tfop_tax.id, crds_tax.id]
         )
