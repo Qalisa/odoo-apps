@@ -1,8 +1,8 @@
 {
     'name': "Taxes - TFOP et Plus-values mobilières",
     'category': "Accounting/Taxes",
-    'summary': "Taxes, comptes et groupes de taxes pour la gestion de la TFOP et de la TPV",
-    'description': """Localisation Fiscale "France" installée requise !
+    'summary': "Localisation Fiscale `France` installée requise ! Taxes, comptes et groupes de taxes pour la gestion de la TFOP et de la TPV",
+    'description': """
 Ce module crée automatiquement les taxes, comptes et groupes de taxes nécessaires pour gérer la fiscalité 
 liée à la revente d'objets précieux en France, selon la législation en vigueur.
     """,
@@ -11,7 +11,7 @@ liée à la revente d'objets précieux en France, selon la législation en vigue
     'license': "AGPL-3",
     'version': "1.0.4",
     'depends': ['l10n_fr_account'],
-    'data': [],
+    'data': ["data/gold_accounts.xml"],
     'post_init_hook': 'create_gold_tax_groups',
     'installable': True,
     'application': True,

@@ -14,7 +14,7 @@
             "postDebugTask": "Cleanup",
             "serverReadyAction": {
                 "action": "startDebugging",
-                "name": "Debug Addons",
+                "name": "DebugPy - Addons",
                 "pattern": "wait_for_client()",
                 // "name": "Launch Browser",
                 // "pattern": "Registry loaded",
@@ -34,15 +34,12 @@
             ]
         },
         {
-            "name": "Debug Addons",
+            "name": "DebugPy - Addons",
             "type": "debugpy",
             "request": "attach",
             "connect": {
                 "host": "localhost",
                 "port": 8888
-            },
-            "presentation": {
-                "hidden": true,
             },
             "pathMappings": [
                 {

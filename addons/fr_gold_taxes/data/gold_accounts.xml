@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="fr_gold_taxes_447100" model="account.account">
+        <field name="name">TMP / TFOP</field>
+        <field name="code">447100</field>
+        <field name="account_type">liability_current</field>
+    </record>
+    <record id="fr_gold_taxes_447111" model="account.account">
+        <field name="name">TMP Seule due à l'administration</field>
+        <field name="code">447111</field>
+        <field name="account_type">liability_current</field>
+    </record>
+    <record id="fr_gold_taxes_447112" model="account.account">
+        <field name="name">CRDS sur TMP due à l'administration</field>
+        <field name="code">447112</field>
+        <field name="account_type">liability_current</field>
+    </record>
+    <record id="fr_gold_taxes_447121" model="account.account">
+        <field name="name">TFOP Seule collectée due à l'administration</field>
+        <field name="code">447121</field>
+        <field name="account_type">liability_current</field>
+    </record>
+    <record id="fr_gold_taxes_447122" model="account.account">
+        <field name="name">CRDS sur TFOP due à l'administration</field>
+        <field name="code">447122</field>
+        <field name="account_type">liability_current</field>
+    </record>
+
+    <record id="fr_gold_taxes_442610" model="account.account">
+        <field name="name">TPV</field>
+        <field name="code">442610</field>
+        <field name="account_type">liability_current</field>
+    </record>
+    <record id="fr_gold_taxes_442611" model="account.account">
+        <field name="name">Impôt collecté pour la TPV dû à l'administration</field>
+        <field name="code">442611</field>
+        <field name="account_type">liability_current</field>
+    </record>
+    <record id="fr_gold_taxes_442612" model="account.account">
+        <field name="name">Prélèvements sociaux divers sur la TPV dus à l'administration</field>
+        <field name="code">442612</field>
+        <field name="account_type">liability_current</field>
+    </record>
+</odoo>
