@@ -1,0 +1,16 @@
+<odoo>
+  <template id="report_invoice_document_inherit_customer_bank"
+            inherit_id="account.report_invoice_document"
+            priority="20">
+      <xpath expr="//div[@name='qr_code_placeholder']" position="before">
+        <!-- Show only on customer credit notes and only if a bank account is selected -->
+        <t t-if="o.move_type == 'out_refund' and o.partner_bank_id">
+          <p>
+            <strong>Payé par virement bancaire sur votre compte:</strong><br/>
+            <t t-esc="o.partner_bank_id.acc_number"/>
+            <t t-if="o.partner_bank_id.bank_id"> (<t t-esc="o.partner_bank_id.bank_id.name"/>)</t>
+          </p>
+        </t>
+      </xpath>
+  </template>
+</odoo>
