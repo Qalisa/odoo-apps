@@ -9,7 +9,7 @@ liée à la revente d'objets précieux en France, selon la législation en vigue
     'author': "Qalisa",
     'website': "https://www.qalisa.fr",
     'license': "AGPL-3",
-    'version': "1.0.4",
+    'version': "1.1.0",
     'depends': ['l10n_fr_account'],
     'data': ["data/gold_accounts.xml"],
     'post_init_hook': 'create_gold_tax_groups',
