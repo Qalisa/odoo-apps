@@ -3,6 +3,7 @@
         "ms-python.python",
         "ms-azuretools.vscode-docker",
         "gruntfuggly.todo-tree",
+        "mechatroner.rainbow-csv",
     ],
     "unwantedRecommendations": []
 }

@@ -11,6 +11,14 @@
             "problemMatcher": []
         },
         {
+            "label": "Generate Taxes",
+            "type": "shell",
+            "command": "python gen_csv.py",
+            "options": {
+                "cwd": "${workspaceFolder}/addons/fr_gold_taxes/utils"
+            }
+        },
+        {
             "label": "Ensure right permissions for .pgpass",
             "type": "shell",
             "command": "chmod 600 .pgpass",
