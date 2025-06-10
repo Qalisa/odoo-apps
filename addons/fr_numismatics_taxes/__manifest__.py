@@ -1,7 +1,7 @@
 {
-    'name': "Taxes - TFOP et Plus-values mobilières",
+    'name': "Numismatique - Taxes (TMP, TPV et TFOP)",
     'category': "Accounting/Taxes",
-    'summary': "Localisation Fiscale `France` installée requise ! Taxes, comptes et groupes de taxes pour la gestion de la TFOP et de la TPV",
+    'summary': "Localisation Fiscale `France` installée requise ! Taxes, comptes et groupes de taxes spécifiques à l'activité numismatique en France",
     'description': """
 Ce module crée automatiquement les taxes, comptes et groupes de taxes nécessaires pour gérer la fiscalité 
 liée à la revente d'objets précieux en France, selon la législation en vigueur.

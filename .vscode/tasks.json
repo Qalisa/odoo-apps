@@ -22,8 +22,19 @@
             "label": "Ensure right permissions for .pgpass",
             "type": "shell",
             "command": "chmod 600 .pgpass",
+            "windows": {
+                "command": "echo 'OK'"
+            },
             "options": {
-                "cwd": "${workspaceFolder}/.dev"
+                "cwd": "${workspaceFolder}/.dev",
+            },
+            "presentation": {
+                "echo": false,
+                "reveal": "never",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
             },
             "problemMatcher": []
         },
