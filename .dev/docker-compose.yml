@@ -17,7 +17,7 @@ services:
       start_period: 10s
 
   odoo:
-    image: odoo-18-debug
+    image: ghcr.io/qalisa/odoo:18-0 # odoo-18-debug # prefer using compiled image (to detect bugs in prodution)
     build:
       dockerfile: ./odoo-debug/Dockerfile
     depends_on:
