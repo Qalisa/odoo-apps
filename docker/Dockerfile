@@ -1,4 +1,5 @@
-FROM odoo:18.0
+# track specific version (odoo do fix bugs regularly !)
+FROM odoo:18.0-20250606
 
 USER root
 
