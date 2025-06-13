@@ -1,9 +1,9 @@
-name: Publish CLI
+name: Publish Custom Odoo Image
 
 on:
   push:
     paths:
-      - .github/workflows/release-odoo-custom.yml
+      - .github/workflows/release.yml
       - docker/Dockerfile
   workflow_dispatch: # Allows manual triggering
 
@@ -28,6 +28,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Set tags
+        id: vars
+        run: |
+          BRANCH_NAME=$(echo "${GITHUB_REF##*/}" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
+          DATE=$(date +%Y%m%d)
+          echo "COMBINED_TAG=${BRANCH_NAME}-${DATE}" >> "$GITHUB_ENV"
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
@@ -36,12 +43,13 @@ jobs:
           tags: |
             type=ref,event=branch
             type=raw,value=latest
+            type=raw,value=${{ env.COMBINED_TAG }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/Dockerfile # Path to the CLI Dockerfile
+          file: ./docker/Dockerfile # Path to the Custom Odoo Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
