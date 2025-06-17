@@ -15,7 +15,7 @@
             "type": "shell",
             "command": "python gen_csv.py",
             "options": {
-                "cwd": "${workspaceFolder}/addons/fr_gold_taxes/utils"
+                "cwd": "${workspaceFolder}/addons/fr_numismatics_taxes/utils"
             }
         },
         {

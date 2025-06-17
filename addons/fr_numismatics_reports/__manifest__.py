@@ -7,17 +7,18 @@
     'website': "https://www.qalisa.fr",
     'license': "AGPL-3",
     'version': "1.0.0",
-    'depends': ['l10n_fr_account'],
+    'depends': ['account'],
     'data': [
-        'report/report_2091_sd.xml',
+        'security/ir.model.access.csv',
+        'views/cerfa_report_wizard.xml',
         'views/menu.xml',
-        'views/financial_report.xml',
-        'wizard/account_report_common_view.xml',
-        'wizard/tax_report.xml'
+        'views/cerfa_report_action.xml',
+        'reports/report_2091_sd.xml',
+        'views/settings.xml'
     ],
     'installable': True,
     'application': True, 
-    'auto_install': False,
+    'auto_install': False, 
     'external_dependencies': {
         'python': [],
     },

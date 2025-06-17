@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_pdf_report_cerfa_2091_sd" model="ir.actions.report">
+        <field name="name">Aide à la saisie Cerfa 2091-SD</field>
+        <field name="model">account.taxes.cerfa_report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">fr_numismatics_reports.report_2091_sd</field>
+        <field name="report_file">fr_numismatics_reports.report_2091_sd</field>
+    </record>
+</odoo>

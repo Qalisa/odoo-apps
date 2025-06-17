@@ -1,0 +1,27 @@
+<odoo>
+  <record id="view_res_config_settings_inherit_my_module" model="ir.ui.view">
+    <field name="name">res.config.settings.inherit.tax.groups</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//app[@name='account']" position="inside">
+        <block title="Rapports d'aide à la saisie (Cerfa)">
+            <group string="Pour Cerfa 2091-SD">
+                <setting id="report_tax_groups_config" string="Groupes de Taxes" help="Selectionnez les groupes de taxes correspondants à faire apparaître sur le rapport.">
+                    <div class="content-group">
+                        <div class="row">
+                            <label string="Pour la TFOP" for="tax_group_tfop_id" class="col-lg-3 o_light_label"/>
+                            <field name="tax_group_tfop_id"/>
+                        </div>
+                        <div class="row">
+                            <label string="Pour la TMP" for="tax_group_tmp_id" class="col-lg-3 o_light_label"/>
+                            <field name="tax_group_tmp_id"/>
+                        </div>
+                    </div>
+                </setting>
+            </group>
+        </block>
+      </xpath>
+    </field>
+  </record>
+</odoo>

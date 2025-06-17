@@ -24,8 +24,8 @@ services:
       db:
         condition: service_healthy
     entrypoint: [
-      # "/usr/bin/python3", "-m", "debugpy", "--listen", "0.0.0.0:8888", 
-      # "--wait-for-client", "--log-to-stderr",
+      "/usr/bin/python3", "-m", "debugpy", "--listen", "0.0.0.0:8888", 
+      "--wait-for-client", "--log-to-stderr",
       "/usr/bin/odoo", 
         "--db_host", "db", 
         "--db_password", "odoo"

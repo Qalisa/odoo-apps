@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-self_mod= "fr_gold_taxes"
+self_mod= "fr_numismatics_taxes"
 
 @dataclass
 class TaxRates:
@@ -32,7 +32,7 @@ class TaxGroupConfig:
     """Configuration d'un groupe de taxes."""
     name: str
     sequence: int
-    tax_payable_account_id: str
+    # tax_payable_account_id: str
 
 
 @dataclass
@@ -322,13 +322,14 @@ class OdooTaxCSVGenerator:
     
     # Configuration des groupes de taxes
     TAX_GROUPS = {
-        'tmp': TaxGroupConfig('TMP', 0, f'{self_mod}.numim_447100'),
-        'tfop': TaxGroupConfig('TFOP', 0, f'{self_mod}.numim_447100'),
-        'tpv': TaxGroupConfig('TPV', 0, f'{self_mod}.numim_442610')
+        'tmp': TaxGroupConfig('TMP', 0), # f'{self_mod}.numim_447100'),
+        'tfop': TaxGroupConfig('TFOP', 0), # f'{self_mod}.numim_447100'),
+        'tpv': TaxGroupConfig('TPV', 0), #f'{self_mod}.numim_442610')
     }
     
     # Définition des champs CSV
-    TAX_GROUP_FIELDS = ['id', 'name', 'sequence', 'country_id:id', 'tax_payable_account_id:id']
+    TAX_GROUP_FIELDS = ['id', 'name', 'sequence', 'country_id:id', #'tax_payable_account_id:id'
+                        ]
     TAX_FIELDS = [
         'id', 'name', 'description', 'amount_type', 'amount', 'country_id:id',
         'tax_group_id:id', 'tax_scope', 'type_tax_use', 'price_include',
@@ -378,7 +379,7 @@ class OdooTaxCSVGenerator:
                 'name': config.name,
                 'sequence': config.sequence,
                 'country_id:id': 'base.fr',
-                'tax_payable_account_id:id': config.tax_payable_account_id
+                # 'tax_payable_account_id:id': config.tax_payable_account_id
             })
         
         self.csv_writer.write_csv('account.tax.group.csv', data, self.TAX_GROUP_FIELDS)
