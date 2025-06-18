@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="paperformat_cerfa_2091" model="report.paperformat">
+        <field name="name">Rapports d'aide à la saisie - Numimastique</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">30</field>
+        <field name="margin_bottom">15</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_spacing">25</field>
+        <field name="dpi">96</field>
+    </record>
+    <record id="action_pdf_report_cerfa_2091_sd" model="ir.actions.report">
+        <field name="name">Aide à la saisie Cerfa 2091-SD</field>
+        <field name="model">account.taxes.cerfa_report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">fr_numismatics_reports.report_2091_sd</field>
+        <field name="report_file">fr_numismatics_reports.report_2091_sd</field>
+        <field name="paperformat_id" ref="fr_numismatics_reports.paperformat_cerfa_2091" />
+    </record>
+</odoo>

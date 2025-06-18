@@ -1,0 +1,9 @@
+id,code,account_type,name
+numim_442610,442610,liability_current,"TPV"
+numim_442611,442611,liability_current,"Impôt collecté pour la TPV dû à l'administration"
+numim_442612,442612,liability_current,"Prélèvements sociaux divers sur la TPV dus à l'administration"
+numim_447100,447100,liability_current,"TMP / TFOP"
+numim_447111,447111,liability_current,"TMP Seule due à l'administration"
+numim_447112,447112,liability_current,"CRDS sur TMP due à l'administration"
+numim_447121,447121,liability_current,"TFOP Seule collectée due à l'administration"
+numim_447122,447122,liability_current,"CRDS sur TFOP due à l'administration"

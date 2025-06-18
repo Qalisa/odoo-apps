@@ -2,7 +2,7 @@
 
 {
     'name': "Contacts - Identification civile",
-    'version': '1.1.0',
+    'version': '1.1.2',
     'summary': """
 Ajoute des informations supplémentaires aux contacts (Date et lieu de naissance, Justificatif d'identité),
 et les affiche si présents sur les documents générés par Odoo.
@@ -19,7 +19,8 @@ Ces informations sont également affichées sur les avoirs, factures et commande
 """,
     'category': 'Contacts',
     'author': 'Qalisa',
-    'website': 'https://www.qalisa.fr',
+    'license': "AGPL-3",
+    'website': 'https://odoo-docs.qalisa.fr/',
     'depends': ['base', 'contacts'],
     'data': [
         'views/report_views.xml',

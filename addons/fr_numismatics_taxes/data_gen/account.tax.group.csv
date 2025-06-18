@@ -1,0 +1,4 @@
+id,name,sequence,country_id:id
+tax_group_tmp,TMP,0,base.fr
+tax_group_tfop,TFOP,0,base.fr
+tax_group_tpv,TPV,0,base.fr

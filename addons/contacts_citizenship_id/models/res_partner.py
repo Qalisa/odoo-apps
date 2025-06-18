@@ -7,4 +7,4 @@ class ResPartner(models.Model):
     
     birthdate = fields.Date(string='Date de Naissance')
     birthplace = fields.Char(string='Lieu de Naissance')
-    id_proof = fields.Char(string="Justificatif d'identité (CNI, Passeport, Permis, Titre de séjour...)", help="Libellé de la preuve de l'identité fournie (carte d'identité nationnale, titre de séjour, permis, passport...) accompagné du numéro d'identité associé")
+    id_proof = fields.Char(string="Justificatif d'identité (CNI, Passeport, Permis, Titre de séjour...)", help="Libellé de la preuve de l'identité fournie (carte d'identité nationale, titre de séjour, permis, passport...) accompagné du numéro d'identité associé")

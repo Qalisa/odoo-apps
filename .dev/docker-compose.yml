@@ -1,0 +1,70 @@
+name: odoo-apps
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_USER: odoo
+    volumes:
+      - odoo-pg-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  odoo:
+    image: ghcr.io/qalisa/odoo:18-0 # odoo-18-debug # prefer using compiled image (to detect bugs in prodution)
+    build:
+      dockerfile: ./odoo-debug/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: [
+      "/usr/bin/python3", "-m", "debugpy", "--listen", "0.0.0.0:8888", 
+      "--wait-for-client", "--log-to-stderr",
+      "/usr/bin/odoo", 
+        "--db_host", "db", 
+        "--db_password", "odoo"
+    ]
+    command: [
+      "--init", "prt_report_attachment_preview,fr_numismatics_reports,fr_numismatics_taxes,sale_management",
+      # "--init", "contacts,l10n_fr_account,sale_management,prt_report_attachment_preview,fr_startup_enforced",
+      "-d", "mydb",
+      "--without-demo=all",
+      "--load-language=fr_FR",
+      "--language=fr_FR",
+      "--dev=all"
+    ]
+    ports:
+      - "8069:8069"
+      - "8888:8888" # debugger
+    volumes:
+      - ../addons:/mnt/extra-addons
+      - odoo-data:/var/lib/odoo
+    environment:
+      - HOST=db
+      - USER=odoo
+      - PASSWORD=odoo
+
+  pgadmin:
+    image: dpage/pgadmin4:9.4.0
+    depends_on:
+      - db
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: odootest
+    volumes:
+      - ./pgadmin.servers.json:/pgadmin4/servers.json
+      - pgadmin-data:/var/lib/pgadmin
+      # - .pgpass:/var/lib/pgadmin/storage/admin_example.com/.pgpass
+    ports:
+      - "5050:80"
+
+volumes:
+  odoo-pg-db:
+  odoo-data:
+  pgadmin-data:
