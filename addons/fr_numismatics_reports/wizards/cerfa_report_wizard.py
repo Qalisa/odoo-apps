@@ -2,13 +2,17 @@ from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 from datetime import date, timedelta
 
+min_paginate = 1
+max_paginate = 50
+
 class CerfaReportWizard(models.TransientModel):
     _name = 'account.taxes.cerfa_report.wizard'
     _description = "Formulaire de génération de rapport d'aide à la saisie des Cerfa (Taxes)"
 
     company_ids = fields.Many2many('res.company', 
         string='Sociétés à inclure', required=True, 
-        default=lambda self: self.env.context.get('allowed_company_ids', [])
+        default=lambda self: self.env.context.get('allowed_company_ids', []),
+        help="La 1ère société selectionnée sera celle présentée comme déclarante par défaut."
     )
 
     start_date = fields.Date(
@@ -25,12 +29,18 @@ class CerfaReportWizard(models.TransientModel):
     )
     paginate = fields.Integer(
         string='Lignes maximum par rapport', default=21,
-         help="Regroupe les lignes facturées par un nombre maximum; permet de s'adapter à l'identique au format restreint du CERFA."
+         help="Regroupe les lignes facturées et taxées par lots; permet notamment de s'adapter à l'identique au format restreint en nombre de lignes du CERFA."
     )
     ignore_cutoff = fields.Boolean(
         string='Ignorer les remises ?', default=True,
         help="Par mauvaises manipulations, des lignes indépendantes correspondant à des réductions appliquées aux lignes taxées peuvent apparaître sur les rapports. Cochez cette option pour les ignorer."
     )
+
+    @api.constrains('paginate')
+    def _check_my_integer_field(self):
+        for record in self:
+            if not (min_paginate <= record.paginate <= max_paginate):
+                raise ValidationError(f"Le nombre de lignes maximum par rapport doit être entre {min_paginate} et {max_paginate}.")
 
     def action_confirm(self):
         #

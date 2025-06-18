@@ -1,35 +1,216 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="report_2091_sd">
-        <t t-foreach="docs" t-as="property">
-            <t t-call="web.html_container">
-                <t t-call="web.external_layout">
-                    <div class="page">
-                        <h2>
-                            <span t-field="property.name"/>
-                        </h2>
-                        <div>
-                            <strong>Expected Price: </strong>
-                            <span t-field="property.expected_price"/>
-                        </div>
-                        <table class="table">
+        <t t-call="web.html_container">
+            <meta charset="UTF-8" />
+            <!-- Report Header -->
+            <div class="header">
+                <h1 style="font-size: 24px; text-align: center;">Aide à la saisie pour Cerfa 2091-SD</h1>
+                <p style="text-align: center;">
+                    Période:
+                    <b>
+                        <t t-esc="docs.start_date" t-options='{"widget": "date"}'/>
+                    </b> au
+                    <b>
+                        <t t-esc="docs.end_date" t-options='{"widget": "date"}'/>
+                    </b>
+                    <br/>
+                    Sociétés inclues:
+                    <b>
+                        <t t-esc="', '.join(docs.company_ids.mapped('name'))"/>
+                    </b>
+                </p>
+            </div>
+            <!-- Report Footer -->
+            <div class="footer">TEST - TEST</div>
+            <!-- Report Page(s) -->
+            <div class="page">
+                <t t-foreach="results['companies'].values()" t-as="of_company_data">
+                    <t t-set="company" t-value="of_company_data['company']" />
+                    <h3>Intermédiaire:</h3>
+                    <table class="info">
+                        <tbody>
+                            <tr>
+                                <th style="text-align:left; width:1%"><b>Dénomination</b></th>
+                                <td><b><t t-esc="company['name']" /></b></td>
+                            </tr>
+                            <tr>
+                                <th><b>Adresse de l'établissement</b></th>
+                                <td><t t-esc="company.partner_id.contact_address_inline" /></td>
+                            </tr>
+                            <tr>
+                                <th><b>Adresse courriel</b></th>
+                                <td><t t-esc="company['email']" /></td>
+                            </tr>
+                            <tr>
+                                <th><b>Tél.</b></th>
+                                <td><t t-esc="company['phone']" /></td>
+                            </tr>
+                            <tr>
+                                <t t-set="siren" t-value="(company['siret'] or '').replace(' ', '')[:9].ljust(9, '0')" />
+                                <th><b>N° SIREN</b></th>
+                                <td><t t-esc="siren" /></td>
+                            </tr>
+                            <tr>
+                                <th><b>N° SIRET</b></th>
+                                <td><t t-esc="company['siret']" /></td>
+                            </tr>
+                            <tr>
+                                <th><b>Code activité</b></th>
+                                <td><t t-esc="company['ape']" /></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <t t-set="batches" t-value="of_company_data['batches']" />
+                    <h3>Opérations:</h3>
+                    <!-- NO Data -->
+                    <t t-if="len(batches) == 0">
+                        <table>
                             <thead>
                                 <tr>
-                                    <th>Price</th>
+                                    <th style="height:24px;"></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-set="offers" t-value="property.mapped('offer_ids')"/>
-                                <tr t-foreach="offers" t-as="offer">
-                                    <td>
-                                        <span t-field="offer.price"/>
-                                    </td>
+                                <tr>
+                                    <td style="text-align:center; font-weight: bold">Pas de données disponibles sur la période.</td>
                                 </tr>
                             </tbody>
                         </table>
-                    </div>
+                    </t>
+                    <t t-else="" t-foreach="batches" t-as="batch">
+                        <div class="batch">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                <thead>
+                                    <tr style="background-color: #f2f2f2;">
+                                        <th colspan="2" rowspan="2" style="font-weight:normal">
+                                            <span>[<t t-esc="company['name']" />]</span>
+                                            <br/><br/>
+                                            <i>Lot - <t t-esc='batch["i"]' /> / <t t-esc='batch["i_of"]' /></i>
+                                        </th>
+                                        <th rowspan="2">Date de l'opération</th>
+                                        <th rowspan="2">
+                                            <b>Métaux précieux, bijoux, objets d'art, de collection ou d'antiquité</b>
+                                            <br/>
+                                            <i style="font-weight:normal">Pour chaque opération, précisez leur nature</i>
+                                        </th>
+                                        <th rowspan="2">Montant de l'opération</th>
+                                        <th colspan="2">Ventilation du prix</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Métaux précieux</th>
+                                        <th>Bijoux, objets d'art, de collection ou d'antiquité</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="blank_lines" t-value="docs['paginate'] - len(batch['items'])"/>
+                                    <t t-set="line_c" t-value="0"/>
+                                    <!-- Fill with data -->
+                                    <t t-foreach="batch['items']" t-as="item">
+                                        <t t-set="line_c" t-value="line_c+1"/>
+                                        <tr>
+                                            <td style="color: #666; font-size:.5rem; text-align: center">
+                                                <t t-out="line_c"/>
+                                            </td>
+                                            <td style="color: #666; border: 1px solid #ddd; padding: 8px;">
+                                                <t t-esc="item['move_name']"/>
+                                            </td>
+                                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                                                <t t-esc="item['invoice_date']" t-options='{"widget": "date"}'/>
+                                            </td>
+                                            <td style="border: 1px solid #ddd; padding: 8px;">
+                                                <t t-set="quantity" t-value="item['quantity']" />
+                                                <t t-if="quantity == int(quantity)">
+                                                    <t t-esc="'{0}'.format(int(quantity))" />
+                                            </t>
+                                                <t t-else="">
+                                                    <t t-esc="'{0}'.format(quantity)" />
+                                            </t>
+                                             x
+                                                <t t-esc="item['name']"/>
+                                            </td>
+                                            <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">
+                                                <t t-esc="item['price_total']" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}" />
+                                            </td>
+                                            <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">
+                                                <t t-if="item['tax_group_id'] == tmp_group_id">
+                                                    <t t-esc="item['price_total']" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                            </t>
+                                                <t t-else="">
+                                                    <t t-esc="item['currency']"/></t>
+                                            </td>
+                                            <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">
+                                                <t t-if="item['tax_group_id'] == tfop_group_id">
+                                                    <t t-esc="item['price_total']" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                            </t>
+                                                <t t-else="">
+                                                    <t t-esc="item['currency']"/></t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <!-- Fill with blanks -->
+                                    <t t-if="blank_lines > 0">
+                                        <t t-foreach="range(0, blank_lines)" t-as="ee">
+                                            <t t-set="line_c" t-value="line_c+1"/>
+                                            <tr>
+                                                <td style="color: #666; font-size:.5rem; text-align: center">
+                                                    <t t-out="line_c"/>
+                                                </td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">
+                                                    <t t-esc="item['currency']"/>
+                                                </td>
+                                                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">
+                                                    <t t-esc="item['currency']"/>
+                                                </td>
+                                                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">
+                                                    <t t-esc="item['currency']"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="4" style="text-align:left;">TOTAL</th>
+                                        <th style="text-align:right;">
+                                            <t t-esc="batch['total']" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </th>
+                                        <th style="text-align:right;">
+                                            <t t-esc="batch['total_tmp']" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </th>
+                                        <th style="text-align:right;">
+                                            <t t-esc="batch['total_tfop']" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
+                                        </th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </t>
                 </t>
-            </t>
+            </div>
+            <!-- Basic CSS for Pagination and Styling -->
+            <style>
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #ddd; padding: 8px; }
+                th { background-color: #f2f2f2; text-align: center; }
+                tr:nth-child(even) { background-color: #f9f9f9; }
+                table.info td:empty::before {
+                    content: "Pas de données disponibles";
+                    color: gray;
+                    font-style: italic;
+                    font-size: .75rem;
+                }
+                .batch {
+                    page-break-after: always;
+                }
+
+                .batch:last-of-type {
+                    page-break-after: auto;
+                }
+            </style>
         </t>
     </template>
 </odoo>

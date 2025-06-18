@@ -1,6 +1,7 @@
 from odoo import api, models, _
 from odoo.exceptions import UserError
-
+from itertools import groupby,batched,product
+from operator import itemgetter
 
 class TwoZeroNineOneSDPDFReportModel(models.AbstractModel):
     _name = 'report.fr_numismatics_reports.report_2091_sd'
@@ -8,11 +9,13 @@ class TwoZeroNineOneSDPDFReportModel(models.AbstractModel):
 
     @api.model
     def _get_report_values(self, docids, data=None):
-        # check settings are set
+        # check referenced tax groups exist and are configured 
         ICP = self.env['ir.config_parameter']
-        tfop_tax_group_id = ICP.get_param('fr_numismatics_reports.tax_group_tfop_id')
-        tmp_tax_group_id = ICP.get_param('fr_numismatics_reports.tax_group_tmp_id')
-        if tfop_tax_group_id is False or tmp_tax_group_id is False:
+        tfop_group_id = int(ICP.get_param('fr_numismatics_reports.tax_group_tfop_id'))
+        tmp_group_id = int(ICP.get_param('fr_numismatics_reports.tax_group_tmp_id'))
+        tax_group_ids = [tfop_group_id, tmp_group_id]
+        found_tax_groups = self.env['account.tax.group'].browse(tax_group_ids).exists()
+        if len(found_tax_groups) != len(tax_group_ids):
             raise UserError("""
 Impossible de générer vos rapports pour le moment, des éléments de configuration manquent:
 
@@ -28,13 +31,14 @@ Merci de configurer les groupes de taxes à faire apparaître dans `Menu > Param
         split_by_company = wizard.split_by_company
         paginate = wizard.paginate
 
-        query = """SELECT 
+        query = f"""SELECT 
                 aml.move_name, 
                 aml.invoice_date, 
                 aml.company_id,
                 aml.quantity, 
                 aml.name, 
-                aml.amount_currency, 
+                aml.price_total, 
+                aml.currency_id,
                 curr.symbol currency,
                 acctx.tax_group_id, 
                 acctx.name for_tax
@@ -46,22 +50,24 @@ Merci de configurer les groupes de taxes à faire apparaître dans `Menu > Param
                 account_tax acctx ON (aml_rel.account_tax_id = acctx.id)
             LEFT JOIN 
                 res_currency curr ON (aml.currency_id = curr.id)
+            LEFT JOIN 
+                account_move am ON (aml.move_id = am.id)
             WHERE 
-                aml.display_type = 'product' 
+                am.state = 'posted'
+                AND aml.display_type = 'product' 
                 AND aml.invoice_date is not NULL 
                 AND acctx.tax_group_id IN %s
                 AND aml.company_id IN %s
                 AND aml.invoice_date BETWEEN %s AND %s
-                """ + 'AND aml.quantity > 0' if ignore_cutoff else '' + """
+                {'AND aml.quantity > 0' if ignore_cutoff else ''}
             ORDER BY 
                 aml.invoice_date ASC, 
                 aml.move_name ASC
         """
 
         # prepare query
-        tax_groups_ids = [int(tfop_tax_group_id), int(tmp_tax_group_id)]
         query = self.env.cr.mogrify(query, (
-            tuple(tax_groups_ids), 
+            tuple(tax_group_ids), 
             tuple(company_ids.ids), 
             start_date, end_date, 
         )).decode('utf-8')
@@ -70,60 +76,42 @@ Merci de configurer les groupes de taxes à faire apparaître dans `Menu > Param
         self.env.cr.execute(query)
         results = self.env.cr.dictfetchall()
 
+        # group by company
+        grouped_by_companies = {}
+        if split_by_company:
+            # ensure all expected companies is present
+            for company_id in company_ids.ids:
+                grouped_by_companies[company_id] = []
+            # fill with data (if any fetched)
+            for company_id, group in groupby(results, key=itemgetter('company_id')):
+                grouped_by_companies[company_id] = list(group)
+        else:
+            # else, gather all ids as first company's results
+            grouped_by_companies[company_ids.ids[0]] = results
+
+        # split
+        grouped_by_companies_by_batches = {'companies': {}}
+        for company_id, rows in grouped_by_companies.items():
+            grouped_by_companies_by_batches['companies'][company_id] = {
+                'company': self.env['res.company'].browse(company_id).exists(),
+                'batches': [],
+            }
+            batches = list(batched(rows, paginate))
+            for i, batch in enumerate(batches):
+                grouped_by_companies_by_batches['companies'][company_id]['batches'].append({
+                    'items': batch,
+                    'i': i + 1,
+                    'i_of': len(batches),
+                    'total': sum(record['price_total'] for record in batch),
+                    'total_tfop': sum(record['price_total'] for record in batch if record['tax_group_id'] == tfop_group_id),
+                    'total_tmp': sum(record['price_total'] for record in batch if record['tax_group_id'] == tmp_group_id),
+                })
+
         return {
             'doc_ids': docids,
             'doc_model': 'account.taxes.cerfa_report.wizard',
             'docs': wizard,
-            'results': results,
+            'results': grouped_by_companies_by_batches,
+            'tfop_group_id': tfop_group_id, 
+            'tmp_group_id': tmp_group_id,
         }
-
-    # @api.model
-    # def _get_report_values(self, docids, data=None):
-    #     if not data.get('form'):
-    #         raise UserError(_("Form content is missing, this report cannot be printed."))
-    #     return {
-    #         'data': data['form'],
-    #         'lines': self.get_lines(data.get('form')),
-    #     }
-
-
-
-    # def _sql_from_amls(self):
-    #     sql = """SELECT "account_move_line".tax_line_id, SUM("account_move_line".credit), SUM("account_move_line".tax_base_amount) 
-    #              FROM %s
-    #              INNER JOIN account_tax t ON ("account_move_line".tax_line_id = t.id)
-    #              WHERE %s
-    #              GROUP BY "account_move_line".tax_line_id"""
-    #     return sql
-
-    # def _compute_from_amls(self, options, taxes):
-    #     #compute the tax amount
-    #     sql = self._sql_from_amls()
-    #     tables, where_clause, where_params = self.env['account.move.line']._query_get()
-    #     query = sql % (tables, where_clause)
-    #     self.env.cr.execute(query, where_params)
-    #     results = self.env.cr.fetchall()
-    #     for result in results:
-    #         if result[0] in taxes:
-    #             taxes[result[0]]['tax'] = abs(result[1])
-    #             taxes[result[0]]['net'] = abs(result[2])
-
-    # @api.model
-    # def get_lines(self, options):
-    #     taxes = {}
-    #     for tax in self.env['account.tax'].search([('type_tax_use', '!=', 'none')]):
-    #         if tax.children_tax_ids:
-    #             for child in tax.children_tax_ids:
-    #                 if child.type_tax_use != 'none':
-    #                     continue
-    #                 taxes[child.id] = {'tax': 0, 'net': 0, 'name': child.name, 'type': tax.type_tax_use}
-    #         else:
-    #             taxes[tax.id] = {'tax': 0, 'net': 0, 'name': tax.name, 'type': tax.type_tax_use}
-    #     self.with_context(date_from=options['date_from'], date_to=options['date_to'],
-    #                       state=options['target_move'],
-    #                       strict_range=True)._compute_from_amls(options, taxes)
-    #     groups = dict((tp, []) for tp in ['sale', 'purchase'])
-    #     for tax in taxes.values():
-    #         if tax['tax']:
-    #             groups[tax['type']].append(tax)
-    #     return groups
