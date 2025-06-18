@@ -7,9 +7,9 @@ Ce module crée automatiquement les taxes, comptes et groupes de taxes nécessai
 liée à la revente d'objets précieux en France, selon la législation en vigueur.
     """,
     'author': "Qalisa",
-    'website': "https://www.qalisa.fr",
+    'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
-    'version': "1.2.0",
+    'version': "1.2.1",
     'depends': ['l10n_fr_account'],
     'data': [
         "data/account.account.csv",

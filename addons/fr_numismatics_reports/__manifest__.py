@@ -4,9 +4,9 @@
     'summary': "Permet la génération de rapports de taxes pour aider à la saisie des documents Cerfa",
     'description': "Permet la génération de rapports de taxes pour aider à la saisie des documents Cerfa",
     'author': "Qalisa",
-    'website': "https://www.qalisa.fr",
+    'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
-    'version': "1.0.0",
+    'version': "1.0.1",
     'depends': ['account'],
     'data': [
         'security/ir.model.access.csv',

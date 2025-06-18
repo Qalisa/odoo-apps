@@ -6,9 +6,9 @@
 Permet l'affichage d'un compte bancaire destinataire du montant de l'avoir sur la preuve du client
     """,
     'author': "Qalisa",
-    'website': "https://www.qalisa.fr",
+    'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
-    'version': "1.0.1",
+    'version': "1.0.2",
     'depends': ['account'],
     'data': [
         'views/report_views.xml'

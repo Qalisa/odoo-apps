@@ -3,10 +3,10 @@
     'summary': "Force la langue française comme langue par défaut pour les utilisateurs et les sociétés.",
     'description': "Force la langue française comme langue par défaut pour les utilisateurs et les sociétés.",
     'author': "Qalisa",
-    'website': "https://www.qalisa.fr",
+    'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
-    'version': "1.1.0",
-    'depends': ['l10n_fr', 'l10n_fr_account'],
+    'version': "1.1.1",
+    'depends': ['l10n_fr_account'],
     'data': [
         'data/company_settings.xml'
     ],
