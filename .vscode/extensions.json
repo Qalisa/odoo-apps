@@ -2,10 +2,8 @@
     "recommendations": [
         "ms-python.python",
         "ms-azuretools.vscode-docker",
-        "astro-build.astro-vscode",
         "gruntfuggly.todo-tree",
-        "unifiedjs.vscode-mdx",
-        "tyriar.luna-paint"
+        "mechatroner.rainbow-csv",
     ],
     "unwantedRecommendations": []
 }

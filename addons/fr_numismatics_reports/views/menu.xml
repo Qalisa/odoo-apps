@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Submenu under Finance -->
+    <menuitem
+        id="menu_report"
+        name="Rapports"
+        parent="account.menu_finance"
+        sequence="10"
+    />
+
+    <menuitem
+        id="menu_taxes"
+        name="Aide à la déclaration"
+        parent="menu_report"
+        sequence="10"
+    />
+
+    <menuitem
+        id="menu_cerfa_2091_sd"
+        name="Cerfa 2091-SD (Taxes sur la TMP / TFOP)"
+        parent="menu_taxes"
+        action="action_cerfa_2091_sd_wizard"
+        sequence="10"
+    />
+</odoo>

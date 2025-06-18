@@ -1,6 +1,0 @@
-{
-    "editor.codeActionsOnSave": {
-        "source.fixAll": "always"
-    },
-    "terminal.integrated.cwd": "${workspaceFolder}/docs"
-}
