@@ -7,7 +7,7 @@
             <div class="header">
                 <h1 style="font-size: 24px; text-align: center;">Aide à la saisie pour Cerfa 2091-SD</h1>
                 <p style="text-align: center;">
-                    Période:
+                    du
                     <b>
                         <t t-esc="docs.start_date" t-options='{"widget": "date"}'/>
                     </b> au
@@ -15,14 +15,18 @@
                         <t t-esc="docs.end_date" t-options='{"widget": "date"}'/>
                     </b>
                     <br/>
-                    Sociétés inclues:
+                    pour
                     <b>
                         <t t-esc="', '.join(docs.company_ids.mapped('name'))"/>
                     </b>
                 </p>
             </div>
             <!-- Report Footer -->
-            <div class="footer">TEST - TEST</div>
+            <div class="footer" style="border-top: 1px solid #666">
+                <a target="_blank" href="https://www.impots.gouv.fr/formulaire/2091-sd/taxe-forfaitaire-sur-les-cessions-ou-exportations-de-metaux-precieux">
+                    https://www.impots.gouv.fr/formulaire/2091-sd/taxe-forfaitaire-sur-les-cessions-ou-exportations-de-metaux-precieux
+                </a>
+            </div>
             <!-- Report Page(s) -->
             <div class="page">
                 <t t-foreach="results['companies'].values()" t-as="of_company_data">
@@ -31,32 +35,46 @@
                     <table class="info">
                         <tbody>
                             <tr>
-                                <th style="text-align:left; width:1%"><b>Dénomination</b></th>
+                                <th style="text-align:left; width:1%">
+                                    <b>Dénomination</b>
+                                </th>
                                 <td><b><t t-esc="company['name']" /></b></td>
                             </tr>
                             <tr>
-                                <th><b>Adresse de l'établissement</b></th>
+                                <th>
+                                    <b>Adresse de l'établissement</b>
+                                </th>
                                 <td><t t-esc="company.partner_id.contact_address_inline" /></td>
                             </tr>
                             <tr>
-                                <th><b>Adresse courriel</b></th>
+                                <th>
+                                    <b>Adresse courriel</b>
+                                </th>
                                 <td><t t-esc="company['email']" /></td>
                             </tr>
                             <tr>
-                                <th><b>Tél.</b></th>
+                                <th>
+                                    <b>Tél.</b>
+                                </th>
                                 <td><t t-esc="company['phone']" /></td>
                             </tr>
                             <tr>
                                 <t t-set="siren" t-value="(company['siret'] or '').replace(' ', '')[:9].ljust(9, '0')" />
-                                <th><b>N° SIREN</b></th>
+                                <th>
+                                    <b>N° SIREN</b>
+                                </th>
                                 <td><t t-esc="siren" /></td>
                             </tr>
                             <tr>
-                                <th><b>N° SIRET</b></th>
+                                <th>
+                                    <b>N° SIRET</b>
+                                </th>
                                 <td><t t-esc="company['siret']" /></td>
                             </tr>
                             <tr>
-                                <th><b>Code activité</b></th>
+                                <th>
+                                    <b>Code activité</b>
+                                </th>
                                 <td><t t-esc="company['ape']" /></td>
                             </tr>
                         </tbody>
@@ -84,9 +102,10 @@
                                 <thead>
                                     <tr style="background-color: #f2f2f2;">
                                         <th colspan="2" rowspan="2" style="font-weight:normal">
-                                            <span>[<t t-esc="company['name']" />]</span>
-                                            <br/><br/>
-                                            <i>Lot - <t t-esc='batch["i"]' /> / <t t-esc='batch["i_of"]' /></i>
+                                            <i>Lot -
+                                                <t t-esc='batch["i"]' /> /
+                                                <t t-esc='batch["i_of"]' />
+                                            </i>
                                         </th>
                                         <th rowspan="2">Date de l'opération</th>
                                         <th rowspan="2">
@@ -174,7 +193,13 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <th colspan="4" style="text-align:left;">TOTAL</th>
+                                        <th colspan="4" style="text-align:left; gap: 5rem">
+                                            <span style="font-weight: normal"><t t-esc="company['name']" /></span>
+                                            <span style="margin-left: .20rem">-</span>
+                                            <i style="font-weight: normal">(Lot n°<t t-esc='batch["i"]' />)</i>
+                                            <span style="margin-left: .20rem">-</span>
+                                            <span>TOTAL</span>
+                                        </th>
                                         <th style="text-align:right;">
                                             <t t-esc="batch['total']" t-options="{'widget': 'monetary', 'display_currency': res_company.currency_id}"/>
                                         </th>
@@ -206,7 +231,6 @@
                 .batch {
                     page-break-after: always;
                 }
-
                 .batch:last-of-type {
                     page-break-after: auto;
                 }

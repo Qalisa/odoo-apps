@@ -6,7 +6,7 @@
         <field name="model">account.taxes.cerfa_report.wizard</field>
         <field name="arch" type="xml">
         <form string="Formulaire">
-            <group string="Configuration">
+            <group>
                 <field name="start_date"/>
                 <field name="end_date"/>
                 <field name="company_ids" widget="many2many_tags"/>
