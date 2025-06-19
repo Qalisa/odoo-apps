@@ -2,7 +2,7 @@
 
 {
     'name': "Contacts - Identification civile",
-    'version': '1.1.2',
+    'version': '1.1.3',
     'summary': """
 Ajoute des informations supplémentaires aux contacts (Date et lieu de naissance, Justificatif d'identité),
 et les affiche si présents sur les documents générés par Odoo.

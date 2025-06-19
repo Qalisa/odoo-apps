@@ -7,10 +7,10 @@
                         <p>Date de Naissance: <span t-field="o.partner_id.birthdate">10/10/2010</span></p>
                     </t>
                     <t t-if="o.partner_id.birthplace">
-                        <p>Lieu de Naissance: <t t-esc="o.partner_id.birthplace"/></p>
+                        <p>Lieu de Naissance: <t t-out="o.partner_id.birthplace"/></p>
                     </t>
                     <t t-if="o.partner_id.id_proof">
-                        <p>Justificatif d'identité: <t t-esc="o.partner_id.id_proof"/></p>
+                        <p>Justificatif d'identité: <t t-out="o.partner_id.id_proof"/></p>
                     </t>
                 </div>
             </t>
