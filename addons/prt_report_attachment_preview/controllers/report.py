@@ -160,7 +160,7 @@ class CxReportController(ReportController):
             try:
                 doc_ids = [int(i) for i in docids.split(",")]
                 records = request.env[report.model].browse(doc_ids)
-                records.check_access_rule("read")
+                records.check_access("read")
             except (ValueError, AttributeError):
                 return request.not_found()
 
