@@ -7,6 +7,10 @@ class TwoZeroNineOneSDPDFReportModel(models.AbstractModel):
     _name = 'report.fr_numismatics_reports.report_2091_sd'
     _description = 'Aide à la saisie pour Cerfa 2091-SD (Déclaration TMP / TFOP)'
 
+    def _get_internal_url_for_move(self, move_id):
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        return f"{base_url}/web#id={move_id}&model=account.move&view_type=form"
+
     @api.model
     def _get_report_values(self, docids, data=None):
         # check referenced tax groups exist and are configured 
@@ -33,6 +37,7 @@ Merci de configurer les groupes de taxes à faire apparaître dans `Menu > Param
         paginate = wizard.paginate
 
         query = f"""SELECT 
+                am.id move_id,
                 aml.move_name, 
                 aml.invoice_date, 
                 aml.company_id,
@@ -116,4 +121,5 @@ Merci de configurer les groupes de taxes à faire apparaître dans `Menu > Param
             'results': grouped_by_companies_by_batches,
             'tfop_group_id': tfop_group_id, 
             'tmp_group_id': tmp_group_id,
+            'get_internal_url_for_move': self._get_internal_url_for_move
         }

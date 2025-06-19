@@ -147,7 +147,7 @@
                                             <t t-out="line_c"/>
                                         </td>
                                         <td style="color: #666; border: 1px solid #ddd; padding: 8px;">
-                                            <t t-out="item['move_name']"/>
+                                            <a t-out="item['move_name']" t-att-href="get_internal_url_for_move(item['move_id'])"/>
                                         </td>
                                         <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
                                             <t t-out="item['invoice_date']" t-options='{"widget": "date"}'/>

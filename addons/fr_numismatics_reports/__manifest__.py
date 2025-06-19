@@ -6,7 +6,7 @@
     'author': "Qalisa",
     'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
-    'version': "1.1.2",
+    'version': "1.2.0",
     'depends': ['account'],
     'data': [
         'security/ir.model.access.csv',
