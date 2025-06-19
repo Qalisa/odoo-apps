@@ -9,6 +9,10 @@ class CerfaReportWizard(models.TransientModel):
     _name = 'account.taxes.cerfa_report.wizard'
     _description = "Formulaire de génération de rapport d'aide à la saisie des Cerfa (Taxes)"
 
+    ##
+    ## fields
+    ##
+
     company_ids = fields.Many2many('res.company', 
         string='Sociétés à inclure', required=True, 
         default=lambda self: self.env.context.get('allowed_company_ids', [])
@@ -45,6 +49,10 @@ class CerfaReportWizard(models.TransientModel):
         help="Par mauvaises manipulations, des lignes indépendantes correspondant à des réductions appliquées aux lignes taxées peuvent apparaître sur les rapports. Cochez cette option pour les ignorer."
     )
 
+    ##
+    ## rules / triggers
+    ##
+
     @api.constrains('paginate')
     def _check_paginate_field(self):
         for record in self:
@@ -68,6 +76,17 @@ class CerfaReportWizard(models.TransientModel):
         if len(self.company_ids) < 2:
             self.split_by_company = False
 
+    ##
+    ## metadata
+    ##
+
+    def _get_report_base_filename(self):
+        self.ensure_one()
+        return f"Aide_2091_SD__{self.start_date.strftime('%Y-%m-%d')}__{self.end_date.strftime('%Y-%m-%d')}"
+
+    ##
+    ## actions
+    ##
 
     def action_confirm(self):
         #
