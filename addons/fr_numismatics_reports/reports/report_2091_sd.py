@@ -25,6 +25,7 @@ Merci de configurer les groupes de taxes à faire apparaître dans `Menu > Param
         # extract parameters
         wizard = self.env['account.taxes.cerfa_report.wizard'].browse(docids)
         company_ids = wizard.company_ids
+        main_company_id = wizard.main_company_id
         start_date = wizard.start_date
         end_date = wizard.end_date
         ignore_cutoff = wizard.ignore_cutoff
@@ -87,7 +88,7 @@ Merci de configurer les groupes de taxes à faire apparaître dans `Menu > Param
                 grouped_by_companies[company_id] = list(group)
         else:
             # else, gather all ids as first company's results
-            grouped_by_companies[company_ids.ids[0]] = results
+            grouped_by_companies[main_company_id.ids[0]] = results
 
         # split
         grouped_by_companies_by_batches = {'companies': {}}

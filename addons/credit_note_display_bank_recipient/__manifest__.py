@@ -8,7 +8,7 @@ Permet l'affichage d'un compte bancaire destinataire du montant de l'avoir sur l
     'author': "Qalisa",
     'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
-    'version': "1.0.2",
+    'version': "1.0.3",
     'depends': ['account'],
     'data': [
         'views/report_views.xml'
