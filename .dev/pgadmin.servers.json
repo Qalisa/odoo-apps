@@ -1,13 +1,14 @@
 {
     "Servers": {
         "1": {
-            "Name": "PostgreSQL",
+            "Name": "Local Odoo-Apps",
             "Group": "Servers",
             "Host": "db",
             "Port": 5432,
             "Username": "odoo",
             "MaintenanceDB": "postgres",
-            "SSLMode": "prefer"
+            "SSLMode": "prefer",
+            "PassFile": "/pgpass"
         }
     }
 }

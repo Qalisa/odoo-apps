@@ -2,41 +2,21 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Cleanup",
+            "label": "🗑️ Cleanup Compose Stack",
             "type": "shell",
-            "command": "docker compose rm -v -f -s && docker volume rm odoo-apps_odoo-data && docker volume rm odoo-apps_odoo-pg-db",
+            "command": "docker compose rm -v -f -s && docker volume rm odoo-apps_odoo-data odoo-apps_postgres-data odoo-apps_pgadmin-data",
             "options": {
                 "cwd": "${workspaceFolder}/.dev"
             },
             "problemMatcher": []
         },
         {
-            "label": "Generate Taxes",
+            "label": "📘 Generate Taxes (`fr_numismatics_taxes`)",
             "type": "shell",
             "command": "python gen_csv.py",
             "options": {
                 "cwd": "${workspaceFolder}/addons/fr_numismatics_taxes/utils"
             }
-        },
-        {
-            "label": "Ensure right permissions for .pgpass",
-            "type": "shell",
-            "command": "chmod 600 .pgpass",
-            "windows": {
-                "command": "echo 'OK'"
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/.dev",
-            },
-            "presentation": {
-                "echo": false,
-                "reveal": "never",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": true,
-                "clear": false
-            },
-            "problemMatcher": []
         },
     ]
 }
