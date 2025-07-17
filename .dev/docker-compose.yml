@@ -49,6 +49,7 @@ services:
 
   odoo:
     image: odoo-18-debugpy
+    # platform: linux/amd64 # enforces platform for compatibility
     build:
       dockerfile: ./odoo-debug/Dockerfile # use special Odoo image including DebugPy
     depends_on:
