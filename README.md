@@ -2,8 +2,11 @@
 
 Odoo addons and modules specifically developped for Qalisa's customers.
 
+> [!NOTE]
+> To mimic `odoo`'s official repo structure, there is no `main` / `master` repo; only major version tracked branches (`18-0`, `<major>-<minor>`...)
+
 ## About imported modules
-- `prt_report_attachment_preview` was sourced by another maintainer, but kept here for coherence. All rights reserved.
+- `prt_report_attachment_preview` and `psql_query_execute` were sourced by others developpers, but kept here for coherence. All rights apply with their sourcecode's respective licenses.
 
 ## Debugging & Developping 
 
