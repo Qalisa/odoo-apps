@@ -72,13 +72,17 @@ services:
       "--without-demo=all",
       "--load-language=fr_FR",
       "--language=fr_FR",
-      "--dev=all"
+      "--dev=all",
+      "--addons-path", "/mnt/extra-addons,/more-addons/odooapps,/more-addons/eqp_odoo_addons"
     ]
     ports:
       - "8069:8069" # UI / HTTP
       - "8888:8888" # DebugPy
     volumes:
       - ../addons:/mnt/extra-addons
+      #
+      - ./more-addons/eqp_odoo_addons:/more-addons/eqp_odoo_addons
+      - ./more-addons/odooapps:/more-addons/odooapps
       #
       - odoo-data:/var/lib/odoo
 

@@ -18,5 +18,10 @@
                 "cwd": "${workspaceFolder}/addons/fr_numismatics_taxes/utils"
             }
         },
+                {
+            "label": "🐙 Populate additionnal addons repos",
+            "type": "shell",
+            "command": "git submodule update --init --recursive"
+        },
     ]
 }
