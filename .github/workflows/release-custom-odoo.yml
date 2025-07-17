@@ -52,6 +52,7 @@ jobs:
         with:
           context: ./custom-odoo
           push: true
+          platforms: linux/amd64,linux/arm64 # includes arm for Macbook M1 platforms
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # cache-from: type=gha
