@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - .github/workflows/release-custom-odoo.yml
-      - docker/Dockerfile
+      - custom-odoo/Dockerfile
     branches:
       - "18-0"
   workflow_dispatch: # Allows manual triggering
@@ -50,8 +50,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./custom-odoo/Dockerfile # Path to the Custom Odoo Dockerfile
+          context: ./custom-odoo
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
