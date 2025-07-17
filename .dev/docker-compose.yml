@@ -73,6 +73,7 @@ services:
       "--load-language=fr_FR",
       "--language=fr_FR",
       "--dev=all",
+      "--db-filter", ".*", # allows us to use all databases
       "--addons-path", "/mnt/extra-addons,/more-addons/odooapps,/more-addons/eqp_odoo_addons"
     ]
     ports:

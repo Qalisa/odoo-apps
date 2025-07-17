@@ -1,6 +1,6 @@
 [submodule ".dev/more-addons/odooapps"]
 	path = .dev/more-addons/odooapps
-	url = https://github.com/odoomates/odooapps
+	url = https://github.com/Qalisa/odooapps
 	branch = 18.0
 [submodule ".dev/more-addons/eqp_odoo_addons"]
 	path = .dev/more-addons/eqp_odoo_addons
