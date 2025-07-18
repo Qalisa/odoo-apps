@@ -1,0 +1,7 @@
+<odoo>
+  <template id="contact_name_add_title" inherit_id="base.contact_name">
+    <xpath expr="//t[@t-if=&quot;object.name&quot;]" position="before">
+      <span t-if="object.title" itemprop="title" t-esc="object.title.name"/>
+    </xpath>
+  </template>
+</odoo>

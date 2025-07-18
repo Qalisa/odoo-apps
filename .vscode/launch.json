@@ -69,6 +69,14 @@
                     "localRoot": "${workspaceFolder}/addons",
                     "remoteRoot": "/mnt/extra-addons"
                 },
+                {
+                    "localRoot": "${workspaceFolder}/.dev/more-addons/eqp_odoo_addons",
+                    "remoteRoot": "/more-addons/eqp_odoo_addons"
+                },
+                {
+                    "localRoot": "${workspaceFolder}/.dev/more-addons/odooapps",
+                    "remoteRoot": "/more-addons/odooapps"
+                },
             ],
         },
     ]
