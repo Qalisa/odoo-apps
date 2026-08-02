@@ -52,9 +52,14 @@ tools/
   fantoir.py      table des codes nature de voie (annexe 3 du CDC) + match longest-prefix
   address.py      parse_street() -> zones voie DGFiP ; normalize_cp() ; format_commune()
   dmet.py         dessins E/Q/T (positions fixes), générateur 550 car., nommage, gzip
+  precheck.py     anomalies §8 (gravités B/S/N, seuils 1%/5%) -> check_file() verdict
 tests/
-  test_dmet_tools.py  16 tests, exécutables sous Odoo ET en isolation
+  test_dmet_tools.py  16 tests (générateur, adresse, arrondi)
+  test_precheck.py     9 tests (bloquantes, seuils, vendeur étranger)
 ```
+
+Les 25 tests passent en isolation :
+`cd addons && python3 -m unittest fr_td_bilateral_metaux.tests.test_dmet_tools fr_td_bilateral_metaux.tests.test_precheck`
 
 ## 4. Format du fichier (rappel)
 
@@ -90,11 +95,16 @@ Les dessins exacts (clé, position, longueur, classe) sont dans `tools/dmet.py`
 
 ## 6. État d'avancement
 
+**Noyau pur-Python (testé en isolation, sans Odoo) — TERMINÉ :**
 - [x] **Inc. 1** — noyau générateur (ascii_tools, dmet) + fichier d'exemple
-- [x] **Inc. 2** — table FANTOIR + moteur d'adresse (address) + 16 tests
+- [x] **Inc. 2** — table FANTOIR + moteur d'adresse (address) + tests
+- [x] **Inc. 5-core** — moteur de pré-contrôle (precheck) + tests seuils
+
+**Couche Odoo (à tester dans le Docker client) — À FAIRE :**
 - [ ] **Inc. 3** — bump `contacts_citizenship_id` (identité) + mapping `res.partner` → Q
+      *(prérequis : `partner_firstname` OCA ajouté à la chaîne + copie de prod)*
 - [ ] **Inc. 4** — modèle `fr.dmet.declaration` (persistant) + wizard + action
-- [ ] **Inc. 5** — écran de **pré-contrôle** (anomalies §8 du CDC + seuils 1 %/5 %)
+- [ ] **Inc. 5-ui** — écran de pré-contrôle (vue exploitant `precheck.check_file`)
 - [ ] **Inc. 6** — vues, sécurité (`ir.model.access`), menus, jeu d'essai données réelles
 
 ### Mapping `res.partner` → Q (à implémenter en Inc. 3)
