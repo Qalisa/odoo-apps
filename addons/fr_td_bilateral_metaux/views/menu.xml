@@ -1,0 +1,12 @@
+<odoo>
+    <menuitem id="menu_fr_td_root"
+              name="Tiers déclarants"
+              parent="account.menu_finance"
+              sequence="90"/>
+
+    <menuitem id="menu_fr_dmet_declaration"
+              name="Achats de métaux (DMET)"
+              parent="menu_fr_td_root"
+              action="action_fr_dmet_declaration"
+              sequence="10"/>
+</odoo>
