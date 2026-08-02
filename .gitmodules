@@ -6,3 +6,7 @@
 	path = .dev/more-addons/eqp_odoo_addons
 	url = https://github.com/Qalisa/eqp_odoo_addons
 	branch = 18.0
+[submodule ".dev/more-addons/partner-contact"]
+	path = .dev/more-addons/partner-contact
+	url = https://github.com/OCA/partner-contact
+	branch = 18.0
