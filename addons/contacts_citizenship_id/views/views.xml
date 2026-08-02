@@ -1,15 +1,23 @@
 <odoo>
     <record id="view_res_partner_form_inherit" model="ir.ui.view">
-        <field name="name">res.partner.form.inherit</field>
+        <field name="name">res.partner.form.inherit.citizenship</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@name='partner_address_country']" position="after">
-                <div class="o_address_format">
-                    <field name="id_proof" invisible="is_company" placeholder="Justificatif d'identité" />
-                    <field name="birthdate" invisible="is_company" placeholder="Date de naissance" />
-                    <field name="birthplace" invisible="is_company" placeholder="Lieu de naissance" />
-                </div>
+                <group invisible="is_company" col="4" string="État civil et pièce d'identité">
+                    <field name="birthdate"/>
+                    <field name="birth_country_id"/>
+                    <field name="birth_department" placeholder="ex. 57 (99 si étranger)"/>
+                    <field name="birth_insee_code" placeholder="code INSEE"/>
+                    <field name="birth_city" placeholder="Commune de naissance"/>
+                    <field name="birthplace" placeholder="Lieu de naissance (texte libre)"/>
+                    <field name="id_doc_type"/>
+                    <field name="id_doc_number"/>
+                    <field name="id_doc_issue_date"/>
+                    <field name="id_doc_authority"/>
+                    <field name="id_proof" placeholder="ancien champ" invisible="not id_proof"/>
+                </group>
             </xpath>
         </field>
     </record>
