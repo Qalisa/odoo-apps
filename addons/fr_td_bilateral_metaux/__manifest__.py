@@ -15,9 +15,14 @@ du cahier des charges avant transmission.
     'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
     'version': "1.0.0",
-    # `partner_firstname` (OCA) requis pour l'éclatement nom/prénom du vendeur (zones Q 014/015).
-    'depends': ['account', 'contacts_citizenship_id'],
+    # `contacts_citizenship_id` (1.2.0) apporte l'identité structurée et dépend
+    # lui-même de `partner_firstname` (OCA) pour l'éclatement nom/prénom (Q 014/015).
+    # `l10n_fr_account` apporte le SIRET (res.partner) et le code APE (res.company).
+    'depends': ['l10n_fr_account', 'contacts_citizenship_id'],
     'data': [
+        'security/ir.model.access.csv',
+        'views/dmet_declaration_views.xml',
+        'views/menu.xml',
     ],
     'installable': True,
     'application': True,
