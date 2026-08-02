@@ -100,7 +100,7 @@ Les dessins exacts (clé, position, longueur, classe) sont dans `tools/dmet.py`
 - [x] **Inc. 2** — table FANTOIR + moteur d'adresse (address) + tests
 - [x] **Inc. 5-core** — moteur de pré-contrôle (precheck) + tests seuils
 
-**Couche Odoo — ÉCRITE, à tester dans le Docker client :**
+**Couche Odoo — ÉCRITE et VALIDÉE en Docker (Odoo 18.0-20250606) :**
 - [x] **Inc. 3** — bump `contacts_citizenship_id` 1.2.0 (naissance structurée, pièce
       d'identité éclatée, dépendance `partner_firstname`, migration `id_proof`) +
       mapping `res.partner._dmet_vendor_dict()`
@@ -108,19 +108,30 @@ Les dessins exacts (clé, position, longueur, classe) sont dans `tools/dmet.py`
       pré-contrôle, génération .txt/.txt.gz)
 - [x] **Inc. 5-ui** — écran anomalies (one2many, liens vers fiches) branché sur `precheck`
 - [x] **Inc. 6** — vues (form/list), menu, `ir.model.access.csv`
-- [ ] **À FAIRE (nécessite le Docker) :** installation, migration sur copie de prod,
-      jeu d'essai données réelles, GPG, dépôt. Voir §9 ci-dessous.
 
-## 9. Points à valider en environnement Odoo (non exécutable ici)
+Smoke test réalisé : `-i fr_td_bilateral_metaux` s'installe proprement (tables, vues
+Odoo 18, sécurité, menu, migration `contacts_citizenship_id`) et **4 tests
+d'intégration `TransactionCase` passent** (`tests/test_integration.py`).
 
-Le code de la couche Odoo est écrit mais **n'a pas encore tourné** (pas de runtime ici).
-À vérifier au premier `-i fr_td_bilateral_metaux --test-enable` :
-- champ **`res.company.ape`** et **`res.partner.siret`** disponibles (via `l10n_fr_account`) ;
-- `partner_firstname` bien présent → `res.partner.firstname` / `lastname` ;
-- API **`_read_group`** (Odoo 17+) dans `_collect_vendors` ;
-- vues **Odoo 18** (`<list>`, attributs `invisible=`/`column_invisible`) ;
-- parent de menu **`account.menu_finance`** existant ;
-- migration `contacts_citizenship_id` 1.1.x → 1.2.0 (dossier `migrations/18.0.1.2.0/`).
+## 9. Reste à faire pour la mise en production (recette sur copie de prod)
+
+Validé en Docker sur base vierge — reste à éprouver sur les **vraies données** :
+- `_collect_vendors` sur les **avoirs réels** (agrégation `out_refund` postés par vendeur) ;
+- correction du **SIRET du siège** (`...00017` fermé -> `...00033`) dans `res.company` ;
+- migration `contacts_citizenship_id` sur la base client (données `id_proof` existantes) ;
+- chiffrement **GPG** (clé publique DGFiP) et **dépôt** sur impots.gouv.fr (action client) ;
+- réintégrer les submodules `odooapps` / `eqp_odoo_addons` dans l'addons-path
+  (retirés du smoke test car non initialisés dans ce clone).
+
+### Rejouer le smoke test
+```bash
+docker compose -f .dev/docker-compose.yml up -d db
+docker compose -f .dev/docker-compose.yml run --rm -T --no-deps --entrypoint "" odoo \
+  /usr/bin/odoo -d smoke -u fr_td_bilateral_metaux --test-enable \
+  --test-tags /fr_td_bilateral_metaux --stop-after-init --without-demo=all \
+  --db_host db --db_user odoo --db_password odoo \
+  --addons-path=/mnt/extra-addons,/more-addons/partner-contact
+```
 
 ### Mapping `res.partner` → Q (à implémenter en Inc. 3)
 - `partner_firstname` → Q015 (prénoms) ; `lastname` → Q014 (nom de famille)
