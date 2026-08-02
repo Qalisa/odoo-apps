@@ -1,0 +1,117 @@
+<odoo>
+
+    <record id="view_fr_dmet_declaration_list" model="ir.ui.view">
+        <field name="name">fr.dmet.declaration.list</field>
+        <field name="model">fr.dmet.declaration</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="verdict == 'rejet'" decoration-success="state in ('generated','deposited')">
+                <field name="name"/>
+                <field name="millesime"/>
+                <field name="company_id"/>
+                <field name="vendor_count"/>
+                <field name="amount_total" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="verdict"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fr_dmet_declaration_form" model="ir.ui.view">
+        <field name="name">fr.dmet.declaration.form</field>
+        <field name="model">fr.dmet.declaration</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_precheck" type="object" string="Lancer le pré-contrôle"
+                            class="btn-primary" invisible="state == 'deposited'"/>
+                    <button name="action_generate" type="object" string="Générer le fichier"
+                            invisible="state == 'deposited'"/>
+                    <button name="action_mark_deposited" type="object" string="Marquer comme déposé"
+                            invisible="state != 'generated'"/>
+                    <button name="action_reset_draft" type="object" string="Repasser en brouillon"
+                            invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,checked,generated,deposited"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Déclaration">
+                            <field name="millesime"/>
+                            <field name="type_declaration"/>
+                            <field name="ordre"/>
+                            <field name="verdict" widget="badge"
+                                   decoration-danger="verdict == 'rejet'"
+                                   decoration-success="verdict == 'ok'"/>
+                        </group>
+                        <group string="Périmètre">
+                            <field name="company_id"/>
+                            <field name="company_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Responsable (article T) et remettant">
+                            <field name="responsable_name"/>
+                            <field name="responsable_phone"/>
+                            <field name="responsable_email"/>
+                            <field name="remettant_siren"/>
+                        </group>
+                        <group string="Résultats">
+                            <field name="vendor_count"/>
+                            <field name="amount_total"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="blocking_count" string="Bloquantes"/>
+                            <field name="threshold_count" string="À seuil"/>
+                            <field name="nonblocking_count" string="Non bloquantes"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Anomalies" name="anomalies">
+                            <field name="anomaly_ids" readonly="1">
+                                <list decoration-danger="severity == 'bloquante'"
+                                      decoration-warning="severity == 'bloquante_seuil'"
+                                      decoration-muted="severity == 'non_bloquante'">
+                                    <field name="severity"/>
+                                    <field name="zone"/>
+                                    <field name="label"/>
+                                    <field name="partner_ref"/>
+                                    <field name="message"/>
+                                    <button name="action_open_partner" type="object"
+                                            icon="fa-external-link" title="Ouvrir la fiche"
+                                            invisible="not partner_id"/>
+                                    <field name="partner_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Fichier généré" name="file">
+                            <group>
+                                <field name="date_generation" readonly="1"/>
+                                <field name="filename" invisible="1"/>
+                                <field name="file" filename="filename"
+                                       string="Fichier à chiffrer (.txt.gz)"/>
+                                <field name="filename_txt" invisible="1"/>
+                                <field name="file_txt" filename="filename_txt"
+                                       string="Fichier texte (contrôle) (.txt)"/>
+                            </group>
+                            <div class="alert alert-info" role="alert">
+                                Le fichier <strong>.txt.gz</strong> doit encore être chiffré (GPG,
+                                clé publique DGFiP) avant dépôt sur l'espace professionnel
+                                impots.gouv.fr — service « Tiers déclarants ».
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fr_dmet_declaration" model="ir.actions.act_window">
+        <field name="name">Déclarations DMET (achats de métaux)</field>
+        <field name="res_model">fr.dmet.declaration</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

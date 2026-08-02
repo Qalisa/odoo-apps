@@ -63,6 +63,12 @@ def valid_fr_cp(cp):
     return len(d) == 5 and d[:2] != "00"
 
 
+def vendor_ref(vendor, index=0):
+    """Libellé identifiant un vendeur dans les anomalies (nom, ou n° d'ordre)."""
+    return to_ascii(vendor.get("nom") or vendor.get("raison_sociale")
+                    or "vendeur #%d" % index)
+
+
 # --------------------------------------------------------------------------
 # Contrôles
 # --------------------------------------------------------------------------
@@ -97,8 +103,7 @@ def check_declarant(header, declarant):
 
 def check_vendor(vendor, index):
     out = []
-    ref = to_ascii(vendor.get("nom") or vendor.get("raison_sociale")
-                   or "vendeur #%d" % index)
+    ref = vendor_ref(vendor, index)
     is_company = bool(vendor.get("is_company"))
     foreign = bool(vendor.get("foreign"))
 

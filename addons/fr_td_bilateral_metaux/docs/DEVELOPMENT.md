@@ -100,12 +100,27 @@ Les dessins exacts (clé, position, longueur, classe) sont dans `tools/dmet.py`
 - [x] **Inc. 2** — table FANTOIR + moteur d'adresse (address) + tests
 - [x] **Inc. 5-core** — moteur de pré-contrôle (precheck) + tests seuils
 
-**Couche Odoo (à tester dans le Docker client) — À FAIRE :**
-- [ ] **Inc. 3** — bump `contacts_citizenship_id` (identité) + mapping `res.partner` → Q
-      *(prérequis : `partner_firstname` OCA ajouté à la chaîne + copie de prod)*
-- [ ] **Inc. 4** — modèle `fr.dmet.declaration` (persistant) + wizard + action
-- [ ] **Inc. 5-ui** — écran de pré-contrôle (vue exploitant `precheck.check_file`)
-- [ ] **Inc. 6** — vues, sécurité (`ir.model.access`), menus, jeu d'essai données réelles
+**Couche Odoo — ÉCRITE, à tester dans le Docker client :**
+- [x] **Inc. 3** — bump `contacts_citizenship_id` 1.2.0 (naissance structurée, pièce
+      d'identité éclatée, dépendance `partner_firstname`, migration `id_proof`) +
+      mapping `res.partner._dmet_vendor_dict()`
+- [x] **Inc. 4** — modèle `fr.dmet.declaration` + `fr.dmet.anomaly` (collecte des avoirs,
+      pré-contrôle, génération .txt/.txt.gz)
+- [x] **Inc. 5-ui** — écran anomalies (one2many, liens vers fiches) branché sur `precheck`
+- [x] **Inc. 6** — vues (form/list), menu, `ir.model.access.csv`
+- [ ] **À FAIRE (nécessite le Docker) :** installation, migration sur copie de prod,
+      jeu d'essai données réelles, GPG, dépôt. Voir §9 ci-dessous.
+
+## 9. Points à valider en environnement Odoo (non exécutable ici)
+
+Le code de la couche Odoo est écrit mais **n'a pas encore tourné** (pas de runtime ici).
+À vérifier au premier `-i fr_td_bilateral_metaux --test-enable` :
+- champ **`res.company.ape`** et **`res.partner.siret`** disponibles (via `l10n_fr_account`) ;
+- `partner_firstname` bien présent → `res.partner.firstname` / `lastname` ;
+- API **`_read_group`** (Odoo 17+) dans `_collect_vendors` ;
+- vues **Odoo 18** (`<list>`, attributs `invisible=`/`column_invisible`) ;
+- parent de menu **`account.menu_finance`** existant ;
+- migration `contacts_citizenship_id` 1.1.x → 1.2.0 (dossier `migrations/18.0.1.2.0/`).
 
 ### Mapping `res.partner` → Q (à implémenter en Inc. 3)
 - `partner_firstname` → Q015 (prénoms) ; `lastname` → Q014 (nom de famille)
