@@ -14,3 +14,7 @@
 	path = .dev/more-addons/l10n-france
 	url = https://github.com/OCA/l10n-france
 	branch = 18.0
+[submodule ".dev/more-addons/server-tools"]
+	path = .dev/more-addons/server-tools
+	url = https://github.com/OCA/server-tools
+	branch = 18.0
