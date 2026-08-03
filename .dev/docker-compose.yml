@@ -74,7 +74,7 @@ services:
       "--language=fr_FR",
       "--dev=all",
       "--db-filter", ".*", # allows us to use all databases
-      "--addons-path", "/mnt/extra-addons,/more-addons/odooapps,/more-addons/eqp_odoo_addons,/more-addons/partner-contact"
+      "--addons-path", "/mnt/extra-addons,/more-addons/odooapps,/more-addons/eqp_odoo_addons,/more-addons/partner-contact,/more-addons/l10n-france"
     ]
     ports:
       - "8069:8069" # UI / HTTP
@@ -85,6 +85,7 @@ services:
       - ./more-addons/eqp_odoo_addons:/more-addons/eqp_odoo_addons
       - ./more-addons/odooapps:/more-addons/odooapps
       - ./more-addons/partner-contact:/more-addons/partner-contact
+      - ./more-addons/l10n-france:/more-addons/l10n-france
       #
       - odoo-data:/var/lib/odoo
 

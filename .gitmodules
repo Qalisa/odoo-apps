@@ -10,3 +10,7 @@
 	path = .dev/more-addons/partner-contact
 	url = https://github.com/OCA/partner-contact
 	branch = 18.0
+[submodule ".dev/more-addons/l10n-france"]
+	path = .dev/more-addons/l10n-france
+	url = https://github.com/OCA/l10n-france
+	branch = 18.0
