@@ -74,6 +74,13 @@ class DmetDeclaration(models.Model):
     amount_total = fields.Monetary(
         string="Montant TTC déclaré", readonly=True, currency_field='currency_id',
     )
+    date_debut = fields.Date(
+        string="Début de période", compute='_compute_period_dates', store=True)
+    date_fin = fields.Date(
+        string="Fin de période", compute='_compute_period_dates', store=True)
+    first_move_date = fields.Date(string="1er rachat concerné", readonly=True)
+    last_move_date = fields.Date(string="Dernier rachat concerné", readonly=True)
+    move_count = fields.Integer(string="Nombre d'avoirs (rachats)", readonly=True)
 
     anomaly_ids = fields.One2many(
         'fr.dmet.anomaly', 'declaration_id', string="Anomalies détectées",
@@ -100,6 +107,15 @@ class DmetDeclaration(models.Model):
         for rec in self:
             rec.name = "DMET %s — %s" % (
                 rec.millesime or '', rec.company_id.name or '')
+
+    @api.depends('millesime')
+    def _compute_period_dates(self):
+        for rec in self:
+            if rec.millesime:
+                rec.date_debut = date(rec.millesime, 1, 1)
+                rec.date_fin = date(rec.millesime, 12, 31)
+            else:
+                rec.date_debut = rec.date_fin = False
 
     @api.depends('anomaly_ids.severity')
     def _compute_anomaly_counts(self):
@@ -234,6 +250,14 @@ class DmetDeclaration(models.Model):
         vendors = self._collect_vendors()
         report = precheck_tools.check_file(
             self._header(), self._declarant_dict(), vendors)
+        d_start, d_end = self._period()
+        stats = self.env['account.move']._read_group(
+            [('move_type', '=', 'out_refund'), ('state', '=', 'posted'),
+             ('company_id', 'in', self.company_ids.ids),
+             ('invoice_date', '>=', d_start), ('invoice_date', '<=', d_end)],
+            [], ['invoice_date:min', 'invoice_date:max', '__count'],
+        )
+        first_d, last_d, nb_moves = stats[0] if stats else (False, False, 0)
 
         self.anomaly_ids.unlink()
         self.line_ids.unlink()
@@ -249,6 +273,9 @@ class DmetDeclaration(models.Model):
             'verdict': 'ok' if report['verdict'] == 'OK' else 'rejet',
             'vendor_count': report['nb_vendors'],
             'amount_total': sum(dmet_tools.round_euro(v['montant']) for v in vendors),
+            'first_move_date': first_d,
+            'last_move_date': last_d,
+            'move_count': nb_moves,
             'state': 'checked' if self.state == 'draft' else self.state,
         })
         return True

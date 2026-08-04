@@ -41,6 +41,8 @@
                     <group>
                         <group string="Déclaration">
                             <field name="millesime"/>
+                            <field name="date_debut" readonly="1"/>
+                            <field name="date_fin" readonly="1"/>
                             <field name="type_declaration"/>
                             <field name="ordre"/>
                             <field name="verdict" widget="badge"
@@ -62,6 +64,9 @@
                         <group string="Résultats">
                             <field name="vendor_count"/>
                             <field name="amount_total"/>
+                            <field name="move_count"/>
+                            <field name="first_move_date"/>
+                            <field name="last_move_date"/>
                             <field name="currency_id" invisible="1"/>
                             <field name="blocking_count" string="Bloquantes"/>
                             <field name="threshold_count" string="À seuil"/>
