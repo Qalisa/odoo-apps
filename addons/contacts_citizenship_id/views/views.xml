@@ -4,8 +4,8 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[@name='partner_address_country']" position="after">
-                <group invisible="is_company" col="2" string="État civil et pièce d'identité">
+            <xpath expr="//sheet/group[1]" position="after">
+                <group invisible="is_company" col="4" string="État civil et pièce d'identité">
                     <field name="birthdate"/>
                     <field name="birth_country_id"/>
                     <field name="birth_department" placeholder="ex. 57 (99 si étranger)"/>
