@@ -82,6 +82,10 @@ class DmetDeclaration(models.Model):
     threshold_count = fields.Integer(compute='_compute_anomaly_counts')
     nonblocking_count = fields.Integer(compute='_compute_anomaly_counts')
 
+    line_ids = fields.One2many(
+        'fr.dmet.line', 'declaration_id', string="Lignes du dépôt", readonly=True,
+    )
+
     file = fields.Binary(string="Fichier (.txt.gz)", readonly=True, attachment=True)
     filename = fields.Char(readonly=True)
     file_txt = fields.Binary(string="Fichier texte (.txt)", readonly=True, attachment=True)
@@ -177,40 +181,71 @@ class DmetDeclaration(models.Model):
             ('invoice_date', '<=', d_end),
         ]
         groups = self.env['account.move']._read_group(
-            domain, groupby=['partner_id'], aggregates=['amount_total:sum'],
+            domain, groupby=['partner_id'],
+            aggregates=['amount_total:sum', '__count'],
         )
-        vendors, ref_map = [], {}
-        for partner, amount_sum in groups:
+        vendors = []
+        for partner, amount_sum, nb_moves in groups:
             if not partner:
                 continue
             amount = abs(amount_sum or 0.0)
             if dmet_tools.round_euro(amount) < 1:
                 continue
             vendor = partner._dmet_vendor_dict(amount)
+            vendor['_nb_moves'] = nb_moves
             vendors.append(vendor)
-            ref_map[precheck_tools.vendor_ref(vendor, len(vendors))] = partner.id
         # Ordre stable (montant décroissant) pour un fichier reproductible.
         vendors.sort(key=lambda v: v['montant'], reverse=True)
-        return vendors, ref_map
+        return vendors
+
+    def _deposit_line_vals(self, vendors):
+        """Valeurs des lignes d'aperçu du dépôt (un enregistrement Q par vendeur)."""
+        vals = []
+        for v in vendors:
+            is_company = bool(v.get('is_company'))
+            if is_company:
+                personne = v.get('raison_sociale') or ''
+            else:
+                personne = ' '.join(p for p in (v.get('nom'), v.get('prenoms')) if p).strip()
+            bd = False
+            if not is_company:
+                try:
+                    bd = date(int(v['annee_naiss']), int(v['mois_naiss']), int(v['jour_naiss']))
+                except (KeyError, ValueError, TypeError):
+                    bd = False
+            vals.append((0, 0, {
+                'partner_id': v.get('_partner_id'),
+                'personne': personne or (v.get('nom') or ''),
+                'vendor_kind': 'pm' if is_company else 'pp',
+                'foreign': bool(v.get('foreign')),
+                'birthdate': bd,
+                'code_postal': v.get('code_postal') or '',
+                'commune': v.get('libelle_commune') or '',
+                'nb_rachats': v.get('_nb_moves') or 0,
+                'montant': dmet_tools.round_euro(v.get('montant') or 0),
+            }))
+        return vals
 
     # ------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------
     def action_precheck(self):
         self.ensure_one()
-        vendors, ref_map = self._collect_vendors()
+        vendors = self._collect_vendors()
         report = precheck_tools.check_file(
             self._header(), self._declarant_dict(), vendors)
 
         self.anomaly_ids.unlink()
+        self.line_ids.unlink()
         lines = [(0, 0, {
             'zone': f.zone, 'label': f.label, 'severity': f.severity,
             'message': f.message, 'partner_ref': f.ref,
-            'partner_id': ref_map.get(f.ref),
+            'partner_id': f.partner_id,
         }) for f in report['findings']]
 
         self.write({
             'anomaly_ids': lines,
+            'line_ids': self._deposit_line_vals(vendors),
             'verdict': 'ok' if report['verdict'] == 'OK' else 'rejet',
             'vendor_count': report['nb_vendors'],
             'amount_total': sum(dmet_tools.round_euro(v['montant']) for v in vendors),
@@ -220,7 +255,7 @@ class DmetDeclaration(models.Model):
 
     def action_generate(self):
         self.ensure_one()
-        vendors, _ref = self._collect_vendors()
+        vendors = self._collect_vendors()
         if not vendors:
             raise UserError(_("Aucun vendeur à déclarer sur la période %s.") % self.millesime)
 
@@ -262,6 +297,37 @@ class DmetAnomaly(models.Model):
     message = fields.Char(string="Aide à la correction")
     partner_ref = fields.Char(string="Vendeur")
     partner_id = fields.Many2one('res.partner', string="Fiche")
+
+    def action_open_partner(self):
+        self.ensure_one()
+        if not self.partner_id:
+            return False
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'res.partner',
+            'res_id': self.partner_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+class DmetLine(models.Model):
+    _name = 'fr.dmet.line'
+    _description = "Ligne de dépôt DMET (aperçu enregistrement Q)"
+    _order = 'montant desc, id'
+
+    declaration_id = fields.Many2one(
+        'fr.dmet.declaration', required=True, ondelete='cascade')
+    partner_id = fields.Many2one('res.partner', string="Fiche")
+    personne = fields.Char(string="Personne / Raison sociale")
+    vendor_kind = fields.Selection(
+        [('pp', "Personne physique"), ('pm', "Personne morale")],
+        string="Nature")
+    foreign = fields.Boolean(string="Étranger")
+    birthdate = fields.Date(string="Naissance")
+    code_postal = fields.Char(string="Code postal")
+    commune = fields.Char(string="Commune")
+    nb_rachats = fields.Integer(string="Quantité (rachats)")
+    montant = fields.Integer(string="Montant TTC annuel (€)")
 
     def action_open_partner(self):
         self.ensure_one()

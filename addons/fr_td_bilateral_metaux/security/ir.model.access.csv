@@ -3,3 +3,5 @@ access_fr_dmet_declaration_user,fr.dmet.declaration.user,model_fr_dmet_declarati
 access_fr_dmet_declaration_manager,fr.dmet.declaration.manager,model_fr_dmet_declaration,account.group_account_manager,1,1,1,1
 access_fr_dmet_anomaly_user,fr.dmet.anomaly.user,model_fr_dmet_anomaly,account.group_account_user,1,1,1,1
 access_fr_dmet_anomaly_manager,fr.dmet.anomaly.manager,model_fr_dmet_anomaly,account.group_account_manager,1,1,1,1
+access_fr_dmet_line_user,fr.dmet.line.user,model_fr_dmet_line,account.group_account_user,1,1,1,1
+access_fr_dmet_line_manager,fr.dmet.line.manager,model_fr_dmet_line,account.group_account_manager,1,1,1,1

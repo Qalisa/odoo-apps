@@ -36,6 +36,7 @@ class Finding:
     message: str                    # aide à la correction
     ref: str                        # vendeur concerné (ou "DECLARANT")
     threshold: Optional[float] = None   # seuil en % pour la gravité S
+    partner_id: Optional[int] = None    # id opaque du partenaire (rattachement anomalie -> fiche)
 
 
 # --------------------------------------------------------------------------
@@ -64,9 +65,17 @@ def valid_fr_cp(cp):
 
 
 def vendor_ref(vendor, index=0):
-    """Libellé identifiant un vendeur dans les anomalies (nom, ou n° d'ordre)."""
-    return to_ascii(vendor.get("nom") or vendor.get("raison_sociale")
-                    or "vendeur #%d" % index)
+    """Libellé lisible d'un vendeur pour l'affichage des anomalies.
+
+    Inclut le prénom afin de distinguer les homonymes (même nom de famille).
+    Ce texte est purement indicatif : le rattachement à la fiche se fait via
+    ``Finding.partner_id`` (identifiant unique), jamais par ce libellé.
+    """
+    nom = to_ascii(vendor.get("nom") or vendor.get("raison_sociale") or "").strip()
+    prenoms = to_ascii(vendor.get("prenoms") or "").strip()
+    if nom and prenoms:
+        return "%s %s" % (nom, prenoms)
+    return nom or ("vendeur #%d" % index)
 
 
 # --------------------------------------------------------------------------
@@ -170,6 +179,9 @@ def check_vendor(vendor, index):
         out.append(Finding("Q030", "Montant TTC annuel", B,
                            "Montant < 1 € : ce vendeur ne doit pas être déclaré.", ref))
 
+    pid = vendor.get("_partner_id")
+    for finding in out:
+        finding.partner_id = pid
     return out
 
 

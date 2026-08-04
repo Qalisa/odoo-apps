@@ -88,5 +88,17 @@ class TestNonBlocking(unittest.TestCase):
         self.assertIn("Q013", {f.zone for f in rep["non_bloquantes"]})
 
 
+class TestPartnerMapping(unittest.TestCase):
+    def test_findings_carry_partner_id_for_homonyms(self):
+        # Deux homonymes (même nom de famille) -> chacun rattaché à SA fiche.
+        didier = _pp(nom="THIERION", prenoms="DIDIER", code_postal="", _partner_id=11)
+        sylvie = _pp(nom="THIERION", prenoms="SYLVIE", _partner_id=22)
+        rep = precheck.check_file(HEADER, DECLARANT, [didier, sylvie])
+        cp = [f for f in rep["findings"] if f.zone == "Q027"]
+        self.assertEqual(len(cp), 1)                 # seul Didier a un CP vide
+        self.assertEqual(cp[0].partner_id, 11)       # rattaché à Didier, pas Sylvie
+        refs = {f.partner_id: f.ref for f in rep["findings"] if f.partner_id}
+        self.assertEqual(refs.get(11), "THIERION DIDIER")
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

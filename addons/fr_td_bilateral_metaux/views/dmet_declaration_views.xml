@@ -86,6 +86,24 @@
                                 </list>
                             </field>
                         </page>
+                        <page string="Lignes du dépôt" name="lines">
+                            <field name="line_ids" readonly="1">
+                                <list>
+                                    <field name="personne"/>
+                                    <field name="vendor_kind"/>
+                                    <field name="foreign" optional="hide"/>
+                                    <field name="birthdate"/>
+                                    <field name="code_postal"/>
+                                    <field name="commune"/>
+                                    <field name="nb_rachats" sum="Rachats"/>
+                                    <field name="montant" sum="Total (€)"/>
+                                    <button name="action_open_partner" type="object"
+                                            icon="fa-external-link" title="Ouvrir la fiche"
+                                            invisible="not partner_id"/>
+                                    <field name="partner_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
                         <page string="Fichier généré" name="file">
                             <group>
                                 <field name="date_generation" readonly="1"/>
