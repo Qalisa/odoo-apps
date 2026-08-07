@@ -7,3 +7,4 @@ from . import test_precheck
 # lorsque Odoo est présent, pour préserver l'exécution standalone des autres.
 if _ilu.find_spec('odoo') is not None:
     from . import test_integration
+    from . import test_id_document_gate

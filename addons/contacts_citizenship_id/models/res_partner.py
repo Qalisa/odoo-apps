@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class ResPartner(models.Model):
@@ -53,6 +54,66 @@ class ResPartner(models.Model):
     id_doc_number = fields.Char(string="Numéro de la pièce d'identité")
     id_doc_issue_date = fields.Date(string="Date de délivrance")
     id_doc_authority = fields.Char(string="Autorité de délivrance")
+    id_doc_issue_place = fields.Char(
+        string="Lieu de délivrance",
+        help="Lieu de délivrance de la pièce. L'art. R321-3 impose : nature, "
+             "numéro, date ET lieu de délivrance, et autorité émettrice.",
+    )
+
+    id_doc_complete = fields.Boolean(
+        string="Pièce d'identité complète (R321-3)",
+        compute='_compute_id_doc_complete', store=True,
+        help="Vrai lorsque nature, numéro, date, lieu de délivrance et autorité "
+             "sont tous renseignés (mentions obligatoires du livre de police).",
+    )
+
+    # Mentions obligatoires de la pièce d'identité au sens de l'art. R321-3.
+    _R321_3_ID_FIELDS = (
+        'id_doc_type', 'id_doc_number', 'id_doc_issue_date',
+        'id_doc_issue_place', 'id_doc_authority',
+    )
+
+    @api.depends('id_doc_type', 'id_doc_number', 'id_doc_issue_date',
+                 'id_doc_issue_place', 'id_doc_authority')
+    def _compute_id_doc_complete(self):
+        for partner in self:
+            partner.id_doc_complete = all(
+                partner[fname] for fname in self._R321_3_ID_FIELDS
+            )
+
+    @api.constrains('id_doc_type', 'id_doc_number', 'id_doc_issue_date',
+                    'id_doc_issue_place', 'id_doc_authority', 'is_company')
+    def _check_id_doc_r321_3(self):
+        """Cohérence R321-3 : si une pièce d'identité est saisie sur une personne
+        physique, toutes ses mentions obligatoires doivent l'être.
+
+        On n'impose pas la *présence* d'une pièce sur tous les contacts (cela
+        casserait la création d'individus non concernés) : l'obligation « le
+        vendeur DOIT présenter une pièce » relève du flux d'achat (avoir), pas
+        de la fiche contact.
+        """
+        labels = {
+            'id_doc_type': "la nature",
+            'id_doc_number': "le numéro",
+            'id_doc_issue_date': "la date de délivrance",
+            'id_doc_issue_place': "le lieu de délivrance",
+            'id_doc_authority': "l'autorité de délivrance",
+        }
+        for partner in self:
+            if partner.is_company:
+                continue
+            started = any(partner[fname] for fname in self._R321_3_ID_FIELDS)
+            if not started:
+                continue
+            missing = [labels[fname] for fname in self._R321_3_ID_FIELDS
+                       if not partner[fname]]
+            if missing:
+                raise ValidationError(_(
+                    "Pièce d'identité incomplète pour « %(name)s » "
+                    "(art. R321-3) : renseigner %(missing)s.",
+                    name=partner.display_name,
+                    missing=", ".join(missing),
+                ))
 
     @api.onchange('birth_country_id')
     def _onchange_birth_country_id(self):

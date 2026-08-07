@@ -14,7 +14,7 @@ du cahier des charges avant transmission.
     'author': "Qalisa",
     'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
-    'version': "1.0.0",
+    'version': "1.1.0",
     # `contacts_citizenship_id` (1.2.0) apporte l'identité structurée et dépend
     # lui-même de `partner_firstname` (OCA) pour l'éclatement nom/prénom (Q 014/015).
     # `l10n_fr_account` apporte le SIRET (res.partner) et le code APE (res.company).

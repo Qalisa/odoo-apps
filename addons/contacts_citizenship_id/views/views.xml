@@ -11,11 +11,13 @@
                     <field name="birth_department" placeholder="ex. 57 (99 si étranger)"/>
                     <field name="birth_insee_code" placeholder="code INSEE"/>
                     <field name="birth_city" placeholder="Commune de naissance"/>
-                    <field name="birthplace" placeholder="Lieu de naissance (texte libre)"/>
+                    <field name="birthplace" placeholder="ancien champ" invisible="not birthplace"/>
                     <field name="id_doc_type"/>
                     <field name="id_doc_number"/>
                     <field name="id_doc_issue_date"/>
+                    <field name="id_doc_issue_place" placeholder="ex. Préfecture de la Moselle"/>
                     <field name="id_doc_authority"/>
+                    <field name="id_doc_complete" readonly="1"/>
                     <field name="id_proof" placeholder="ancien champ" invisible="not id_proof"/>
                 </group>
             </xpath>
