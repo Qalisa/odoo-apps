@@ -59,11 +59,18 @@ class ResPartner(models.Model):
 
         if not is_company:
             bd = self.birthdate
+            # Le « 99 » (né à l'étranger) se déduit du pays de NAISSANCE, jamais
+            # du pays de l'adresse : sinon un natif de France résidant à
+            # l'étranger serait déclaré « étranger », et un natif de l'étranger
+            # résidant en France ne le serait pas.
+            foreign_birth = bool(
+                self.birth_country_id and self.birth_country_id.code != 'FR'
+            )
             vals.update({
                 'jour_naiss': ('%02d' % bd.day) if bd else '',
                 'mois_naiss': ('%02d' % bd.month) if bd else '',
                 'annee_naiss': ('%04d' % bd.year) if bd else '',
-                'dept_naiss': self.birth_department or ('99' if foreign else ''),
+                'dept_naiss': self.birth_department or ('99' if foreign_birth else ''),
                 'insee_naiss': self.birth_insee_code or '',
                 'commune_naiss': self.birth_city or self.birthplace or '',
             })
