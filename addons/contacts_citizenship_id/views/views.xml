@@ -8,8 +8,11 @@
                 <group invisible="is_company" col="4" string="État civil et pièce d'identité">
                     <field name="birthdate"/>
                     <field name="birth_country_id" required="not is_company"/>
-                    <field name="birth_department" placeholder="ex. 57 (99 si étranger)"/>
-                    <field name="birth_insee_code" placeholder="code INSEE"/>
+                    <!-- Zones non contrôlées par le DMET (lieu de naissance « accepté à
+                         zéro ») : champs conservés (données + alimentation par l'onchange
+                         du « 99 » étranger) mais masqués de la saisie. -->
+                    <field name="birth_department" invisible="1"/>
+                    <field name="birth_insee_code" invisible="1"/>
                     <field name="birth_city" placeholder="Commune de naissance"/>
                     <field name="birthplace" placeholder="ancien champ" invisible="not birthplace"/>
                     <field name="id_doc_type"/>
