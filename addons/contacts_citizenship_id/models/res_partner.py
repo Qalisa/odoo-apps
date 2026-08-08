@@ -42,7 +42,8 @@ class ResPartner(models.Model):
     birth_city = fields.Char(
         string='Commune de naissance',
         help="DMET : libellé de la commune de naissance (zones Q010-012, non "
-             "bloquant). Livre de police : aide à l'identification. Recommandé.",
+             "bloquant). Livre de police : aide à l'identification. Recommandé. "
+             "Ex. : « Metz ». Pour une naissance à l'étranger, indiquer le pays.",
     )
 
     # ------------------------------------------------------------------
@@ -79,14 +80,18 @@ class ResPartner(models.Model):
     )
     id_doc_authority = fields.Char(
         string="Autorité de délivrance",
-        help="Livre de police (art. R321-3) : autorité émettrice. Obligatoire "
-             "pour un vendeur particulier.",
+        help="Livre de police (art. R321-3) : administration émettrice de la "
+             "pièce. Ex. : « Préfecture de la Moselle », « Sous-préfecture de "
+             "Sarreguemines », « Mairie de Metz », « Consulat de France à … » "
+             "(pièce délivrée à l'étranger), ou « Ministère de l'Intérieur / "
+             "ANTS » (format récent). Obligatoire pour un vendeur particulier.",
     )
     id_doc_issue_place = fields.Char(
         string="Lieu de délivrance",
-        help="Livre de police (art. R321-3) : lieu de délivrance. Obligatoire "
-             "pour un vendeur particulier. R321-3 impose : nature, numéro, date "
-             "ET lieu de délivrance, et autorité émettrice.",
+        help="Livre de police (art. R321-3) : commune/lieu où la pièce a été "
+             "délivrée (ex. « Metz ») — à distinguer de l'autorité émettrice. "
+             "Obligatoire pour un vendeur particulier. R321-3 impose : nature, "
+             "numéro, date ET lieu de délivrance, et autorité.",
     )
 
     id_doc_complete = fields.Boolean(
