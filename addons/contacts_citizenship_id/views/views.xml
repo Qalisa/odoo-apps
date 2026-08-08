@@ -5,6 +5,7 @@
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <xpath expr="//sheet/group[1]" position="after">
+                <!-- Champs attendus / nécessaires aujourd'hui -->
                 <group invisible="is_company" col="4" string="État civil et pièce d'identité">
                     <field name="birthdate"/>
                     <field name="birth_country_id" required="not is_company"/>
@@ -14,14 +15,24 @@
                     <field name="birth_department" invisible="1"/>
                     <field name="birth_insee_code" invisible="1"/>
                     <field name="birth_city" placeholder="Commune de naissance"/>
-                    <field name="birthplace" placeholder="ancien champ" invisible="not birthplace"/>
                     <field name="id_doc_type"/>
                     <field name="id_doc_number"/>
                     <field name="id_doc_issue_date"/>
                     <field name="id_doc_issue_place" placeholder="ex. Préfecture de la Moselle"/>
                     <field name="id_doc_authority"/>
                     <field name="id_doc_complete" readonly="1"/>
-                    <field name="id_proof" placeholder="ancien champ" invisible="not id_proof"/>
+                </group>
+                <!-- Anciens champs (texte libre) : conservés pour l'historique,
+                     remplacés par les zones structurées ci-dessus. Affichés côte à
+                     côte, et uniquement si l'un d'eux porte encore une valeur. -->
+                <group string="Anciens champs (obsolètes — ne plus renseigner)"
+                       invisible="is_company or (not birthplace and not id_proof)">
+                    <group>
+                        <field name="birthplace" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="id_proof" readonly="1"/>
+                    </group>
                 </group>
             </xpath>
         </field>
