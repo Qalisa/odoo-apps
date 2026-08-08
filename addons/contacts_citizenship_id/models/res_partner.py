@@ -43,7 +43,8 @@ class ResPartner(models.Model):
         string='Commune de naissance',
         help="DMET : libellé de la commune de naissance (zones Q010-012, non "
              "bloquant). Livre de police : aide à l'identification. Recommandé. "
-             "Ex. : « Metz ». Pour une naissance à l'étranger, indiquer le pays.",
+             "Ex. : « Metz ». Naissance à l'étranger : laisser vide (le pays "
+             "renseigné ci-dessus suffit) ou préciser la ville étrangère.",
     )
 
     # ------------------------------------------------------------------

@@ -66,12 +66,18 @@ class ResPartner(models.Model):
             foreign_birth = bool(
                 self.birth_country_id and self.birth_country_id.code != 'FR'
             )
+            # Libellé du lieu de naissance : la commune si renseignée ; sinon,
+            # pour une naissance à l'étranger, le pays (déjà saisi dans
+            # birth_country_id) — évite de le ressaisir dans birth_city.
+            commune_naiss = self.birth_city or self.birthplace
+            if not commune_naiss and foreign_birth:
+                commune_naiss = self.birth_country_id.name
             vals.update({
                 'jour_naiss': ('%02d' % bd.day) if bd else '',
                 'mois_naiss': ('%02d' % bd.month) if bd else '',
                 'annee_naiss': ('%04d' % bd.year) if bd else '',
                 'dept_naiss': self.birth_department or ('99' if foreign_birth else ''),
                 'insee_naiss': self.birth_insee_code or '',
-                'commune_naiss': self.birth_city or self.birthplace or '',
+                'commune_naiss': commune_naiss or '',
             })
         return vals

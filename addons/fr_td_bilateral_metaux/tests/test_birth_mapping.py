@@ -32,3 +32,15 @@ class TestBirthMapping(TransactionCase):
         # Un département explicitement saisi prime toujours.
         partner = self._vendor(birth_department="57", birth_country_id=self.be.id)
         self.assertEqual(partner._dmet_vendor_dict(100.0)["dept_naiss"], "57")
+
+    def test_foreign_birth_commune_defaults_to_country(self):
+        # Naissance à l'étranger sans commune saisie -> le pays alimente le lieu.
+        partner = self._vendor(birth_country_id=self.be.id)
+        self.assertEqual(
+            partner._dmet_vendor_dict(100.0)["commune_naiss"], self.be.name)
+
+    def test_foreign_birth_with_city_keeps_city(self):
+        # Si une ville étrangère est saisie, elle prime sur le pays.
+        partner = self._vendor(birth_country_id=self.be.id, birth_city="Bruxelles")
+        self.assertEqual(
+            partner._dmet_vendor_dict(100.0)["commune_naiss"], "Bruxelles")

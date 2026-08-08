@@ -14,11 +14,11 @@
                          du « 99 » étranger) mais masqués de la saisie. -->
                     <field name="birth_department" invisible="1"/>
                     <field name="birth_insee_code" invisible="1"/>
-                    <field name="birth_city" placeholder="ex. Metz (ou le pays si né à l'étranger)"/>
+                    <field name="birth_city" placeholder="ex. Metz"/>
                     <field name="id_doc_type"/>
                     <field name="id_doc_number"/>
                     <field name="id_doc_issue_date"/>
-                    <field name="id_doc_issue_place" placeholder="ex. Metz (la commune)"/>
+                    <field name="id_doc_issue_place" placeholder="ex. Metz"/>
                     <field name="id_doc_authority" placeholder="ex. Préfecture de la Moselle"/>
                     <field name="id_doc_complete" readonly="1"/>
                 </group>

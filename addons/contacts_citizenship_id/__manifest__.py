@@ -2,7 +2,7 @@
 
 {
     'name': "Contacts - Identification civile",
-    'version': '1.3.7',
+    'version': '1.3.8',
     'summary': """
 Ajoute des informations d'état civil aux contacts (naissance structurée, pièce d'identité détaillée),
 requises pour le livre de police et la déclaration DMET. Affichées sur les documents générés par Odoo.
