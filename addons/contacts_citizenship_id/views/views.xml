@@ -7,7 +7,7 @@
             <xpath expr="//sheet/group[1]" position="after">
                 <group invisible="is_company" col="4" string="État civil et pièce d'identité">
                     <field name="birthdate"/>
-                    <field name="birth_country_id"/>
+                    <field name="birth_country_id" required="not is_company"/>
                     <field name="birth_department" placeholder="ex. 57 (99 si étranger)"/>
                     <field name="birth_insee_code" placeholder="code INSEE"/>
                     <field name="birth_city" placeholder="Commune de naissance"/>
