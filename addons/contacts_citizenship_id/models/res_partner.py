@@ -10,27 +10,39 @@ class ResPartner(models.Model):
     # ------------------------------------------------------------------
     # Naissance
     # ------------------------------------------------------------------
-    birthdate = fields.Date(string='Date de Naissance')
-    # Champ historique conservé (texte libre). Le format structuré ci-dessous
-    # le remplace pour les usages réglementaires (déclaration DMET, livre de police).
-    birthplace = fields.Char(string='Lieu de Naissance (texte libre)')
+    birthdate = fields.Date(
+        string='Date de Naissance',
+        help="DMET : date de naissance (zones Q007-009, non bloquant). "
+             "Livre de police : aide à l'identification. Fortement recommandé "
+             "(lève les homonymes).",
+    )
+    # Champ historique conservé (texte libre), remplacé par « Commune de naissance ».
+    birthplace = fields.Char(
+        string='Lieu de Naissance (texte libre)',
+        help="Ancien champ (texte libre). Obsolète : remplacé par « Commune de "
+             "naissance ». Conservé uniquement pour l'historique.",
+    )
 
     birth_country_id = fields.Many2one(
         'res.country', string='Pays de naissance',
-        help="Choix explicite (pas de valeur par défaut) : détermine le « 99 » "
-             "d'une naissance à l'étranger dans la déclaration DMET.",
+        help="DMET : détermine le « 99 » d'une naissance à l'étranger. "
+             "Choix explicite, sans valeur par défaut.",
     )
     birth_department = fields.Char(
         string='Département de naissance', size=3,
-        help="Code département (ex. 57). 99 pour une naissance à l'étranger.",
+        help="DMET : département de naissance (zone dept_naiss). Non contrôlé "
+             "(« accepté à zéro ») ; vaut 99 pour une naissance à l'étranger. "
+             "Champ masqué de la saisie.",
     )
     birth_insee_code = fields.Char(
         string='Code INSEE commune/pays de naissance', size=5,
-        help="Code INSEE de la commune de naissance, ou code pays si né à l'étranger.",
+        help="DMET : code INSEE de la commune (ou code pays) de naissance. Non "
+             "contrôlé (« accepté à zéro »). Champ masqué de la saisie.",
     )
     birth_city = fields.Char(
         string='Commune de naissance',
-        help="Libellé de la commune de naissance (ou du pays si né à l'étranger).",
+        help="DMET : libellé de la commune de naissance (zones Q010-012, non "
+             "bloquant). Livre de police : aide à l'identification. Recommandé.",
     )
 
     # ------------------------------------------------------------------
@@ -40,7 +52,8 @@ class ResPartner(models.Model):
     # Champ historique conservé pour compatibilité ; migré vers id_doc_number.
     id_proof = fields.Char(
         string="Justificatif d'identité (ancien champ)",
-        help="Champ historique. Utilisez de préférence les zones structurées ci-dessous.",
+        help="Ancien champ. Obsolète : migré vers « Numéro de la pièce "
+             "d'identité ». Conservé uniquement pour l'historique.",
     )
     id_doc_type = fields.Selection(
         selection=[
@@ -51,14 +64,29 @@ class ResPartner(models.Model):
             ('autre', 'Autre'),
         ],
         string="Nature de la pièce d'identité",
+        help="Livre de police (art. R321-3) : nature de la pièce. Obligatoire "
+             "pour un vendeur particulier. Non utilisé par le DMET.",
     )
-    id_doc_number = fields.Char(string="Numéro de la pièce d'identité")
-    id_doc_issue_date = fields.Date(string="Date de délivrance")
-    id_doc_authority = fields.Char(string="Autorité de délivrance")
+    id_doc_number = fields.Char(
+        string="Numéro de la pièce d'identité",
+        help="Livre de police (art. R321-3) : numéro de la pièce. Obligatoire "
+             "pour un vendeur particulier. Non utilisé par le DMET.",
+    )
+    id_doc_issue_date = fields.Date(
+        string="Date de délivrance",
+        help="Livre de police (art. R321-3) : date de délivrance de la pièce. "
+             "Obligatoire pour un vendeur particulier.",
+    )
+    id_doc_authority = fields.Char(
+        string="Autorité de délivrance",
+        help="Livre de police (art. R321-3) : autorité émettrice. Obligatoire "
+             "pour un vendeur particulier.",
+    )
     id_doc_issue_place = fields.Char(
         string="Lieu de délivrance",
-        help="Lieu de délivrance de la pièce. L'art. R321-3 impose : nature, "
-             "numéro, date ET lieu de délivrance, et autorité émettrice.",
+        help="Livre de police (art. R321-3) : lieu de délivrance. Obligatoire "
+             "pour un vendeur particulier. R321-3 impose : nature, numéro, date "
+             "ET lieu de délivrance, et autorité émettrice.",
     )
 
     id_doc_complete = fields.Boolean(
