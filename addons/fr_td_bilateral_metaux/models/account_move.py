@@ -8,34 +8,55 @@ class AccountMove(models.Model):
     _inherit = "account.move"
 
     def _post(self, soft=True):
-        self._dmet_check_vendor_id_document()
+        self._dmet_check_vendor_completeness()
         return super()._post(soft=soft)
 
-    def _dmet_check_vendor_id_document(self):
-        """Bloque la validation d'un rachat (avoir) à un particulier tant que la
-        pièce d'identité du vendeur est incomplète (art. R321-3 du code pénal).
+    def _dmet_check_vendor_completeness(self):
+        """Bloque la validation d'un rachat (avoir) à un particulier tant que les
+        données **obligatoires** du vendeur sont incomplètes.
 
-        Périmètre aligné sur la sélection DMET (``out_refund``). Seules les
-        personnes physiques sont concernées : une personne morale n'a pas de
-        pièce d'identité au sens de l'art. R321-3.
+        Périmètre aligné sur la sélection DMET (``out_refund``), personnes
+        physiques uniquement. Champs contrôlés :
+
+        - **Nom** et **prénom** — DMET (Q014/Q015) et livre de police (R321-3) ;
+        - **Pays de naissance** — détermine le « 99 » (naissance à l'étranger) du
+          DMET ;
+        - **Adresse** (rue, code postal, ville) — domicile (R321-3) et zones
+          DMET adresse ;
+        - **Pièce d'identité** complète — livre de police (art. R321-3 : nature,
+          numéro, date et lieu de délivrance, autorité).
+
+        L'obligation naît de l'achat : on la contrôle donc au moment de valider
+        l'avoir, sans imposer ces champs à tous les contacts.
         """
-        blocked = []
+        checks = [
+            ('lastname', "nom"),
+            ('firstname', "prénom"),
+            ('birth_country_id', "pays de naissance"),
+            ('street', "adresse (rue)"),
+            ('zip', "code postal"),
+            ('city', "ville"),
+        ]
+        problems = []
         for move in self:
             if move.move_type != "out_refund":
                 continue
             partner = move.partner_id
             if not partner or partner.is_company:
                 continue
+            missing = [label for fname, label in checks if not partner[fname]]
             if not partner.id_doc_complete:
-                blocked.append((move, partner))
-        if blocked:
+                missing.append("pièce d'identité (R321-3)")
+            if missing:
+                problems.append((move, partner, missing))
+        if problems:
             details = "\n".join(
-                "- %s : %s" % (move.display_name, partner.display_name)
-                for move, partner in blocked
+                "- %s (%s) : %s" % (
+                    move.display_name, partner.display_name, ", ".join(missing))
+                for move, partner, missing in problems
             )
             raise UserError(_(
-                "Rachat à un particulier : la pièce d'identité du vendeur est "
-                "incomplète (art. R321-3). Renseignez la nature, le numéro, la "
-                "date et le lieu de délivrance, et l'autorité, avant de valider "
-                ":\n%s", details
+                "Rachat à un particulier : les données obligatoires du vendeur "
+                "(déclaration DMET / livre de police) sont incomplètes. "
+                "Complétez la fiche avant de valider :\n%s", details
             ))
