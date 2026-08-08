@@ -17,7 +17,8 @@ class ResPartner(models.Model):
 
     birth_country_id = fields.Many2one(
         'res.country', string='Pays de naissance',
-        default=lambda self: self.env.ref('base.fr', raise_if_not_found=False),
+        help="Choix explicite (pas de valeur par défaut) : détermine le « 99 » "
+             "d'une naissance à l'étranger dans la déclaration DMET.",
     )
     birth_department = fields.Char(
         string='Département de naissance', size=3,
