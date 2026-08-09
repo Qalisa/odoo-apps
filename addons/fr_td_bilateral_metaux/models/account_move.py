@@ -29,6 +29,15 @@ class AccountMove(models.Model):
         L'obligation naît de l'achat : on la contrôle donc au moment de valider
         l'avoir, sans imposer ces champs à tous les contacts.
         """
+        # Backfill historique : exemption explicite. Les rachats antérieurs à
+        # l'adoption du logiciel sont réinjectés pour le DMET / la concordance du
+        # livre de police ; leur pièce d'identité et leur adresse complètes
+        # n'existent qu'au format papier (livre de police tenu à l'époque). On ne
+        # fabrique pas de données (ce serait corrompre le livre de police) : on
+        # exempte ces imports via un contexte dédié, sans affaiblir le contrôle
+        # des nouveaux rachats saisis dans le logiciel.
+        if self.env.context.get('dmet_backfill'):
+            return
         checks = [
             ('lastname', "nom"),
             ('firstname', "prénom"),
