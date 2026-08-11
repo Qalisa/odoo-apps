@@ -24,7 +24,8 @@ class AccountMove(models.Model):
         - **Adresse** (rue, code postal, ville) — domicile (R321-3) et zones
           DMET adresse ;
         - **Pièce d'identité** complète — livre de police (art. R321-3 : nature,
-          numéro, date et lieu de délivrance, autorité).
+          numéro, date de délivrance et autorité émettrice ; le *lieu* de
+          délivrance n'est pas exigé par le texte).
 
         L'obligation naît de l'achat : on la contrôle donc au moment de valider
         l'avoir, sans imposer ces champs à tous les contacts.

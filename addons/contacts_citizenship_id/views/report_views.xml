@@ -14,7 +14,7 @@
                     <t t-if="num_piece">
                         <p>Pièce d'identité :
                             <t t-if="o.partner_id.id_doc_type"><span t-field="o.partner_id.id_doc_type"/> </t>
-                            n° <t t-out="num_piece"/><t t-if="o.partner_id.id_doc_issue_date">, délivrée le <span t-field="o.partner_id.id_doc_issue_date"/></t><t t-if="o.partner_id.id_doc_issue_place"> à <t t-out="o.partner_id.id_doc_issue_place"/></t><t t-if="o.partner_id.id_doc_authority"> par <t t-out="o.partner_id.id_doc_authority"/></t></p>
+                            n° <t t-out="num_piece"/><t t-if="o.partner_id.id_doc_issue_date">, délivrée le <span t-field="o.partner_id.id_doc_issue_date"/></t><t t-if="o.partner_id.id_doc_authority"> par <t t-out="o.partner_id.id_doc_authority"/></t></p>
                     </t>
                 </div>
             </t>

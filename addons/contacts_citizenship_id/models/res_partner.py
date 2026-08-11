@@ -87,29 +87,27 @@ class ResPartner(models.Model):
              "(pièce délivrée à l'étranger), ou « Ministère de l'Intérieur / "
              "ANTS » (format récent). Obligatoire pour un vendeur particulier.",
     )
-    id_doc_issue_place = fields.Char(
-        string="Lieu de délivrance",
-        help="Livre de police (art. R321-3) : commune/lieu où la pièce a été "
-             "délivrée (ex. « Metz ») — à distinguer de l'autorité émettrice. "
-             "Obligatoire pour un vendeur particulier. R321-3 impose : nature, "
-             "numéro, date ET lieu de délivrance, et autorité.",
-    )
-
     id_doc_complete = fields.Boolean(
         string="Pièce d'identité complète (R321-3)",
         compute='_compute_id_doc_complete', store=True,
-        help="Vrai lorsque nature, numéro, date, lieu de délivrance et autorité "
-             "sont tous renseignés (mentions obligatoires du livre de police).",
+        help="Vrai lorsque nature, numéro, date de délivrance et autorité sont "
+             "tous renseignés (mentions obligatoires du livre de police).",
     )
 
-    # Mentions obligatoires de la pièce d'identité au sens de l'art. R321-3.
+    # Mentions obligatoires de la pièce d'identité au sens de l'art. R321-3 :
+    # « la nature, le numéro et la date de délivrance de la pièce d'identité
+    # produite […] avec l'indication de l'autorité qui l'a établie ». Le *lieu*
+    # de délivrance n'est PAS exigé (le texte demande l'autorité émettrice), pas
+    # plus que par le registre métaux précieux (CGI ann. IV, art. 56 J
+    # quindecies, qui se limite aux nom, prénoms et adresse) ni par le DMET
+    # (aucune zone « pièce d'identité » dans le dessin Q).
     _R321_3_ID_FIELDS = (
         'id_doc_type', 'id_doc_number', 'id_doc_issue_date',
-        'id_doc_issue_place', 'id_doc_authority',
+        'id_doc_authority',
     )
 
     @api.depends('id_doc_type', 'id_doc_number', 'id_doc_issue_date',
-                 'id_doc_issue_place', 'id_doc_authority')
+                 'id_doc_authority')
     def _compute_id_doc_complete(self):
         for partner in self:
             partner.id_doc_complete = all(
@@ -117,7 +115,7 @@ class ResPartner(models.Model):
             )
 
     @api.constrains('id_doc_type', 'id_doc_number', 'id_doc_issue_date',
-                    'id_doc_issue_place', 'id_doc_authority', 'is_company')
+                    'id_doc_authority', 'is_company')
     def _check_id_doc_r321_3(self):
         """Cohérence R321-3 : si une pièce d'identité est saisie sur une personne
         physique, toutes ses mentions obligatoires doivent l'être.
@@ -131,7 +129,6 @@ class ResPartner(models.Model):
             'id_doc_type': "la nature",
             'id_doc_number': "le numéro",
             'id_doc_issue_date': "la date de délivrance",
-            'id_doc_issue_place': "le lieu de délivrance",
             'id_doc_authority': "l'autorité de délivrance",
         }
         for partner in self:

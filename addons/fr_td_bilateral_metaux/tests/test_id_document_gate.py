@@ -17,7 +17,6 @@ class TestVendorCompletenessGate(TransactionCase):
             "id_doc_type": "cni",
             "id_doc_number": "123456789",
             "id_doc_issue_date": "2020-01-15",
-            "id_doc_issue_place": "Metz",
             "id_doc_authority": "Préfecture de la Moselle",
         }
 
