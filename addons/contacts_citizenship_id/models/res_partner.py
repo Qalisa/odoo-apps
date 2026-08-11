@@ -82,10 +82,15 @@ class ResPartner(models.Model):
     id_doc_authority = fields.Char(
         string="Autorité de délivrance",
         help="Livre de police (art. R321-3) : administration émettrice de la "
-             "pièce. Ex. : « Préfecture de la Moselle », « Sous-préfecture de "
-             "Sarreguemines », « Mairie de Metz », « Consulat de France à … » "
-             "(pièce délivrée à l'étranger), ou « Ministère de l'Intérieur / "
-             "ANTS » (format récent). Obligatoire pour un vendeur particulier.",
+             "pièce, telle qu'elle est mentionnée sur le titre. Ex. : "
+             "« Préfecture de la Moselle », « Sous-préfecture de Sarreguemines », "
+             "« Mairie de Metz », ou « Consulat de France à … » pour une pièce "
+             "délivrée à l'étranger.\n\n"
+             "Cas particulier — nouvelle carte d'identité française (format "
+             "carte bancaire) : l'autorité n'y est plus imprimée. Saisir alors "
+             "« Ministère de l'Intérieur », qui est l'autorité émettrice du "
+             "titre ; à défaut, « République française ».\n\n"
+             "Obligatoire pour un vendeur particulier.",
     )
     id_doc_complete = fields.Boolean(
         string="Pièce d'identité complète (R321-3)",
