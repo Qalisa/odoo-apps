@@ -9,7 +9,7 @@ except ImportError:
     from fr_td_bilateral_metaux.tools import precheck
 
 
-HEADER = {"annee": "2025", "siret": "12345678900014", "type_decl": "1"}
+HEADER = {"annee": "2025", "siret": "12345678200028", "type_decl": "1"}
 DECLARANT = {"nom": "AGENCE MOSELLANE DE L'OR", "code_activite": "4778C",
              "code_postal": "57070", "bureau": "METZ", "libelle_commune": "METZ",
              "date_emission": "20260909"}
@@ -44,7 +44,7 @@ class TestBlocking(unittest.TestCase):
         self.assertEqual(rep["verdict"], "REJET")
 
     def test_declarant_bad_siret_blocks(self):
-        bad = dict(HEADER, siret="123456789")  # 9 chiffres, siège non corrigé
+        bad = dict(HEADER, siret="123456782")  # 9 chiffres, siège non corrigé
         rep = precheck.check_file(bad, DECLARANT, [_pp()])
         self.assertEqual(rep["verdict"], "REJET")
         self.assertIn("E002", {f.zone for f in rep["bloquantes"]})

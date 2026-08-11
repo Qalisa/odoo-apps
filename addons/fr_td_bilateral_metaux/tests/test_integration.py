@@ -46,9 +46,17 @@ class TestDmetIntegration(TransactionCase):
 
     def test_declaration_build_end_to_end(self):
         company = self.env.company
+        # Sur une base issue de la production, la société ambiante porte déjà un
+        # numéro de TVA dérivé de son SIREN réel ; `l10n_fr_siret` contrôle la
+        # cohérence TVA/SIREN et refuserait le SIRET de test. La TVA (inutile au
+        # DMET, qui n'exploite que le SIRET) est donc retirée au préalable, en
+        # une écriture distincte : `siret` est un champ calculé dont l'inverse
+        # alimente `siren`/`nic`, et l'écrire dans la même passe que `vat`
+        # évaluerait la contrainte avant la mise à jour du SIREN.
+        company.partner_id.vat = False
         company.partner_id.write({
             'street': '1 rue de la Gare', 'zip': '57070', 'city': 'Metz',
-            'siret': '12345678900014',
+            'siret': '12345678200028',
         })
         if 'ape' in company._fields:
             company.ape = '4778C'
@@ -60,15 +68,15 @@ class TestDmetIntegration(TransactionCase):
             'responsable_name': 'DUPONT MARIE, GERANTE',
             'responsable_phone': '0387000000',
             'responsable_email': 'contact@example.fr',
-            'remettant_siren': '123456789',
+            'remettant_siren': '123456782',
         })
 
         header = decl._header()
         declarant = decl._declarant_dict()
         total = decl._totalisation_dict()
-        self.assertEqual(header['siret'], '12345678900014')
+        self.assertEqual(header['siret'], '12345678200028')
         self.assertEqual(header['annee'], '2025')
-        self.assertEqual(total['siren_remettant'], '123456789')
+        self.assertEqual(total['siren_remettant'], '123456782')
 
         partner = self.env['res.partner'].create({
             'firstname': 'Sophie', 'lastname': 'Martin', 'is_company': False,
@@ -81,7 +89,7 @@ class TestDmetIntegration(TransactionCase):
         self.assertEqual([len(r) for r in records], [550, 550, 550])
         self.assertEqual((records[0][19], records[1][19], records[2][19]),
                          ('E', 'Q', 'T'))
-        self.assertEqual(records[0][4:18], '12345678900014')
+        self.assertEqual(records[0][4:18], '12345678200028')
         # Montant arrondi demi-supérieur : 1093,50 -> 1094, cadré à droite (Q030).
         self.assertEqual(records[1][335:345], '0000001094')
 

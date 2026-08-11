@@ -19,11 +19,11 @@ except ImportError:  # exécution isolée (addons/ sur le PYTHONPATH)
     from fr_td_bilateral_metaux.tools.ascii_tools import to_ascii, is_within_charset
 
 
-HEADER = {"annee": "2025", "siret": "12345678900014", "type_decl": "1"}
+HEADER = {"annee": "2025", "siret": "12345678200028", "type_decl": "1"}
 DECLARANT = {"nom": "AGENCE MOSELLANE DE L'OR", "code_activite": "4778C",
              "code_postal": "57070", "bureau": "METZ", "date_emission": "20260909"}
 TOTAL = {"responsable": "DUPONT MARIE", "tel": "0387000000",
-         "email": "x@example.fr", "siren_remettant": "123456789"}
+         "email": "x@example.fr", "siren_remettant": "123456782"}
 
 
 class TestAsciiTools(unittest.TestCase):

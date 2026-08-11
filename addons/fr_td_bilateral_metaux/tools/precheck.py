@@ -90,7 +90,7 @@ def check_declarant(header, declarant):
                            "L'année doit être 2025 (achats réalisés en 2025).", ref))
     if len(digits_only(header.get("siret"))) != 14:
         out.append(Finding("E002", "SIRET déclarant", B,
-                           "SIRET à 14 chiffres requis (siège : 12345678900014).", ref))
+                           "SIRET à 14 chiffres requis (siège : 12345678200028).", ref))
     if _blank(declarant.get("nom")):
         out.append(Finding("E005", "Identification du déclarant", B,
                            "Nom ou raison sociale obligatoire.", ref))
