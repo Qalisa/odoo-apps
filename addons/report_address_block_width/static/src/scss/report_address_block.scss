@@ -1,0 +1,39 @@
+// Largeur du bloc adresse du destinataire sur les documents imprimés.
+//
+// Mise en page « Bubble » (`web.external_layout_bubble`) : l'adresse et le titre
+// du document sont placés dans les deux cellules d'un même tableau, et la mise
+// en page pose `custom_layout_address`, ce qui **retire la classe `col-*`** du
+// bloc adresse (`web.address_layout`). Le bloc est donc dimensionné à son
+// contenu — mais la ligne d'adresse porte `w-100` (widget `contact`), et une
+// largeur en pourcentage ne participe pas au calcul de largeur intrinsèque :
+// **seule la ligne du nom fixe la largeur de la boîte**.
+//
+// Conséquence observée : un client au nom court obtient une boîte étroite et sa
+// rue est coupée, alors qu'un client au nom long garde la sienne intacte — même
+// si sa rue est plus longue. L'espace resté libre à droite n'est pas récupérable
+// par l'adresse : il appartient à la cellule du titre, aligné à droite.
+//
+// On donne donc une largeur explicite au bloc, pour découpler l'adresse du nom.
+// 340px couvre la rue la plus longue du fichier client (50 caractères) tout en
+// laissant sa place au titre, insécable (`text-nowrap`).
+//
+// Les marges négatives de `.row` sont neutralisées : combinées à une largeur
+// explicite, elles débordent de la cellule et repoussent le titre hors de la
+// page.
+//
+// Note : `table-layout: fixed` et les largeurs en pourcentage sur les `td`
+// restent sans effet avec le moteur de rendu de wkhtmltopdf (WebKit ancien) —
+// testés, écartés.
+//
+// Amont : comportement toujours présent dans la branche 18.0 officielle, et non
+// corrigé sur master (19), où la mise en page est remaniée mais conserve les
+// mêmes ingrédients. À revalider lors d'une migration : les classes ciblées
+// ci-dessous peuvent changer.
+
+.o_report_layout_bubble {
+    .address.row {
+        width: 340px;
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
