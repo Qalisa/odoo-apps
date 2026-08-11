@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_livre_police_evenement,livre.police.evenement lecture,model_livre_police_evenement,base.group_user,1,0,0,0
+access_livre_police_ouverture,livre.police.ouverture,model_livre_police_ouverture,account.group_account_invoice,1,1,1,1
+access_livre_police_ouverture_ligne,livre.police.ouverture.ligne,model_livre_police_ouverture_ligne,account.group_account_invoice,1,1,1,1

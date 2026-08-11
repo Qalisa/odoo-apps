@@ -1,0 +1,34 @@
+<odoo>
+
+    <record id="res_config_settings_view_form_police" model="ir.ui.view">
+        <field name="name">res.config.settings.form.police</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='analytic']" position="before">
+                <block title="Livre de police" id="livre_police">
+                    <setting string="Début du registre"
+                             help="Date à partir de laquelle les avoirs de rachat font entrer les objets au livre de police. Tant qu'elle est vide, rien ne se déclenche.">
+                        <field name="police_start_date"/>
+                        <div class="text-muted mt-2">
+                            Les objets déjà détenus en coffre à cette date doivent
+                            y être inscrits par un inventaire d'ouverture : le
+                            registre vise « chaque objet détenu en stock »
+                            (art. R321-4 du code pénal).
+                        </div>
+                    </setting>
+                    <setting string="Numéros d'ordre"
+                             help="Préfixe identifiant l'établissement, repris en tête du numéro d'ordre porté sur chaque objet ou lot.">
+                        <field name="police_sequence_prefix"
+                               placeholder="METZ"/>
+                        <div class="text-muted mt-2">
+                            METZ donne METZ-2026-00001. À défaut, le code de
+                            l'entrepôt est utilisé.
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

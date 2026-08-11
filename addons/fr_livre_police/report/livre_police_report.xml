@@ -1,0 +1,34 @@
+<odoo>
+
+    <!--
+        Le registre du commerce est un cahier à l'italienne (21 x 31,5 cm chez
+        les papetiers spécialisés) : les mentions obligatoires ne tiennent pas
+        en portrait. Marges réduites, la réglure occupe la page.
+    -->
+    <record id="paperformat_livre_police" model="report.paperformat">
+        <field name="name">Livre de police - A4 paysage</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">22</field>
+        <field name="margin_bottom">16</field>
+        <field name="margin_left">6</field>
+        <field name="margin_right">6</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">8</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_livre_police" model="ir.actions.report">
+        <field name="name">Livre de police</field>
+        <field name="model">stock.lot</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">fr_livre_police.report_livre_police</field>
+        <field name="report_file">fr_livre_police.report_livre_police</field>
+        <field name="binding_model_id" ref="stock.model_stock_lot"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_livre_police"/>
+        <field name="print_report_name">"Livre de police"</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,17 @@
+<odoo>
+
+    <record id="product_template_form_view_police" model="ir.ui.view">
+        <field name="name">product.template.form.police</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id"
+               ref="fr_numismatics_metals.product_template_form_view_metal"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='metal']//field[@name='metal_unit_weight']"
+                   position="after">
+                <field name="is_storable" invisible="not metal_regulated"/>
+                <field name="tracking" invisible="not metal_regulated"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,72 @@
+<odoo>
+
+    <record id="livre_police_ouverture_view_form" model="ir.ui.view">
+        <field name="name">livre.police.ouverture.form</field>
+        <field name="model">livre.police.ouverture</field>
+        <field name="arch" type="xml">
+            <form string="Inventaire d'ouverture">
+                <div class="alert alert-info" role="alert">
+                    Le registre ne commence pas à zéro : ce que le coffre
+                    contient à la date de bascule doit y figurer, avec un
+                    numéro d'ordre (art. R321-4).
+                    <br/>
+                    Ces objets ayant été acquis avant, leur vendeur et leur prix
+                    restent au registre tenu à l'époque — ils ne sont pas
+                    demandés ici, et ne doivent pas être inventés.
+                </div>
+                <div class="alert alert-warning" role="alert"
+                     invisible="not already_done">
+                    Un inventaire d'ouverture a déjà été effectué pour cet
+                    établissement le <field name="previous_date" readonly="1"
+                    class="oe_inline"/>. Le rejouer doublerait le stock et le
+                    registre.
+                </div>
+                <group>
+                    <group>
+                        <field name="company_id"
+                               options="{'no_create': True}"/>
+                        <field name="opening_date"/>
+                    </group>
+                    <group>
+                        <field name="origin"/>
+                        <field name="already_done" invisible="1"/>
+                        <field name="confirm_complement"
+                               invisible="not already_done"
+                               required="already_done"/>
+                    </group>
+                </group>
+                <field name="line_ids">
+                    <list editable="bottom">
+                        <field name="product_id"
+                               options="{'no_quick_create': True}"/>
+                        <field name="quantity_mode" string="Régime"
+                               readonly="1" optional="show"/>
+                        <field name="quantity"/>
+                        <field name="weight"/>
+                        <field name="fineness"/>
+                        <field name="description" width="30%"
+                               placeholder="3 alliances, 1 gourmette maille anglaise, 1 pendentif cassé…"/>
+                    </list>
+                </field>
+                <div class="text-muted">
+                    Le poids se déduit du régime de l'article — au gramme, ou
+                    nombre de pièces multiplié par le poids unitaire. Un lot
+                    hétérogène est à peser.
+                </div>
+                <footer>
+                    <button name="action_valider" type="object" string="Inscrire au registre"
+                            class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_livre_police_ouverture" model="ir.actions.act_window">
+        <field name="name">Inventaire d'ouverture</field>
+        <field name="res_model">livre.police.ouverture</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

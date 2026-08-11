@@ -1,0 +1,134 @@
+<odoo>
+
+    <record id="stock_lot_view_list_police" model="ir.ui.view">
+        <field name="name">stock.lot.list.police</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <list string="Livre de police" create="false"
+                  decoration-warning="not police_complete"
+                  decoration-muted="police_exit_date">
+                <field name="name" string="N° d'ordre"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="police_entry_date" string="Entrée" widget="date"/>
+                <field name="police_exit_date" string="Sortie" widget="date"/>
+                <field name="police_exit_picking_id" string="Bon de sortie" optional="show"/>
+                <field name="product_id" string="Nature de l'objet"/>
+                <field name="police_quantity" string="Nombre"/>
+                <field name="police_quantity_on_hand" string="Restant"/>
+                <field name="police_weight" sum="Poids total"/>
+                <field name="police_fineness" optional="show"/>
+                <field name="police_seller_id" string="Vendeur"/>
+                <field name="police_origin"/>
+                <field name="police_description" string="Description"
+                       optional="show"/>
+                <field name="police_purchase_price" sum="Total"/>
+                <field name="police_payment_mode"/>
+                <field name="police_currency_id" column_invisible="1"/>
+                <field name="police_opening" string="Ouverture" optional="hide"/>
+                <field name="police_complete" optional="hide"/>
+                <field name="police_source_move_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="stock_lot_view_form_police" model="ir.ui.view">
+        <field name="name">stock.lot.form.police</field>
+        <field name="model">stock.lot</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Livre de police (art. 56 J quindecies)"
+                       invisible="not police_registered">
+                    <group>
+                        <field name="police_registered" invisible="1"/>
+                        <field name="police_seller_id"/>
+                        <field name="police_origin"/>
+                        <field name="police_purchase_price"/>
+                        <field name="police_currency_id" invisible="1"/>
+                        <field name="police_payment_mode"
+                               placeholder="Virement, chèque…"/>
+                    </group>
+                    <group>
+                        <field name="police_entry_date"/>
+                        <field name="police_exit_date"/>
+                        <field name="police_quantity"/>
+                        <field name="police_quantity_on_hand"/>
+                        <field name="police_weight"/>
+                        <field name="police_fineness"/>
+                        <field name="police_source_move_id"/>
+                    </group>
+                    <div class="text-muted" colspan="2">
+                        Le paiement en espèces est interdit pour les métaux
+                        précieux (art. L112-6 du code monétaire et financier).
+                    </div>
+                    <field name="police_event_ids" colspan="2" nolabel="1"
+                           readonly="1">
+                        <list string="Journal" create="false" delete="false">
+                            <field name="sequence_number" string="Rang"/>
+                            <field name="event_date" string="Date"/>
+                            <field name="event_type" string="Nature"/>
+                            <field name="description"/>
+                            <field name="user_id" string="Opérateur"/>
+                            <field name="current_hash" string="Empreinte"
+                                   optional="hide"/>
+                        </list>
+                    </field>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="stock_lot_view_search_police" model="ir.ui.view">
+        <field name="name">stock.lot.search.police</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <search string="Livre de police">
+                <field name="name" string="N° d'ordre"/>
+                <field name="police_seller_id"/>
+                <field name="product_id"/>
+                <filter name="en_stock" string="Détenus en stock"
+                        domain="[('police_exit_date', '=', False)]"/>
+                <filter name="sortis" string="Sortis"
+                        domain="[('police_exit_date', '!=', False)]"/>
+                <separator/>
+                <filter name="ouverture" string="Lignes d'ouverture"
+                        domain="[('police_opening', '=', True)]"/>
+                <separator/>
+                <filter name="incomplets" string="Mentions incomplètes"
+                        domain="[('police_complete', '=', False)]"/>
+                <separator/>
+                <filter name="entree" string="Date d'entrée"
+                        date="police_entry_date"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_company" string="Établissement"
+                            context="{'group_by': 'company_id'}"/>
+                    <filter name="group_product" string="Objet"
+                            context="{'group_by': 'product_id'}"/>
+                    <filter name="group_month" string="Mois d'entrée"
+                            context="{'group_by': 'police_entry_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_livre_police" model="ir.actions.act_window">
+        <field name="name">Livre de police</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="stock_lot_view_list_police"/>
+        <field name="search_view_id" ref="stock_lot_view_search_police"/>
+        <field name="domain">[('police_registered', '=', True)]</field>
+        <field name="context">{'search_default_group_company': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Le registre est vide.
+            </p>
+            <p>
+                Les objets y entrent à la comptabilisation d'un avoir de rachat,
+                à partir de la date de début fixée pour l'établissement. En
+                orange, les lignes dont une mention obligatoire manque.
+            </p>
+        </field>
+    </record>
+
+</odoo>

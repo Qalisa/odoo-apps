@@ -1,0 +1,72 @@
+<odoo>
+
+    <record id="livre_police_evenement_view_list" model="ir.ui.view">
+        <field name="name">livre.police.evenement.list</field>
+        <field name="model">livre.police.evenement</field>
+        <field name="arch" type="xml">
+            <list string="Journal du livre de police" create="false"
+                  edit="false" delete="false"
+                  decoration-info="event_type == 'entree'"
+                  decoration-muted="event_type == 'sortie'"
+                  decoration-warning="event_type == 'correction'">
+                <field name="sequence_number" string="Rang"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="event_date" string="Date"/>
+                <field name="event_type" string="Nature"/>
+                <field name="lot_id" string="N° d'ordre"/>
+                <field name="description"/>
+                <field name="user_id" string="Opérateur"/>
+                <field name="current_hash" string="Empreinte" optional="hide"/>
+                <field name="previous_hash" string="Précédente" optional="hide"/>
+                <field name="payload" string="Mentions" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="livre_police_evenement_view_search" model="ir.ui.view">
+        <field name="name">livre.police.evenement.search</field>
+        <field name="model">livre.police.evenement</field>
+        <field name="arch" type="xml">
+            <search string="Journal du livre de police">
+                <field name="lot_id" string="N° d'ordre"/>
+                <field name="user_id"/>
+                <filter name="entrees" string="Entrées"
+                        domain="[('event_type', '=', 'entree')]"/>
+                <filter name="sorties" string="Sorties"
+                        domain="[('event_type', '=', 'sortie')]"/>
+                <filter name="corrections" string="Corrections"
+                        domain="[('event_type', '=', 'correction')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_company" string="Établissement"
+                            context="{'group_by': 'company_id'}"/>
+                    <filter name="group_type" string="Nature"
+                            context="{'group_by': 'event_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_livre_police_evenement" model="ir.actions.act_window">
+        <field name="name">Journal du registre</field>
+        <field name="res_model">livre.police.evenement</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Le journal est vide.
+            </p>
+            <p>
+                Chaque entrée, sortie et correction du registre y est inscrite
+                et chaînée à la précédente par une empreinte. Le journal est en
+                ajout seul : rien ne s'y modifie ni ne s'y efface.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_verifier_integrite" model="ir.actions.server">
+        <field name="name">Vérifier l'intégrité du registre</field>
+        <field name="model_id" ref="model_livre_police_evenement"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_verifier_integrite()</field>
+    </record>
+
+</odoo>

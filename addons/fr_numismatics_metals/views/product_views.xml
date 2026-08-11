@@ -1,0 +1,92 @@
+<odoo>
+
+    <record id="product_template_form_view_metal" model="ir.ui.view">
+        <field name="name">product.template.form.metal</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <!-- Dans l'onglet principal, et non dans un onglet dédié : ces
+                 mentions se saisissent à la création de l'article, pas plus
+                 tard. Un onglet séparé, personne ne l'ouvre. -->
+            <xpath expr="//page[@name='general_information']/group" position="after">
+                <group string="Livre de police (art. R321-4)" name="metal">
+                    <group>
+                        <field name="metal_regulated"/>
+                        <field name="metal_nature"
+                               options="{'no_quick_create': True}"
+                               invisible="not metal_regulated"
+                               required="metal_regulated"/>
+                        <field name="metal_fineness"
+                               invisible="not metal_regulated"/>
+                    </group>
+                    <group>
+                        <field name="metal_quantity_mode"
+                               invisible="not metal_regulated"
+                               required="metal_regulated"/>
+                        <field name="metal_unit_weight"
+                               invisible="metal_quantity_mode != 'unit'"
+                               required="metal_quantity_mode == 'unit'"/>
+                        <field name="metal_is_object" invisible="1"/>
+                        <field name="metal_weight_undetermined" invisible="1"/>
+                    </group>
+                    <div class="text-muted" colspan="2"
+                         invisible="metal_regulated">
+                        Article hors registre : remise, acompte, arrondi,
+                        régularisation. Cocher la case si cet article désigne un
+                        objet acheté.
+                    </div>
+                    <div class="text-muted" colspan="2"
+                         invisible="metal_quantity_mode != 'lot'">
+                        Lot hétérogène : le poids ne se déduit pas de la quantité,
+                        il doit être saisi sur chaque ligne d'achat.
+                    </div>
+                    <div class="text-muted" colspan="2"
+                         invisible="metal_quantity_mode != 'gram'">
+                        La quantité saisie sur les lignes d'achat vaut directement
+                        le poids en grammes.
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_tree_view_metal" model="ir.ui.view">
+        <field name="name">product.template.list.metal</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <field name="list_price" position="after">
+                <field name="metal_regulated" optional="hide"/>
+                <field name="metal_nature" optional="show"/>
+                <field name="metal_quantity_mode" optional="show"/>
+                <field name="metal_unit_weight" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="action_product_metal_incomplete" model="ir.actions.act_window">
+        <field name="name">Articles à caractériser</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <!-- Seuls les articles déclarés soumis au registre : inutile de
+             réclamer une nature de métal à une ligne de remise. -->
+        <field name="domain">
+            ['&amp;', ('metal_regulated', '=', True),
+             '|', ('metal_quantity_mode', '=', False),
+                  ('metal_weight_undetermined', '=', True)]
+        </field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tous les articles sont caractérisés.
+            </p>
+            <p>
+                Cet écran liste les articles soumis au livre de police dont le
+                régime de quantité manque, et ceux dont le poids ne peut pas se
+                déduire de la quantité — lots hétérogènes, ou pièces dont le
+                poids unitaire reste à renseigner.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,28 @@
+<odoo>
+
+    <menuitem id="menu_livre_police"
+              name="Livre de police"
+              parent="fr_numismatics_metals.menu_metal_root"
+              action="action_livre_police"
+              sequence="1"/>
+
+
+    <menuitem id="menu_livre_police_journal"
+              name="Journal du registre"
+              parent="fr_numismatics_metals.menu_metal_root"
+              action="action_livre_police_evenement"
+              sequence="2"/>
+
+    <menuitem id="menu_livre_police_ouverture"
+              name="Inventaire d'ouverture"
+              parent="fr_numismatics_metals.menu_metal_root"
+              action="action_livre_police_ouverture"
+              sequence="3"/>
+
+    <menuitem id="menu_livre_police_integrite"
+              name="Vérifier l'intégrité"
+              parent="fr_numismatics_metals.menu_metal_root"
+              action="action_verifier_integrite"
+              sequence="4"/>
+
+</odoo>

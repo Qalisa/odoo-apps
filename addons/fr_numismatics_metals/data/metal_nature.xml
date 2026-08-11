@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      Natures usuelles du métier, créées une fois à l'installation.
+
+      `noupdate="1"` : à partir de là ces enregistrements appartiennent au
+      client. Renommés ou archivés, ils ne sont jamais réécrits par une mise
+      à jour du module.
+    -->
+    <data noupdate="1">
+
+        <record id="metal_nature_or" model="metal.nature">
+            <field name="name">Or</field>
+        </record>
+
+        <record id="metal_nature_argent" model="metal.nature">
+            <field name="name">Argent</field>
+        </record>
+
+        <record id="metal_nature_platine" model="metal.nature">
+            <field name="name">Platine</field>
+        </record>
+
+        <record id="metal_nature_palladium" model="metal.nature">
+            <field name="name">Palladium</field>
+        </record>
+
+        <record id="metal_nature_rhodium" model="metal.nature">
+            <field name="name">Rhodium</field>
+        </record>
+
+    </data>
+</odoo>

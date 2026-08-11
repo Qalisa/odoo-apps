@@ -1,0 +1,221 @@
+<odoo>
+
+    <!--
+        Édition du registre, calquée sur le cahier du commerce : une page de
+        garde portant l'ouverture, la clôture et le visa de l'autorité, puis
+        la réglure à l'italienne.
+
+        Les feuillets sont numérotés et datés (art. 56 J sexdecies : « les
+        feuillets informatiques doivent être identifiés, numérotés et datés »).
+    -->
+
+    <template id="report_livre_police">
+        <t t-call="web.html_container">
+
+            <div class="header" style="font-size:7.5pt;border-bottom:1px solid #000;
+                                       padding-bottom:2px;white-space:nowrap;">
+                <!-- Casse mixte : la fonte du moteur d'édition ne porte pas
+                     les capitales accentuées, et « METAUX PRECIEUX » ferait
+                     négligé sur une pièce présentée à l'autorité. -->
+                <span style="letter-spacing:0.5px;font-weight:bold;">
+                    Livre de police — registre des métaux précieux
+                </span>
+                <span style="float:right;">
+                    Art. 537 CGI · ann. IV 56 J · c. pén. R321-3
+                </span>
+            </div>
+
+            <div class="footer" style="font-size:7.5pt;border-top:1px solid #000;
+                                       padding-top:2px;">
+                <span>
+                    Édité le
+                    <t t-out="context_timestamp(datetime.datetime.now())
+                              .strftime('%d/%m/%Y à %H:%M')"/>
+                </span>
+                <span style="float:right;">
+                    Feuillet <span class="page"/> / <span class="topage"/>
+                </span>
+            </div>
+
+            <div class="article">
+                <t t-set="inscrits" t-value="docs.filtered('police_registered')"/>
+                <t t-set="par_societe" t-value="{}"/>
+                <t t-foreach="inscrits" t-as="lot">
+                    <t t-set="_" t-value="par_societe.setdefault(
+                                            lot.company_id, []).append(lot)"/>
+                </t>
+
+                <t t-foreach="par_societe" t-as="societe">
+                    <t t-set="lignes" t-value="par_societe[societe]"/>
+
+                    <!-- Page de garde -->
+                    <div t-if="not societe_first"
+                         style="page-break-before:always;"/>
+                    <div style="border:2px solid #000;padding:14mm 12mm;
+                                margin:4mm 10mm;">
+                        <div style="text-align:center;">
+                            <div style="font-size:22pt;font-weight:bold;
+                                        letter-spacing:2px;">LIVRE DE POLICE</div>
+                            <div style="font-size:11pt;margin-top:2mm;">
+                                Registre des achats, ventes, réceptions et
+                                livraisons de matières d'or, d'argent et de platine
+                            </div>
+                        </div>
+
+                        <div style="margin-top:9mm;font-size:10pt;">
+                            <div style="font-weight:bold;font-size:12pt;"
+                                 t-out="societe.name"/>
+                            <div t-if="societe.street" t-out="societe.street"/>
+                            <div>
+                                <span t-out="societe.zip"/>
+                                <span t-out="societe.city"/>
+                            </div>
+                            <div t-if="societe.vat">
+                                N° TVA <span t-out="societe.vat"/>
+                            </div>
+                        </div>
+
+                        <table style="width:100%;margin-top:9mm;font-size:10pt;">
+                            <tr>
+                                <td style="width:50%;padding:2mm 0;">
+                                    Registre ouvert le
+                                    <span style="border-bottom:1px solid #000;
+                                                 padding:0 8mm;font-weight:bold;"
+                                          t-out="societe.police_start_date"
+                                          t-options="{'widget': 'date'}"/>
+                                </td>
+                                <td style="width:50%;padding:2mm 0;">
+                                    Registre clôturé le
+                                    <span style="border-bottom:1px solid #000;
+                                                 padding:0 14mm;">&#160;</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:2mm 0;">
+                                    Inventaire d'ouverture effectué le
+                                    <span style="border-bottom:1px solid #000;
+                                                 padding:0 6mm;font-weight:bold;"
+                                          t-out="societe.police_opening_date"
+                                          t-options="{'widget': 'date'}"/>
+                                </td>
+                                <td style="padding:2mm 0;">
+                                    Lignes portées au présent registre :
+                                    <span style="font-weight:bold;"
+                                          t-out="len(lignes)"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="margin-top:8mm;font-size:8pt;text-align:justify;">
+                            Les fabricants et les marchands d'or, d'argent et de
+                            platine ouvrés ou non ouvrés ou d'alliage de ces
+                            métaux, et, d'une manière générale, toutes les
+                            personnes qui détiennent des matières de l'espèce pour
+                            l'exercice de leur profession, doivent tenir un
+                            registre de leurs achats, ventes, réceptions et
+                            livraisons (art. 537 du code général des impôts). Le
+                            registre indique, sur justification de leur identité,
+                            les noms, prénoms et adresses des personnes ayant
+                            vendu ou confié les matières ou les ouvrages, ainsi
+                            que la nature, le nombre, le poids, le titre, la date
+                            d'entrée et de sortie et l'origine de ceux-ci, afin
+                            de permettre leur identification individuelle
+                            (art. 56 J quindecies de l'annexe IV). Il est
+                            présenté à l'autorité publique à toute réquisition et
+                            conservé six ans.
+                        </div>
+
+                        <div style="margin-top:8mm;border:1px solid #000;
+                                    padding:3mm;height:32mm;">
+                            <div style="font-weight:bold;font-size:9pt;">
+                                Visa du commissaire de police ou du maire
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Réglure -->
+                    <div style="page-break-before:always;"/>
+                    <div style="font-weight:bold;font-size:10pt;margin-bottom:2mm;"
+                         t-out="societe.name"/>
+                    <table style="table-layout:fixed;width:100%;font-size:6.6pt;
+                                  border-collapse:collapse;">
+                        <colgroup>
+                            <col style="width:6.5%"/><col style="width:5%"/>
+                            <col style="width:13%"/><col style="width:11%"/>
+                            <col style="width:20%"/><col style="width:4%"/>
+                            <col style="width:5.5%"/><col style="width:4%"/>
+                            <col style="width:7.5%"/><col style="width:6%"/>
+                            <col style="width:5.5%"/><col style="width:5%"/>
+                            <col style="width:7%"/>
+                        </colgroup>
+                        <thead>
+                            <tr style="background:#e8e8e8;">
+                                <th style="border:1px solid #000;padding:1mm;">N° d'ordre</th>
+                                <th style="border:1px solid #000;padding:1mm;">Date d'entrée</th>
+                                <th style="border:1px solid #000;padding:1mm;">Vendeur — nom, prénoms, domicile</th>
+                                <th style="border:1px solid #000;padding:1mm;">Pièce d'identité</th>
+                                <th style="border:1px solid #000;padding:1mm;">Nature et description des objets</th>
+                                <th style="border:1px solid #000;padding:1mm;" class="text-end">Nombre</th>
+                                <th style="border:1px solid #000;padding:1mm;" class="text-end">Poids (g)</th>
+                                <th style="border:1px solid #000;padding:1mm;" class="text-end">Titre (‰)</th>
+                                <th style="border:1px solid #000;padding:1mm;">Origine</th>
+                                <th style="border:1px solid #000;padding:1mm;" class="text-end">Prix d'achat</th>
+                                <th style="border:1px solid #000;padding:1mm;">Règlement</th>
+                                <th style="border:1px solid #000;padding:1mm;">Date de sortie</th>
+                                <th style="border:1px solid #000;padding:1mm;">Destinataire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="lignes" t-as="lot"
+                                style="page-break-inside:avoid;">
+                                <td style="border:1px solid #000;padding:1mm;
+                                           font-weight:bold;" t-out="lot.name"/>
+                                <td style="border:1px solid #000;padding:1mm;"
+                                    t-out="lot.police_entry_date"
+                                    t-options="{'widget': 'date'}"/>
+                                <td style="border:1px solid #000;padding:1mm;
+                                           white-space:pre-line;"
+                                    t-out="lot._police_vendeur() or
+                                           (lot.police_opening and
+                                            'Registre antérieur' or '')"/>
+                                <td style="border:1px solid #000;padding:1mm;
+                                           white-space:pre-line;"
+                                    t-out="lot._police_piece_identite()"/>
+                                <td style="border:1px solid #000;padding:1mm;">
+                                    <span t-out="lot.product_id.name"/>
+                                    <div t-if="lot.police_description"
+                                         style="white-space:pre-line;font-style:italic;"
+                                         t-out="lot.police_description"/>
+                                </td>
+                                <td style="border:1px solid #000;padding:1mm;"
+                                    class="text-end" t-out="lot.police_quantity"/>
+                                <td style="border:1px solid #000;padding:1mm;"
+                                    class="text-end" t-out="lot.police_weight"/>
+                                <td style="border:1px solid #000;padding:1mm;"
+                                    class="text-end" t-out="lot.police_fineness"/>
+                                <td style="border:1px solid #000;padding:1mm;"
+                                    t-out="lot.police_origin"/>
+                                <td style="border:1px solid #000;padding:1mm;"
+                                    class="text-end">
+                                    <span t-if="not lot.police_opening"
+                                          t-out="lot.police_purchase_price"
+                                          t-options="{'widget': 'monetary',
+                                                      'display_currency': lot.police_currency_id}"/>
+                                </td>
+                                <td style="border:1px solid #000;padding:1mm;"
+                                    t-out="lot.police_payment_mode"/>
+                                <td style="border:1px solid #000;padding:1mm;"
+                                    t-out="lot.police_exit_date"
+                                    t-options="{'widget': 'date'}"/>
+                                <td style="border:1px solid #000;padding:1mm;"
+                                    t-out="lot.police_exit_picking_id.partner_id.name
+                                           or lot.police_exit_picking_id.name or ''"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+            </div>
+        </t>
+    </template>
+
+</odoo>

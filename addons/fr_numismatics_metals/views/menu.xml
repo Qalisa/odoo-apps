@@ -1,0 +1,26 @@
+<odoo>
+
+    <menuitem id="menu_metal_root"
+              name="Métaux précieux"
+              parent="account.menu_finance_configuration"
+              sequence="95"/>
+
+    <menuitem id="menu_metal_nature"
+              name="Natures de métal"
+              parent="menu_metal_root"
+              action="action_metal_nature"
+              sequence="5"/>
+
+    <menuitem id="menu_product_metal_incomplete"
+              name="Articles à caractériser"
+              parent="menu_metal_root"
+              action="action_product_metal_incomplete"
+              sequence="10"/>
+
+    <menuitem id="menu_move_line_metal_anomaly"
+              name="Contrôle des poids"
+              parent="menu_metal_root"
+              action="action_move_line_metal_anomaly"
+              sequence="20"/>
+
+</odoo>

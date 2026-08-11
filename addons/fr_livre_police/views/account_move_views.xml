@@ -1,0 +1,55 @@
+<odoo>
+
+    <record id="view_move_form_police" model="ir.ui.view">
+        <field name="name">account.move.form.police</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="fr_numismatics_metals.view_move_form_metal"/>
+        <field name="arch" type="xml">
+            <!-- La provenance se recueille au comptoir, au moment du rachat :
+                 elle n'a pas d'autre occasion d'être connue. -->
+            <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='metal_weight']"
+                   position="after">
+                <field name="police_origin_required" column_invisible="1"/>
+                <field name="police_origin"
+                       string="Provenance"
+                       optional="show"
+                       placeholder="Succession, héritage, achat antérieur…"
+                       column_invisible="parent.move_type != 'out_refund'"
+                       required="police_origin_required"
+                       readonly="parent_state == 'posted'"/>
+                <field name="police_lot_id" string="N° d'ordre"
+                       optional="show" readonly="1"
+                       column_invisible="parent.move_type != 'out_refund'"/>
+                <!-- Le manque se voit à la saisie, pas seulement au refus de
+                     comptabilisation : la description se recueille au
+                     comptoir, devant les objets. -->
+                <field name="police_description_missing"
+                       string="Description à saisir"
+                       optional="show" widget="boolean_icon"
+                       column_invisible="parent.move_type != 'out_refund'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_move_form_police_button" model="ir.ui.view">
+        <field name="name">account.move.form.police.button</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_police_view_picking" type="object"
+                        class="oe_stat_button" icon="fa-book"
+                        invisible="not police_picking_id">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Livre de</span>
+                        <span class="o_stat_text">police</span>
+                    </div>
+                </button>
+            </div>
+            <field name="ref" position="after">
+                <field name="police_picking_id" invisible="1"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>
