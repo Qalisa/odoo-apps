@@ -3,7 +3,16 @@
     <!--
         Édition du registre, calquée sur le cahier du commerce : une page de
         garde portant l'ouverture, la clôture et le visa de l'autorité, puis
-        la réglure à l'italienne.
+        la réglure de la double page.
+
+        Le registre ne totalise pas le métal, il le ventile — par canal
+        d'acquisition (fabricants, particuliers, autres, dépôt) et, dans
+        chaque canal, par métal (platine, or et alliages, argent). Une ligne
+        ne sert donc qu'une seule des douze cases de poids.
+
+        Les canaux que l'établissement ne pratique pas restent en place,
+        grisés : un registre dont on retire des colonnes est un registre
+        remanié, alors que le grisé énonce ce qui est.
 
         Les feuillets sont numérotés et datés (art. 56 J sexdecies : « les
         feuillets informatiques doivent être identifiés, numérotés et datés »).
@@ -45,25 +54,44 @@
                                             lot.company_id, []).append(lot)"/>
                 </t>
 
+                <t t-set="canaux" t-value="list(docs.CANAUX)"/>
+                <t t-set="gris" t-value="docs.CANAUX_INUTILISES"/>
+                <t t-set="titres" t-value="{
+                        'fabricants': 'Objets achetés aux fabricants',
+                        'particuliers': 'Objets d&#8217;occasion achetés à des particuliers',
+                        'autres': 'Autres achats',
+                        'tiers': 'Objets confiés par des tiers'}"/>
+
+                <t t-set="cellule"
+                   t-value="'border:1px solid #1b3f6b;padding:1.2mm 1mm;'"/>
+                <t t-set="cellule_ref" t-value="cellule + 'font-weight:bold;'"/>
+                <t t-set="cellule_pre" t-value="cellule + 'white-space:pre-line;'"/>
+                <t t-set="cellule_num" t-value="cellule + 'text-align:right;'"/>
+                <t t-set="fond_gris" t-value="'background:#e4e9ef;color:#8894a4;'"/>
+                <t t-set="entete"
+                   t-value="'border:1px solid #1b3f6b;padding:1mm 0.5mm;'
+                            'text-align:center;vertical-align:middle;'
+                            'color:#1b3f6b;font-weight:normal;'"/>
+
                 <t t-foreach="par_societe" t-as="societe">
                     <t t-set="lignes" t-value="par_societe[societe]"/>
 
                     <!-- Page de garde -->
                     <div t-if="not societe_first"
                          style="page-break-before:always;"/>
-                    <div style="border:2px solid #000;padding:14mm 12mm;
-                                margin:4mm 10mm;">
+                    <div style="border:2px solid #1b3f6b;padding:14mm 12mm;
+                                margin:4mm 20mm;color:#1b3f6b;">
                         <div style="text-align:center;">
-                            <div style="font-size:22pt;font-weight:bold;
+                            <div style="font-size:26pt;font-weight:bold;
                                         letter-spacing:2px;">LIVRE DE POLICE</div>
-                            <div style="font-size:11pt;margin-top:2mm;">
+                            <div style="font-size:12pt;margin-top:2mm;">
                                 Registre des achats, ventes, réceptions et
                                 livraisons de matières d'or, d'argent et de platine
                             </div>
                         </div>
 
-                        <div style="margin-top:9mm;font-size:10pt;">
-                            <div style="font-weight:bold;font-size:12pt;"
+                        <div style="margin-top:10mm;font-size:11pt;color:#000;">
+                            <div style="font-weight:bold;font-size:13pt;"
                                  t-out="societe.name"/>
                             <div t-if="societe.street" t-out="societe.street"/>
                             <div>
@@ -75,7 +103,8 @@
                             </div>
                         </div>
 
-                        <table style="width:100%;margin-top:9mm;font-size:10pt;">
+                        <table style="width:100%;margin-top:10mm;font-size:11pt;
+                                      color:#000;">
                             <tr>
                                 <td style="width:50%;padding:2mm 0;">
                                     Registre ouvert le
@@ -106,7 +135,8 @@
                             </tr>
                         </table>
 
-                        <div style="margin-top:8mm;font-size:8pt;text-align:justify;">
+                        <div style="margin-top:9mm;font-size:9pt;text-align:justify;
+                                    color:#000;">
                             Les fabricants et les marchands d'or, d'argent et de
                             platine ouvrés ou non ouvrés ou d'alliage de ces
                             métaux, et, d'une manière générale, toutes les
@@ -125,9 +155,9 @@
                             conservé six ans.
                         </div>
 
-                        <div style="margin-top:8mm;border:1px solid #000;
-                                    padding:3mm;height:32mm;">
-                            <div style="font-weight:bold;font-size:9pt;">
+                        <div style="margin-top:9mm;border:1px solid #1b3f6b;
+                                    padding:3mm;height:34mm;">
+                            <div style="font-weight:bold;font-size:10pt;">
                                 Visa du commissaire de police ou du maire
                             </div>
                         </div>
@@ -135,81 +165,124 @@
 
                     <!-- Réglure -->
                     <div style="page-break-before:always;"/>
-                    <div style="font-weight:bold;font-size:10pt;margin-bottom:2mm;"
-                         t-out="societe.name"/>
-                    <table style="table-layout:fixed;width:100%;font-size:6.6pt;
+                    <div style="font-weight:bold;font-size:10pt;margin-bottom:2mm;
+                                color:#1b3f6b;" t-out="societe.name"/>
+                    <table style="table-layout:fixed;width:100%;font-size:6.5pt;
                                   border-collapse:collapse;">
                         <colgroup>
-                            <col style="width:6.5%"/><col style="width:5%"/>
-                            <col style="width:13%"/><col style="width:11%"/>
-                            <col style="width:20%"/><col style="width:4%"/>
-                            <col style="width:5.5%"/><col style="width:4%"/>
-                            <col style="width:7.5%"/><col style="width:6%"/>
-                            <col style="width:5.5%"/><col style="width:5%"/>
-                            <col style="width:7%"/>
+                            <col style="width:5%"/><col style="width:4%"/>
+                            <col style="width:15%"/><col style="width:13%"/>
+                            <col style="width:3%"/>
+                            <col style="width:3.2%"/><col style="width:3.2%"/><col style="width:3.2%"/>
+                            <col style="width:3.2%"/><col style="width:3.2%"/><col style="width:3.2%"/>
+                            <col style="width:3.2%"/><col style="width:3.2%"/><col style="width:3.2%"/>
+                            <col style="width:3.2%"/><col style="width:3.2%"/><col style="width:3.2%"/>
+                            <col style="width:3.8%"/><col style="width:3.8%"/>
+                            <col style="width:14%"/>
                         </colgroup>
                         <thead>
-                            <tr style="background:#e8e8e8;">
-                                <th style="border:1px solid #000;padding:1mm;">N° d'ordre</th>
-                                <th style="border:1px solid #000;padding:1mm;">Date d'entrée</th>
-                                <th style="border:1px solid #000;padding:1mm;">Vendeur — nom, prénoms, domicile</th>
-                                <th style="border:1px solid #000;padding:1mm;">Pièce d'identité</th>
-                                <th style="border:1px solid #000;padding:1mm;">Nature et description des objets</th>
-                                <th style="border:1px solid #000;padding:1mm;" class="text-end">Nombre</th>
-                                <th style="border:1px solid #000;padding:1mm;" class="text-end">Poids (g)</th>
-                                <th style="border:1px solid #000;padding:1mm;" class="text-end">Titre (‰)</th>
-                                <th style="border:1px solid #000;padding:1mm;">Origine</th>
-                                <th style="border:1px solid #000;padding:1mm;" class="text-end">Prix d'achat</th>
-                                <th style="border:1px solid #000;padding:1mm;">Règlement</th>
-                                <th style="border:1px solid #000;padding:1mm;">Date de sortie</th>
-                                <th style="border:1px solid #000;padding:1mm;">Destinataire</th>
+                            <tr>
+                                <th t-att-style="entete" rowspan="3">
+                                    N° d'ordre<br/>ou<br/>référence</th>
+                                <th t-att-style="entete" rowspan="3">
+                                    Date<br/>des<br/>entrées</th>
+                                <th t-att-style="entete" rowspan="3">
+                                    <div style="font-size:8pt;letter-spacing:1px;">
+                                        Origine des achats</div>
+                                    <div style="font-size:8pt;letter-spacing:1px;">
+                                        Noms et adresses des fournisseurs</div>
+                                    <div style="font-size:6pt;">(en cas d'achat à
+                                        des particuliers noter le nom et le n° de
+                                        la carte d'identité)</div>
+                                </th>
+                                <th t-att-style="entete" rowspan="3">
+                                    Désignation des objets achetés ou confiés,
+                                    et/ou n° d'inscription dans un catalogue
+                                    comptable officiel</th>
+                                <th t-att-style="entete" rowspan="3">Nombre</th>
+                                <t t-foreach="canaux" t-as="canal">
+                                    <th t-att-style="entete + (canal in gris
+                                                               and fond_gris or '')"
+                                        t-att-colspan="canal == 'tiers' and 4 or 3"
+                                        t-out="titres[canal]"/>
+                                </t>
+                                <th t-att-style="entete" rowspan="3">
+                                    Date<br/>de sortie<br/>des objets<br/>vendus</th>
+                                <th t-att-style="entete" rowspan="3">
+                                    <span style="font-size:8pt;letter-spacing:1px;">
+                                        Observations</span></th>
+                            </tr>
+                            <tr>
+                                <t t-foreach="canaux" t-as="canal">
+                                    <th t-att-style="entete + (canal in gris
+                                                               and fond_gris or '')"
+                                        colspan="3">
+                                        <span style="font-size:8pt;letter-spacing:2px;">
+                                            Poids</span></th>
+                                </t>
+                                <th t-att-style="entete + fond_gris" rowspan="2">
+                                    Date<br/>de la<br/>remise</th>
+                            </tr>
+                            <tr>
+                                <t t-foreach="canaux" t-as="canal">
+                                    <t t-set="st" t-value="entete + (canal in gris
+                                                                     and fond_gris or '')"/>
+                                    <th t-att-style="st">Platine</th>
+                                    <th t-att-style="st">Or et<br/>alliages</th>
+                                    <th t-att-style="st">Argent</th>
+                                </t>
                             </tr>
                         </thead>
                         <tbody>
                             <tr t-foreach="lignes" t-as="lot"
                                 style="page-break-inside:avoid;">
-                                <td style="border:1px solid #000;padding:1mm;
-                                           font-weight:bold;" t-out="lot.name"/>
-                                <td style="border:1px solid #000;padding:1mm;"
-                                    t-out="lot.police_entry_date"
-                                    t-options="{'widget': 'date'}"/>
-                                <td style="border:1px solid #000;padding:1mm;
-                                           white-space:pre-line;"
-                                    t-out="lot._police_vendeur() or
-                                           (lot.police_opening and
-                                            'Registre antérieur' or '')"/>
-                                <td style="border:1px solid #000;padding:1mm;
-                                           white-space:pre-line;"
-                                    t-out="lot._police_piece_identite()"/>
-                                <td style="border:1px solid #000;padding:1mm;">
+                                <t t-set="cases" t-value="lot._police_cases_poids()"/>
+                                <!-- Valeurs dans un `span` enfant, jamais en
+                                     `t-out` sur la cellule : QWeb retire la
+                                     balise quand la valeur est vide, et la
+                                     ligne se décalerait d'une colonne. -->
+                                <td t-att-style="cellule_ref">
+                                    <span t-out="lot.name"/></td>
+                                <td t-att-style="cellule">
+                                    <span t-out="lot.police_entry_date"
+                                          t-options="{'widget': 'date'}"/></td>
+                                <td t-att-style="cellule_pre">
+                                    <t t-set="identite" t-value="lot._police_vendeur()"/>
+                                    <span t-if="identite" t-out="identite"/>
+                                    <span t-else="" style="font-style:italic;"
+                                          t-out="lot.police_opening
+                                                 and 'Registre antérieur' or ''"/>
+                                    <div t-if="lot._police_piece_identite()"
+                                         style="white-space:pre-line;"
+                                         t-out="lot._police_piece_identite()"/>
+                                    <div t-if="lot.police_origin"
+                                         style="font-style:italic;"
+                                         t-out="lot.police_origin"/>
+                                </td>
+                                <td t-att-style="cellule">
                                     <span t-out="lot.product_id.name"/>
                                     <div t-if="lot.police_description"
                                          style="white-space:pre-line;font-style:italic;"
                                          t-out="lot.police_description"/>
                                 </td>
-                                <td style="border:1px solid #000;padding:1mm;"
-                                    class="text-end" t-out="lot.police_quantity"/>
-                                <td style="border:1px solid #000;padding:1mm;"
-                                    class="text-end" t-out="lot.police_weight"/>
-                                <td style="border:1px solid #000;padding:1mm;"
-                                    class="text-end" t-out="lot.police_fineness"/>
-                                <td style="border:1px solid #000;padding:1mm;"
-                                    t-out="lot.police_origin"/>
-                                <td style="border:1px solid #000;padding:1mm;"
-                                    class="text-end">
-                                    <span t-if="not lot.police_opening"
-                                          t-out="lot.police_purchase_price"
-                                          t-options="{'widget': 'monetary',
-                                                      'display_currency': lot.police_currency_id}"/>
-                                </td>
-                                <td style="border:1px solid #000;padding:1mm;"
-                                    t-out="lot.police_payment_mode"/>
-                                <td style="border:1px solid #000;padding:1mm;"
-                                    t-out="lot.police_exit_date"
-                                    t-options="{'widget': 'date'}"/>
-                                <td style="border:1px solid #000;padding:1mm;"
-                                    t-out="lot.police_exit_picking_id.partner_id.name
-                                           or lot.police_exit_picking_id.name or ''"/>
+                                <td t-att-style="cellule_num">
+                                    <span t-out="lot.police_quantity"/></td>
+                                <t t-foreach="canaux" t-as="canal">
+                                    <t t-set="st" t-value="cellule_num + (
+                                            canal in gris and fond_gris or '')"/>
+                                    <t t-foreach="['platine', 'or', 'argent']"
+                                       t-as="metal">
+                                        <td t-att-style="st">
+                                            <span t-out="cases['%s/%s'
+                                                               % (canal, metal)]"/></td>
+                                    </t>
+                                </t>
+                                <td t-att-style="cellule + fond_gris"/>
+                                <td t-att-style="cellule">
+                                    <span t-out="lot.police_exit_date"
+                                          t-options="{'widget': 'date'}"/></td>
+                                <td t-att-style="cellule_pre">
+                                    <span t-out="lot._police_observations()"/></td>
                             </tr>
                         </tbody>
                     </table>

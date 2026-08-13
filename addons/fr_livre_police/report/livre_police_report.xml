@@ -6,9 +6,12 @@
         en portrait. Marges réduites, la réglure occupe la page.
     -->
     <record id="paperformat_livre_police" model="report.paperformat">
-        <field name="name">Livre de police - A4 paysage</field>
+        <field name="name">Livre de police - A3 paysage</field>
         <field name="default" eval="False"/>
-        <field name="format">A4</field>
+        <!-- Le cahier du commerce étale ses vingt colonnes sur une double
+             page. A3 paysage rend cette double page sur une seule feuille ;
+             imprimé en A4, le tableau se réduit sans se disloquer. -->
+        <field name="format">A3</field>
         <field name="orientation">Landscape</field>
         <field name="margin_top">22</field>
         <field name="margin_bottom">16</field>

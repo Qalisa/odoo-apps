@@ -4,25 +4,32 @@
         <field name="name">stock.lot.list.police</field>
         <field name="model">stock.lot</field>
         <field name="arch" type="xml">
+            <!-- Colonnes dans l'ordre de lecture du registre : origine des
+                 achats, désignation, nombre, poids, puis la sortie. -->
             <list string="Livre de police" create="false"
+                  class="o_livre_police_registre"
                   decoration-warning="not police_complete"
                   decoration-muted="police_exit_date">
                 <field name="name" string="N° d'ordre"/>
                 <field name="company_id" groups="base.group_multi_company"/>
-                <field name="police_entry_date" string="Entrée" widget="date"/>
-                <field name="police_exit_date" string="Sortie" widget="date"/>
-                <field name="police_exit_picking_id" string="Bon de sortie" optional="show"/>
-                <field name="product_id" string="Nature de l'objet"/>
-                <field name="police_quantity" string="Nombre"/>
-                <field name="police_quantity_on_hand" string="Restant"/>
-                <field name="police_weight" sum="Poids total"/>
-                <field name="police_fineness" optional="show"/>
+                <field name="police_entry_date" string="Date d'entrée"
+                       options="{'show_time': False}"/>
                 <field name="police_seller_id" string="Vendeur"/>
-                <field name="police_origin"/>
-                <field name="police_description" string="Description"
+                <field name="police_origin" string="Origine"/>
+                <field name="product_id" string="Désignation"/>
+                <field name="police_description" string="Description des objets"
                        optional="show"/>
-                <field name="police_purchase_price" sum="Total"/>
-                <field name="police_payment_mode"/>
+                <field name="police_quantity" string="Nombre"/>
+                <field name="police_weight" string="Poids (g)" sum="Poids total"/>
+                <field name="police_fineness" string="Titre (‰)" optional="show"/>
+                <field name="police_quantity_on_hand" string="Restant"/>
+                <field name="police_purchase_price" string="Prix d'achat"
+                       sum="Total"/>
+                <field name="police_payment_mode" string="Règlement"/>
+                <field name="police_exit_date" string="Date de sortie"
+                       options="{'show_time': False}"/>
+                <field name="police_exit_picking_id" string="Bon de sortie"
+                       optional="show"/>
                 <field name="police_currency_id" column_invisible="1"/>
                 <field name="police_opening" string="Ouverture" optional="hide"/>
                 <field name="police_complete" optional="hide"/>

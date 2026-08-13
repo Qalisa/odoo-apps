@@ -231,6 +231,88 @@ class StockLot(models.Model):
             return valeur.display_name or "—"
         return "—" if valeur in (False, None, '') else str(valeur)
 
+    # ------------------------------------------------------------------
+    # Ventilation du registre papier
+    # ------------------------------------------------------------------
+    #: Canaux d'acquisition, en colonnes du registre.
+    CANAUX = ('fabricants', 'particuliers', 'autres', 'tiers')
+    #: Colonnes de poids, telles que le registre les nomme.
+    METAUX = ('platine', 'or', 'argent')
+    #: Canaux que l'établissement ne pratique pas. Leurs colonnes restent au
+    #: registre, grisées : les retirer donnerait à lire un registre remanié,
+    #: alors que le grisé dit exactement ce qui est — ce canal existe, il ne
+    #: sert pas ici. Déclarés à côté de `_police_canal`, qui ne les rend
+    #: jamais : l'un ne peut pas dériver de l'autre.
+    CANAUX_INUTILISES = ('fabricants', 'tiers')
+
+    def _police_canal(self):
+        """Sous quel canal d'acquisition le poids se porte-t-il ?
+
+        Le registre ne totalise pas le métal : il le ventile selon de qui il
+        vient. « Fabricants » vise l'achat de neuf au professionnel, « objets
+        confiés par des tiers » le dépôt-vente — deux canaux que l'agence ne
+        pratique pas, dont les colonnes restent vides sans cesser d'exister.
+        """
+        self.ensure_one()
+        if self.police_opening or not self.police_seller_id:
+            return 'autres'
+        return 'autres' if self.police_seller_id.is_company else 'particuliers'
+
+    def _police_colonne_metal(self):
+        """Colonne de métal, ou None hors des trois du registre.
+
+        Le registre date d'avant le négoce du palladium et du rhodium : il
+        n'a que platine, or et argent. Un poids sans colonne n'est pas perdu,
+        il passe en observations plutôt que d'être rangé sous un faux métal.
+        """
+        self.ensure_one()
+        nom = (self.product_id.product_tmpl_id.metal_nature.name or '').strip().lower()
+        if nom == 'platine':
+            return 'platine'
+        if nom == 'argent':
+            return 'argent'
+        if nom == 'or':
+            return 'or'
+        return None
+
+    def _police_cases_poids(self):
+        """Les douze cases de poids, dont une seule est servie."""
+        self.ensure_one()
+        cases = {'%s/%s' % (canal, metal): None
+                 for canal in self.CANAUX for metal in self.METAUX}
+        metal = self._police_colonne_metal()
+        if metal and self.police_weight:
+            cases['%s/%s' % (self._police_canal(), metal)] = self.police_weight
+        return cases
+
+    def _police_observations(self):
+        """Ce que le registre n'a pas de colonne pour porter."""
+        self.ensure_one()
+        lignes = []
+        if self.police_opening:
+            lignes.append(_("Inventaire d'ouverture — reprise du registre "
+                            "antérieur"))
+        if self.police_fineness:
+            lignes.append(_("Titre : %s \u2030", self.police_fineness))
+        if not self._police_colonne_metal() and self.police_weight:
+            # Le poids doit figurer quelque part, fût-ce en toutes lettres.
+            lignes.append(_(
+                "%(metal)s : %(poids)s g",
+                metal=self.product_id.product_tmpl_id.metal_nature.name
+                or _("Métal non précisé"),
+                poids=self.police_weight))
+        if self.police_purchase_price and not self.police_opening:
+            prix = self.police_currency_id.format(self.police_purchase_price) \
+                if self.police_currency_id else str(self.police_purchase_price)
+            lignes.append(_("Payé %(prix)s%(mode)s", prix=prix,
+                            mode=" — %s" % self.police_payment_mode
+                            if self.police_payment_mode else ""))
+        if self.police_exit_picking_id:
+            destinataire = (self.police_exit_picking_id.partner_id.name
+                            or self.police_exit_picking_id.name)
+            lignes.append(_("Relevé : %s", destinataire))
+        return '\n'.join(lignes)
+
     def _police_vendeur(self):
         """Nom, prénoms et domicile du vendeur, tels que le registre les exige.
 
@@ -257,7 +339,8 @@ class StockLot(models.Model):
 
         Mentions imposées par l'art. R321-4 : « la nature, le numéro et la
         date de délivrance de la pièce d'identité produite […] avec
-        l'indication de l'autorité qui l'a établie ».
+        l'indication de l'autorité qui l'a établie ». Le lieu de délivrance
+        n'en fait pas partie — le texte demande l'autorité émettrice.
         """
         self.ensure_one()
         partenaire = self.police_seller_id
@@ -268,14 +351,12 @@ class StockLot(models.Model):
         premiere = natures.get(partenaire.id_doc_type, partenaire.id_doc_type)
         if partenaire.id_doc_number:
             premiere += " n° %s" % partenaire.id_doc_number
-        delivrance = []
+        delivrance = ""
         if partenaire.id_doc_issue_date:
-            delivrance.append("délivrée le %s" % format_date(
-                self.env, partenaire.id_doc_issue_date))
-        if partenaire.id_doc_issue_place:
-            delivrance.append("à %s" % partenaire.id_doc_issue_place)
+            delivrance = "délivrée le %s" % format_date(
+                self.env, partenaire.id_doc_issue_date)
         return '\n'.join(filter(None, [
-            premiere, ' '.join(delivrance), partenaire.id_doc_authority or '']))
+            premiere, delivrance, partenaire.id_doc_authority or '']))
 
     @api.model
     def _police_create_entry(self, values):

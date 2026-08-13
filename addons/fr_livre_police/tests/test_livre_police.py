@@ -2,6 +2,7 @@
 """Le registre suit la matière : entrée au rachat, sortie à la relève."""
 
 import html
+import re
 
 from odoo import fields
 from odoo.exceptions import UserError
@@ -416,7 +417,6 @@ class TestMentionsEditees(TestLivrePolice):
             'street': "14 rue des Clercs", 'zip': '57000', 'city': "Metz",
             'id_doc_type': 'cni', 'id_doc_number': '051257304118',
             'id_doc_issue_date': fields.Date.to_date('2019-06-03'),
-            'id_doc_issue_place': "Metz",
             'id_doc_authority': "Préfecture de la Moselle",
         })
 
@@ -439,12 +439,13 @@ class TestMentionsEditees(TestLivrePolice):
         self.assertIn("57000 Metz", mention)
 
     def test_piece_identite_porte_les_quatre_mentions(self):
+        """Nature, numéro, date de délivrance, autorité — et rien de plus :
+        l'art. R321-4 n'exige pas le lieu de délivrance."""
         lot = self._lot_vendu_par(self._particulier())
         mention = lot._police_piece_identite()
         self.assertIn("Carte nationale d'identité", mention)
         self.assertIn("051257304118", mention)
         self.assertIn("03/06/2019", mention)
-        self.assertIn("Metz", mention)
         self.assertIn("Préfecture de la Moselle", mention)
 
     def test_ligne_d_ouverture_n_invente_ni_vendeur_ni_piece(self):
@@ -481,11 +482,15 @@ class TestMentionsEditees(TestLivrePolice):
         # QWeb échappe les données : l'apostrophe y devient `&#39;`.
         edition = html.unescape(edition)
 
-        for entete in ("N° d'ordre", "Date d'entrée",
-                       "Vendeur — nom, prénoms, domicile", "Pièce d'identité",
-                       "Nature et description des objets", "Nombre", "Poids (g)", "Titre",
-                       "Origine", "Prix d'achat", "Règlement",
-                       "Date de sortie", "Destinataire"):
+        for entete in ("N° d'ordre", "référence", "entrées",
+                       "Origine des achats",
+                       "Noms et adresses des fournisseurs",
+                       "Désignation des objets achetés ou confiés,",
+                       "Nombre", "Objets achetés aux fabricants",
+                       "Objets d’occasion achetés à des particuliers",
+                       "Autres achats", "Objets confiés par des tiers",
+                       "Poids", "Platine", "Or et", "Argent",
+                       "remise", "vendus", "Observations"):
             self.assertIn(entete, edition, entete)
 
         for mention in (lot.name, "KIEFFER", "Marie-Claire",
@@ -585,3 +590,117 @@ class TestDescriptionDesObjets(TestLivrePolice):
         self.assertIn(self.NOTE, lot._police_mentions_normalisees())
         self.assertFalse(self.env['livre.police.evenement']._verifier_chaine(
             self.company))
+
+
+@tagged('post_install', '-at_install')
+class TestVentilationDuRegistre(TestLivrePolice):
+    """Le registre ne totalise pas le métal : il le ventile.
+
+    Douze cases de poids — quatre canaux d'acquisition croisés avec platine,
+    or et alliages, argent. Une ligne n'en sert qu'une.
+    """
+
+    def _lot_particulier(self):
+        partenaire = self.env['res.partner'].create({
+            'lastname': "Muller", 'firstname': "Paul", 'is_company': False})
+        return self.env['stock.lot']._police_create_entry({
+            'product_id': self.piece.product_variant_id.id,
+            'company_id': self.company.id,
+            'police_seller_id': partenaire.id,
+            'police_origin': "Succession", 'police_quantity': 2,
+            'police_weight': 12.9032,
+            'police_entry_date': fields.Datetime.now(),
+        })
+
+    def test_l_or_d_un_particulier_ne_sert_qu_une_case(self):
+        lot = self._lot_particulier()
+        cases = lot._police_cases_poids()
+        self.assertEqual(cases['particuliers/or'], 12.9032)
+        servies = [cle for cle, poids in cases.items() if poids]
+        self.assertEqual(servies, ['particuliers/or'])
+
+    def test_une_societe_verse_aux_autres_achats(self):
+        lot = self.env['stock.lot']._police_create_entry({
+            'product_id': self.piece.product_variant_id.id,
+            'company_id': self.company.id,
+            'police_seller_id': self.vendeur.id,
+            'police_origin': "Rachat confrère", 'police_quantity': 1,
+            'police_weight': 6.4516,
+            'police_entry_date': fields.Datetime.now(),
+        })
+        self.assertEqual(lot._police_canal(), 'autres')
+        self.assertEqual(lot._police_cases_poids()['autres/or'], 6.4516)
+
+    def test_une_ligne_d_ouverture_verse_aux_autres_achats(self):
+        lot = self.env['stock.lot']._police_create_entry({
+            'product_id': self.piece.product_variant_id.id,
+            'company_id': self.company.id, 'police_opening': True,
+            'police_origin': "Reprise", 'police_quantity': 1,
+            'police_weight': 6.4516,
+            'police_entry_date': fields.Datetime.now(),
+        })
+        self.assertEqual(lot._police_canal(), 'autres')
+
+    def test_un_metal_hors_colonnes_passe_en_observations(self):
+        """Le registre n'a que platine, or et argent : le palladium n'a pas
+        de case. Son poids passe en observations plutôt que sous un faux
+        métal — il ne disparaît pas."""
+        palladium = self.env.ref('fr_numismatics_metals.metal_nature_palladium')
+        article = self.env['product.template'].create({
+            'name': "Palladium (test)", 'metal_nature': palladium.id,
+            'metal_quantity_mode': 'gram'})
+        lot = self.env['stock.lot']._police_create_entry({
+            'product_id': article.product_variant_id.id,
+            'company_id': self.company.id,
+            'police_seller_id': self.vendeur.id,
+            'police_origin': "Rachat", 'police_quantity': 1,
+            'police_weight': 31.5,
+            'police_entry_date': fields.Datetime.now(),
+        })
+        self.assertIsNone(lot._police_colonne_metal())
+        self.assertFalse([p for p in lot._police_cases_poids().values() if p])
+        self.assertIn("Palladium", lot._police_observations())
+        self.assertIn("31.5", lot._police_observations())
+
+    def test_les_canaux_non_pratiques_sont_grises(self):
+        """Les colonnes inutilisées restent au registre, grisées : les
+        retirer donnerait à lire un registre remanié."""
+        lot = self._lot_particulier()
+        rapport = self.env.ref('fr_livre_police.action_report_livre_police')
+        edition = rapport._render_qweb_html(rapport.report_name, lot.ids)[0]
+        edition = edition.decode() if isinstance(edition, bytes) else edition
+        edition = html.unescape(edition)
+
+        def grise(intitule):
+            motif = r'<th style="([^"]*)"[^>]*>\s*' + re.escape(intitule)
+            trouve = re.search(motif, edition)
+            self.assertTrue(trouve, intitule)
+            return '#e4e9ef' in trouve.group(1)
+
+        for inutilise in ("Objets achetés aux fabricants",
+                          "Objets confiés par des tiers"):
+            self.assertTrue(grise(inutilise), inutilise)
+        for pratique in ("Objets d’occasion achetés à des particuliers",
+                         "Autres achats"):
+            self.assertFalse(grise(pratique), pratique)
+
+    def test_chaque_ligne_a_autant_de_cellules_que_de_colonnes(self):
+        """Une cellule vide ne doit pas emporter sa colonne.
+
+        `t-out` retire la balise quand la valeur est nulle : une case de
+        poids non servie ferait disparaître son `<td>` et décalerait toute
+        la ligne — le poids d'un particulier se lirait sous « fabricants ».
+        """
+        lots = self._lot_particulier()
+        rapport = self.env.ref('fr_livre_police.action_report_livre_police')
+        edition = rapport._render_qweb_html(rapport.report_name, lots.ids)[0]
+        edition = edition.decode() if isinstance(edition, bytes) else edition
+
+        colonnes = len(re.findall(r'<col ', edition))
+        self.assertEqual(colonnes, 20)
+        corps = edition[edition.index('<tbody>'):edition.index('</tbody>')]
+        for rang, ligne in enumerate(re.findall(r'<tr[^>]*>(.*?)</tr>',
+                                                corps, re.S), 1):
+            self.assertEqual(ligne.count('<td'), colonnes,
+                             "ligne %d : %d cellules pour %d colonnes"
+                             % (rang, ligne.count('<td'), colonnes))

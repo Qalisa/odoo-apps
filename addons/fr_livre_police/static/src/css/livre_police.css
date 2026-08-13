@@ -1,0 +1,13 @@
+/*
+ * Le registre est large : dix-huit colonnes de mentions obligatoires.
+ * Odoo répartit par défaut les colonnes sur la largeur disponible, ce qui
+ * tronque les en-têtes et les valeurs — « Bon de so… », « Titre (millè… ».
+ * Sur un registre légal, une mention coupée ne se lit pas.
+ *
+ * On impose donc une largeur minimale : le tableau déborde, et le conteneur
+ * de liste, qui porte déjà `overflow: auto`, défile horizontalement.
+ */
+.o_livre_police_registre table.o_list_table,
+table.o_list_table.o_livre_police_registre {
+    min-width: 2400px;
+}

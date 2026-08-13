@@ -58,6 +58,11 @@ entrepôt et sa séquence de numéros d'ordre.
         'wizard/livre_police_ouverture_views.xml',
         'views/menu.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'fr_livre_police/static/src/css/livre_police.css',
+        ],
+    },
     'installable': True,
     'application': False,
     'auto_install': False,
