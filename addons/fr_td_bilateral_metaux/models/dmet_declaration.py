@@ -24,7 +24,7 @@ _SEVERITY = [
 
 class DmetDeclaration(models.Model):
     _name = 'fr.dmet.declaration'
-    _description = "Déclaration DMET (achats au détail de métaux)"
+    _description = "Déclaration d'achats au détail de métaux (formulaire 2093)"
     _order = 'millesime desc, id desc'
 
     name = fields.Char(compute='_compute_name', store=True)
@@ -322,7 +322,7 @@ class DmetDeclaration(models.Model):
 
 class DmetAnomaly(models.Model):
     _name = 'fr.dmet.anomaly'
-    _description = "Anomalie de pré-contrôle DMET"
+    _description = "Anomalie de pré-contrôle de la déclaration d'achats de métaux"
     _order = 'severity, zone'
 
     declaration_id = fields.Many2one(
@@ -348,7 +348,7 @@ class DmetAnomaly(models.Model):
 
 class DmetLine(models.Model):
     _name = 'fr.dmet.line'
-    _description = "Ligne de dépôt DMET (aperçu enregistrement Q)"
+    _description = "Ligne de la déclaration d'achats de métaux (enregistrement Q)"
     _order = 'montant desc, id'
 
     declaration_id = fields.Many2one(
