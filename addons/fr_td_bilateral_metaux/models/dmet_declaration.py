@@ -185,6 +185,15 @@ class DmetDeclaration(models.Model):
     def _collect_vendors(self):
         """Agrège les rachats (avoirs) par vendeur sur les établissements.
 
+        Le vendeur est l'**entité commerciale**, pas le contact retenu sur la
+        pièce : quand une société vend, la personne qui s'est présentée pour
+        elle n'est pas un vendeur particulier — elle la représente (livre de
+        police, art. R321-3 2°). Grouper sur `commercial_partner_id` évite
+        deux erreurs de déclaration : déclarer un salarié comme vendeur
+        personne physique, et scinder les ventes d'une même société entre ses
+        contacts. Pour un particulier, l'entité commerciale est lui-même : le
+        groupement est inchangé.
+
         Retourne (liste de dicts vendeur, map référence -> res.partner).
         """
         self.ensure_one()
@@ -197,7 +206,7 @@ class DmetDeclaration(models.Model):
             ('invoice_date', '<=', d_end),
         ]
         groups = self.env['account.move']._read_group(
-            domain, groupby=['partner_id'],
+            domain, groupby=['commercial_partner_id'],
             aggregates=['amount_total:sum', '__count'],
         )
         vendors = []
