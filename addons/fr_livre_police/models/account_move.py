@@ -68,6 +68,60 @@ class AccountMove(models.Model):
     police_picking_id = fields.Many2one(
         'stock.picking', string="Réception au registre", readonly=True, copy=False,
     )
+    police_representative_id = fields.Many2one(
+        'res.partner', string="Représentant du vendeur",
+        compute='_compute_police_representative_id', store=True, readonly=False,
+        ondelete='restrict', index='btree_not_null',
+        domain="[('id', 'child_of', police_seller_company_id),"
+               " ('is_company', '=', False)]",
+        help="Personne physique qui a réalisé l'opération pour le compte de "
+             "la société venderesse (art. R321-3 2°). Le registre exige ses "
+             "nom, prénoms, qualité et domicile, et les références de sa "
+             "pièce d'identité : une société ne se présente pas au comptoir, "
+             "quelqu'un s'y présente pour elle.",
+    )
+    police_seller_company_id = fields.Many2one(
+        'res.partner', string="Société venderesse",
+        compute='_compute_police_representative_id', store=True,
+        help="Société pour le compte de laquelle la vente est faite, s'il y "
+             "en a une. Déduite du contact retenu sur la pièce.",
+    )
+    police_representative_required = fields.Boolean(
+        string="Représentant exigé",
+        compute='_compute_police_representative_required',
+    )
+
+    @api.depends('partner_id')
+    def _compute_police_representative_id(self):
+        """Qui vend, et pour le compte de qui ?
+
+        Deux saisies mènent au même achat à une société : retenir la société
+        elle-même, ou retenir directement le contact rattaché. Le second cas
+        porte déjà la réponse — la personne physique est là, la société est
+        son parent commercial ; on ne la redemande pas. Le premier la laisse
+        ouverte : c'est le champ que la comptabilisation réclamera.
+        """
+        for piece in self:
+            partenaire = piece.partner_id
+            societe = partenaire.commercial_partner_id
+            if partenaire and societe.is_company:
+                piece.police_seller_company_id = societe
+                if not partenaire.is_company:
+                    piece.police_representative_id = partenaire
+                elif piece.police_representative_id.commercial_partner_id != societe:
+                    piece.police_representative_id = False
+            else:
+                piece.police_seller_company_id = False
+                piece.police_representative_id = False
+
+    @api.depends('police_seller_company_id', 'move_type', 'date',
+                 'company_id.police_start_date',
+                 'invoice_line_ids.police_origin_required')
+    def _compute_police_representative_required(self):
+        for piece in self:
+            piece.police_representative_required = bool(
+                piece.police_seller_company_id
+                and piece.invoice_line_ids.filtered('police_origin_required'))
 
     def _police_description(self, ligne):
         """Description des objets d'une ligne : les notes qui la suivent.
@@ -203,6 +257,8 @@ class AccountMove(models.Model):
         est donc posé à la comptabilisation, tant qu'il est encore au comptoir.
         """
         self.ensure_one()
+        if self.police_seller_company_id:
+            return self._police_check_representative()
         vendeur = self.partner_id
         if vendeur and not vendeur.is_company and not vendeur.police_qualite_id:
             raise UserError(_(
@@ -210,6 +266,41 @@ class AccountMove(models.Model):
                 "de police l'exige du vendeur (art. R321-3 1°) : complétez sa "
                 "fiche avant de comptabiliser ce rachat.",
                 vendeur.display_name))
+
+    def _police_check_representative(self):
+        """Mentions exigées quand le vendeur est une personne morale.
+
+        L'art. R321-3 2° veut, outre la dénomination et le siège, « les nom,
+        prénoms, qualité et domicile du représentant de la personne morale qui
+        a effectué l'opération pour son compte, avec les références de la
+        pièce d'identité produite ». « Références » est plus léger que
+        l'énumération du 1° : on s'en tient à la nature et au numéro, sans
+        réclamer la date ni l'autorité.
+        """
+        self.ensure_one()
+        representant = self.police_representative_id
+        if not representant:
+            raise UserError(_(
+                "Ce rachat est fait à « %s ». Le livre de police exige "
+                "l'identité de la personne qui a réalisé l'opération pour son "
+                "compte (art. R321-3 2°) : retenez le contact rattaché à la "
+                "société dans « Représentant du vendeur ».",
+                self.police_seller_company_id.display_name))
+        manques = []
+        if not representant.police_qualite_id:
+            manques.append(_("sa qualité (gérant, mandataire…)"))
+        if not representant.street or not representant.city:
+            manques.append(_("son domicile"))
+        if not representant.id_doc_type or not representant.id_doc_number:
+            manques.append(_("les références de sa pièce d'identité"))
+        if manques:
+            raise UserError(_(
+                "La fiche de « %(nom)s », qui vend pour le compte de "
+                "« %(societe)s », est incomplète au regard du livre de police "
+                "(art. R321-3 2°). Il manque : %(manques)s.",
+                nom=representant.display_name,
+                societe=self.police_seller_company_id.display_name,
+                manques=", ".join(manques)))
 
     def _police_create_entry(self):
         """Crée la réception et les lots du registre pour cet avoir."""
@@ -252,8 +343,15 @@ class AccountMove(models.Model):
             lot = Lot._police_create_entry({
                 'product_id': ligne.product_id.id,
                 'company_id': self.company_id.id,
-                'police_seller_id': self.partner_id.id,
-                'police_seller_qualite_id': self.partner_id.police_qualite_id.id,
+                # Le vendeur est la société quand il y en a une ; la personne
+                # physique qui a agi pour elle est le représentant. La qualité
+                # inscrite est toujours celle de qui s'est présenté.
+                'police_seller_id': (self.police_seller_company_id
+                                     or self.partner_id).id,
+                'police_representative_id': self.police_representative_id.id,
+                'police_seller_qualite_id': (
+                    self.police_representative_id
+                    or self.partner_id).police_qualite_id.id,
                 'police_origin_id': ligne.police_origin_id.id,
                 'police_description': self._police_description(ligne),
                 'police_weight': ligne.metal_weight,

@@ -48,6 +48,17 @@
             </div>
             <field name="ref" position="after">
                 <field name="police_picking_id" invisible="1"/>
+                <field name="police_seller_company_id" invisible="1"/>
+                <field name="police_representative_required" invisible="1"/>
+                <!-- Une société ne se présente pas au comptoir : quelqu'un s'y
+                     présente pour elle, et c'est lui que le registre nomme
+                     (art. R321-3 2°). -->
+                <field name="police_representative_id"
+                       invisible="not police_seller_company_id"
+                       required="police_representative_required"
+                       readonly="state == 'posted'"
+                       options="{'no_quick_create': True}"
+                       placeholder="Personne qui vend pour la société"/>
             </field>
         </field>
     </record>

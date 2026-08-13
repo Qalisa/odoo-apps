@@ -35,6 +35,13 @@ class StockLot(models.Model):
         'res.partner', string="Vendeur", copy=False,
         help="Personne qui a vendu ou apporté l'objet (art. R321-3 1°).",
     )
+    police_representative_id = fields.Many2one(
+        'res.partner', string="Représentant du vendeur", copy=False,
+        ondelete='restrict',
+        help="Personne physique ayant réalisé l'opération pour le compte de "
+             "la société venderesse (art. R321-3 2°). Vide lorsque le vendeur "
+             "est un particulier : il agit alors pour lui-même.",
+    )
     police_seller_qualite_id = fields.Many2one(
         'livre.police.qualite', string="Qualité du vendeur", copy=False,
         ondelete='restrict',
@@ -143,6 +150,7 @@ class StockLot(models.Model):
                 lambda q: q.location_id.usage == 'internal').mapped('quantity'))
 
     @api.depends('police_registered', 'police_seller_id', 'police_origin_id',
+                 'police_representative_id',
                  'police_seller_qualite_id', 'police_weight',
                  'police_purchase_price', 'police_payment_mode',
                  'police_entry_date', 'police_opening')
@@ -170,13 +178,14 @@ class StockLot(models.Model):
             if not lot.police_opening:
                 if not lot.police_seller_id:
                     manques.append(_("vendeur"))
-                elif (not lot.police_seller_id.is_company
-                        and not lot.police_seller_qualite_id):
-                    # Pour une personne morale, l'art. R321-3 2° veut la
-                    # qualité du *représentant* — que le module ne recueille
-                    # pas encore. Ne rien exiger ici plutôt que d'exiger la
-                    # mauvaise mention.
-                    manques.append(_("qualité du vendeur"))
+                else:
+                    # Personne morale : l'art. R321-3 2° veut le représentant
+                    # et sa qualité, pas celle de la société.
+                    if (lot.police_seller_id.is_company
+                            and not lot.police_representative_id):
+                        manques.append(_("représentant de la société"))
+                    if not lot.police_seller_qualite_id:
+                        manques.append(_("qualité du vendeur"))
                 if not lot.police_purchase_price:
                     manques.append(_("prix d'achat"))
                 if not lot.police_payment_mode:
@@ -221,6 +230,7 @@ class StockLot(models.Model):
             'poids': round(self.police_weight or 0.0, 4),
             'titre': round(self.police_fineness or 0.0, 1),
             'vendeur': self.police_seller_id.display_name or None,
+            'representant': self.police_representative_id.display_name or None,
             'qualite': self.police_seller_qualite_id.name or None,
             'provenance': self.police_origin_id.name or None,
             'description': self.police_description or None,
@@ -373,14 +383,31 @@ class StockLot(models.Model):
         partenaire = self.police_seller_id
         if not partenaire:
             return ""
+        if partenaire.is_company:
+            # 2° : dénomination et siège, puis le représentant. Sans lui, le
+            # registre nommerait un vendeur que personne n'a vu.
+            lignes = [(partenaire.name or '').upper(),
+                      self._police_adresse(partenaire)]
+            representant = self.police_representative_id
+            if representant:
+                lignes.append(_("Représentée par %s", ' '.join(filter(None, [
+                    (representant.lastname or representant.name or '').upper(),
+                    representant.firstname or '']))))
+                lignes.append(self.police_seller_qualite_id.name)
+                lignes.append(self._police_adresse(representant))
+            return '\n'.join(filter(None, lignes))
         etat_civil = ' '.join(filter(None, [
             (partenaire.lastname or partenaire.name or '').upper(),
             partenaire.firstname or '']))
-        domicile = ', '.join(filter(None, [
+        return '\n'.join(filter(None, [
+            etat_civil, self.police_seller_qualite_id.name,
+            self._police_adresse(partenaire)]))
+
+    @api.model
+    def _police_adresse(self, partenaire):
+        return ', '.join(filter(None, [
             partenaire.street, partenaire.street2,
             ' '.join(filter(None, [partenaire.zip, partenaire.city]))]))
-        return '\n'.join(filter(None, [
-            etat_civil, self.police_seller_qualite_id.name, domicile]))
 
     def _police_piece_identite(self):
         """Nature, numéro, date et lieu de délivrance, autorité émettrice.
@@ -391,7 +418,9 @@ class StockLot(models.Model):
         n'en fait pas partie — le texte demande l'autorité émettrice.
         """
         self.ensure_one()
-        partenaire = self.police_seller_id
+        # La pièce est celle de la personne physique qui s'est présentée : le
+        # vendeur lui-même, ou le représentant de la société.
+        partenaire = self.police_representative_id or self.police_seller_id
         if not partenaire or not partenaire.id_doc_type:
             return ""
         natures = dict(partenaire._fields['id_doc_type']._description_selection(

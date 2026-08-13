@@ -24,7 +24,8 @@ class TestLivrePolice(TransactionCase):
                               'company_id': cls.company.id})
         cls.or_ = cls.env.ref('fr_numismatics_metals.metal_nature_or')
         cls.vendeur = cls.env['res.partner'].create(
-            {'name': "Vendeur de test", 'is_company': True})
+            {'name': "Vendeur de test", 'is_company': True,
+             'street': "1 rue de la Gare", 'zip': '57000', 'city': "Metz"})
         cls.fondeur = cls.env['res.partner'].create(
             {'name': "Fondeur de test", 'is_company': True})
         cls.piece = cls.env['product.template'].create({
@@ -38,10 +39,22 @@ class TestLivrePolice(TransactionCase):
         cls.autre_provenance = cls.env.ref(
             'fr_livre_police.provenance_achat_anterieur')
         cls.qualite = cls.env.ref('fr_livre_police.qualite_retraite')
+        # Une société ne se présente pas au comptoir (art. R321-3 2°) : le
+        # vendeur de test a donc son représentant, fiche complète.
+        cls.representant = cls.env['res.partner'].create({
+            'lastname': "Muller", 'firstname': "Anne", 'is_company': False,
+            'parent_id': cls.vendeur.id,
+            'street': "2 rue Serpenoise", 'zip': '57000', 'city': "Metz",
+            'id_doc_type': 'cni', 'id_doc_number': '180357300994',
+            'id_doc_issue_date': fields.Date.to_date('2018-03-15'),
+            'id_doc_authority': "Préfecture de la Moselle",
+            'police_qualite_id': cls.env.ref(
+                'fr_livre_police.qualite_gerant').id,
+        })
 
     def _rachat(self, qty=5, price=600.0, origine=None, produit=None,
                 description="Pièces scellées, millésimes 1907 à 1914",
-                vendeur=None):
+                vendeur=None, representant=None):
         """Un rachat tel qu'il se saisit : la ligne, puis la note qui décrit
         les objets. Sans elle, la comptabilisation est refusée (R321-3)."""
         produit = produit or self.piece.product_variant_id
@@ -63,8 +76,22 @@ class TestLivrePolice(TransactionCase):
             'date': fields.Date.to_date('2026-03-10'),
             'invoice_line_ids': lignes,
         })
+        # Le vendeur par défaut est une société : sans mention contraire, son
+        # représentant est celui de la fixture.
+        if representant is None and vendeur is None:
+            representant = self.representant
+        if representant:
+            move.police_representative_id = representant
         move.action_post()
         return move
+
+    def _avoir_brouillon(self, vendeur=None):
+        return self.env['account.move'].create({
+            'move_type': 'out_refund',
+            'partner_id': (vendeur or self.vendeur).id,
+            'invoice_date': fields.Date.to_date('2026-03-10'),
+            'date': fields.Date.to_date('2026-03-10'),
+        })
 
     def _relever(self, lot, qty):
         entrepot = self.env['stock.warehouse'].search(
@@ -546,6 +573,7 @@ class TestDescriptionDesObjets(TestLivrePolice):
             }))
         return self.env['account.move'].create({
             'move_type': 'out_refund', 'partner_id': self.vendeur.id,
+            'police_representative_id': self.representant.id,
             'invoice_date': fields.Date.to_date('2026-03-10'),
             'date': fields.Date.to_date('2026-03-10'),
             'invoice_line_ids': lignes,
@@ -802,12 +830,14 @@ class TestQualiteVendeur(TestLivrePolice):
             'fr_livre_police.qualite_salarie')
         self.assertEqual(lot.police_seller_qualite_id, self.qualite)
 
-    def test_societe_dispensee_faute_de_representant(self):
-        """Une personne morale relève du 2°, qui vise le représentant : tant
-        qu'il n'est pas recueilli, ne rien exiger ici."""
+    def test_societe_porte_la_qualite_de_son_representant(self):
+        """Pour une personne morale, la qualité inscrite est celle de qui
+        s'est présenté (art. R321-3 2°), pas celle de la société."""
         lot = self._rachat().invoice_line_ids.police_lot_id
         self.assertTrue(lot.police_seller_id.is_company)
-        self.assertNotIn("qualité", lot.police_missing_mentions or "")
+        self.assertEqual(lot.police_representative_id, self.representant)
+        self.assertEqual(lot.police_seller_qualite_id,
+                         self.representant.police_qualite_id)
 
 
 @tagged('post_install', '-at_install')
@@ -872,3 +902,101 @@ class TestReglementAuLettrage(TestLivrePolice):
         paiement.action_draft()
         self.assertFalse(lot.police_payment_mode)
         self.assertFalse(lot.police_complete)
+
+
+@tagged('post_install', '-at_install')
+class TestVenteParUneSociete(TestLivrePolice):
+    """Art. R321-3 2° : une société ne se présente pas au comptoir.
+
+    Le registre veut alors la dénomination et le siège, *et* les nom,
+    prénoms, qualité et domicile du représentant qui a réalisé l'opération,
+    avec les références de sa pièce d'identité.
+    """
+
+    def _societe(self):
+        return self.env['res.partner'].create({
+            'name': "Joaillerie de test", 'is_company': True,
+            'street': "3 rue Serpenoise", 'zip': '57000', 'city': "Metz",
+        })
+
+    def _representant(self, societe, complet=True):
+        valeurs = {
+            'lastname': "Weber", 'firstname': "Paul", 'is_company': False,
+            'parent_id': societe.id,
+        }
+        if complet:
+            valeurs.update({
+                'street': "8 rue Taison", 'zip': '57000', 'city': "Metz",
+                'id_doc_type': 'cni', 'id_doc_number': '190257300112',
+                'id_doc_issue_date': fields.Date.to_date('2019-02-11'),
+                'id_doc_authority': "Préfecture de la Moselle",
+                'police_qualite_id': self.env.ref(
+                    'fr_livre_police.qualite_gerant').id,
+            })
+        return self.env['res.partner'].create(valeurs)
+
+    # -- saisie ---------------------------------------------------------
+    def test_societe_seule_refusee(self):
+        societe = self._societe()
+        self._representant(societe)
+        with self.assertRaises(UserError) as refus:
+            self._rachat(vendeur=societe)
+        self.assertIn("Représentant", str(refus.exception))
+
+    def test_representant_incomplet_refuse(self):
+        societe = self._societe()
+        representant = self._representant(societe, complet=False)
+        with self.assertRaises(UserError) as refus:
+            self._rachat(vendeur=societe, representant=representant)
+        message = str(refus.exception)
+        self.assertIn("qualité", message)
+        self.assertIn("pièce d'identité", message)
+
+    def test_contact_retenu_vaut_representant(self):
+        """Retenir directement le contact rattaché suffit : la société est
+        son parent commercial, on ne la redemande pas."""
+        societe = self._societe()
+        representant = self._representant(societe)
+        move = self._avoir_brouillon(vendeur=representant)
+        self.assertEqual(move.police_seller_company_id, societe)
+        self.assertEqual(move.police_representative_id, representant)
+
+    def test_societe_avec_representant_designe(self):
+        societe = self._societe()
+        representant = self._representant(societe)
+        move = self._rachat(vendeur=societe, representant=representant)
+        lot = move.invoice_line_ids.police_lot_id
+        self.assertEqual(lot.police_seller_id, societe)
+        self.assertEqual(lot.police_representative_id, representant)
+        self.assertTrue(lot.police_complete or "règlement"
+                        in (lot.police_missing_mentions or ""))
+
+    def test_representant_etranger_a_la_societe_refuse(self):
+        """Le représentant doit être rattaché à la société venderesse."""
+        societe = self._societe()
+        self._representant(societe)
+        autre = self.env['res.partner'].create(
+            {'lastname': "Tiers", 'firstname': "Jean", 'is_company': False})
+        move = self._avoir_brouillon(vendeur=societe)
+        move.police_representative_id = autre
+        move.partner_id = societe          # relance le calcul
+        self.assertFalse(move.police_representative_id)
+
+    # -- mentions éditées ------------------------------------------------
+    def test_edition_nomme_la_societe_et_son_representant(self):
+        societe = self._societe()
+        representant = self._representant(societe)
+        lot = self._rachat(vendeur=societe, representant=representant) \
+            .invoice_line_ids.police_lot_id
+        mention = lot._police_vendeur()
+        self.assertIn("JOAILLERIE DE TEST", mention)
+        self.assertIn("3 rue Serpenoise", mention)
+        self.assertIn("WEBER Paul", mention)
+        self.assertIn("Gérant(e)", mention)
+
+    def test_piece_identite_est_celle_du_representant(self):
+        societe = self._societe()
+        representant = self._representant(societe)
+        lot = self._rachat(vendeur=societe, representant=representant) \
+            .invoice_line_ids.police_lot_id
+        self.assertIn("190257300112", lot._police_piece_identite())
