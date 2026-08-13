@@ -255,9 +255,9 @@
                                     <div t-if="lot._police_piece_identite()"
                                          style="white-space:pre-line;"
                                          t-out="lot._police_piece_identite()"/>
-                                    <div t-if="lot.police_origin"
+                                    <div t-if="lot.police_origin_id"
                                          style="font-style:italic;"
-                                         t-out="lot.police_origin"/>
+                                         t-out="lot.police_origin_id.name"/>
                                 </td>
                                 <td t-att-style="cellule">
                                     <span t-out="lot.product_id.name"/>

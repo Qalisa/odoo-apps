@@ -34,23 +34,31 @@ class TestLivrePolice(TransactionCase):
         })
         cls.remise = cls.env['product.template'].create(
             {'name': "Remise (test)", 'type': 'service'})
+        cls.succession = cls.env.ref('fr_livre_police.provenance_heritage')
+        cls.autre_provenance = cls.env.ref(
+            'fr_livre_police.provenance_achat_anterieur')
+        cls.qualite = cls.env.ref('fr_livre_police.qualite_retraite')
 
-    def _rachat(self, qty=5, price=600.0, origine="Succession", produit=None,
-                description="Pièces scellées, millésimes 1907 à 1914"):
+    def _rachat(self, qty=5, price=600.0, origine=None, produit=None,
+                description="Pièces scellées, millésimes 1907 à 1914",
+                vendeur=None):
         """Un rachat tel qu'il se saisit : la ligne, puis la note qui décrit
         les objets. Sans elle, la comptabilisation est refusée (R321-3)."""
         produit = produit or self.piece.product_variant_id
+        if origine is None:
+            origine = self.succession
         lignes = [(0, 0, {
             'product_id': produit.id, 'quantity': qty,
             'price_unit': price, 'tax_ids': [(5, 0, 0)],
-            'police_origin': origine, 'sequence': 10})]
+            'police_origin_id': origine.id if origine else False,
+            'sequence': 10})]
         if description:
             lignes.append((0, 0, {
                 'display_type': 'line_note', 'name': description,
                 'sequence': 11}))
         move = self.env['account.move'].create({
             'move_type': 'out_refund',
-            'partner_id': self.vendeur.id,
+            'partner_id': (vendeur or self.vendeur).id,
             'invoice_date': fields.Date.to_date('2026-03-10'),
             'date': fields.Date.to_date('2026-03-10'),
             'invoice_line_ids': lignes,
@@ -120,7 +128,7 @@ class TestLivrePolice(TransactionCase):
         self.assertTrue(lot.police_registered)
         self.assertTrue(lot.name.startswith('TEST-2026-'), lot.name)
         self.assertEqual(lot.police_seller_id, self.vendeur)
-        self.assertEqual(lot.police_origin, "Succession")
+        self.assertEqual(lot.police_origin_id, self.succession)
         self.assertAlmostEqual(lot.police_weight, 32.258, places=3)
         self.assertAlmostEqual(lot.police_fineness, 900.0)
         self.assertAlmostEqual(lot.police_purchase_price, 3000.0)
@@ -210,9 +218,10 @@ class TestLivrePolice(TransactionCase):
         lot.police_payment_mode = "Virement"
         self.assertTrue(lot.police_complete)
 
-    def test_provenance_absente_signalee(self):
-        lot = self._rachat(origine=False).invoice_line_ids.police_lot_id
-        self.assertFalse(lot.police_complete)
+    def test_provenance_absente_refuse_la_comptabilisation(self):
+        """La provenance ne se rattrape pas : le vendeur est reparti."""
+        with self.assertRaises(UserError):
+            self._rachat(origine=False)
 
 
 @tagged('post_install', '-at_install')
@@ -262,7 +271,7 @@ class TestIntangibilite(TestLivrePolice):
 
     def test_correction_sans_changement_reel_non_inscrite(self):
         lot = self._rachat().invoice_line_ids.police_lot_id
-        lot.police_origin = "Succession"  # valeur identique
+        lot.police_origin_id = self.succession  # valeur identique
         self.assertEqual(len(self._journal()), 1)
 
     def test_journal_en_ajout_seul(self):
@@ -418,6 +427,7 @@ class TestMentionsEditees(TestLivrePolice):
             'id_doc_type': 'cni', 'id_doc_number': '051257304118',
             'id_doc_issue_date': fields.Date.to_date('2019-06-03'),
             'id_doc_authority': "Préfecture de la Moselle",
+            'police_qualite_id': self.qualite.id,
         })
 
     def _lot_vendu_par(self, partenaire):
@@ -425,7 +435,8 @@ class TestMentionsEditees(TestLivrePolice):
             'product_id': self.piece.product_variant_id.id,
             'company_id': self.company.id,
             'police_seller_id': partenaire.id,
-            'police_origin': "Bijoux de famille",
+            'police_seller_qualite_id': partenaire.police_qualite_id.id,
+            'police_origin_id': self.succession.id,
             'police_quantity': 1, 'police_weight': 6.4516,
             'police_entry_date': fields.Datetime.now(),
         })
@@ -437,6 +448,8 @@ class TestMentionsEditees(TestLivrePolice):
         self.assertIn("Marie-Claire", mention)
         self.assertIn("14 rue des Clercs", mention)
         self.assertIn("57000 Metz", mention)
+        self.assertIn(self.qualite.name, mention,
+                      "l'art. R321-3 1° veut aussi la qualité")
 
     def test_piece_identite_porte_les_quatre_mentions(self):
         """Nature, numéro, date de délivrance, autorité — et rien de plus :
@@ -452,7 +465,8 @@ class TestMentionsEditees(TestLivrePolice):
         lot = self.env['stock.lot']._police_create_entry({
             'product_id': self.piece.product_variant_id.id,
             'company_id': self.company.id, 'police_opening': True,
-            'police_origin': "Reprise du registre antérieur",
+            'police_origin_id': self.env.ref(
+                'fr_livre_police.provenance_registre_anterieur').id,
             'police_quantity': 3, 'police_weight': 19.3548,
             'police_entry_date': fields.Datetime.now(),
         })
@@ -496,7 +510,7 @@ class TestMentionsEditees(TestLivrePolice):
         for mention in (lot.name, "KIEFFER", "Marie-Claire",
                         "14 rue des Clercs", "57000 Metz",
                         "Carte nationale d'identité", "051257304118",
-                        "Préfecture de la Moselle", "Bijoux de famille"):
+                        "Préfecture de la Moselle", self.succession.name):
             self.assertIn(mention, edition, mention)
 
         # Page de garde : ouverture, clôture et visa de l'autorité.
@@ -518,11 +532,12 @@ class TestDescriptionDesObjets(TestLivrePolice):
 
     NOTE = "3 alliances, 1 gourmette maille anglaise, 1 pendentif cassé"
 
-    def _avoir(self, notes=(NOTE,), origine="Succession"):
+    def _avoir(self, notes=(NOTE,), origine=None):
+        origine = origine if origine is not None else self.succession
         lignes = [(0, 0, {
             'product_id': self.piece.product_variant_id.id,
             'quantity': 5, 'price_unit': 600.0, 'tax_ids': [(5, 0, 0)],
-            'police_origin': origine, 'sequence': 10,
+            'police_origin_id': origine.id, 'sequence': 10,
         })]
         for rang, texte in enumerate(notes):
             lignes.append((0, 0, {
@@ -607,7 +622,8 @@ class TestVentilationDuRegistre(TestLivrePolice):
             'product_id': self.piece.product_variant_id.id,
             'company_id': self.company.id,
             'police_seller_id': partenaire.id,
-            'police_origin': "Succession", 'police_quantity': 2,
+            'police_seller_qualite_id': partenaire.police_qualite_id.id,
+            'police_origin_id': self.succession.id, 'police_quantity': 2,
             'police_weight': 12.9032,
             'police_entry_date': fields.Datetime.now(),
         })
@@ -624,7 +640,7 @@ class TestVentilationDuRegistre(TestLivrePolice):
             'product_id': self.piece.product_variant_id.id,
             'company_id': self.company.id,
             'police_seller_id': self.vendeur.id,
-            'police_origin': "Rachat confrère", 'police_quantity': 1,
+            'police_origin_id': self.autre_provenance.id, 'police_quantity': 1,
             'police_weight': 6.4516,
             'police_entry_date': fields.Datetime.now(),
         })
@@ -635,7 +651,7 @@ class TestVentilationDuRegistre(TestLivrePolice):
         lot = self.env['stock.lot']._police_create_entry({
             'product_id': self.piece.product_variant_id.id,
             'company_id': self.company.id, 'police_opening': True,
-            'police_origin': "Reprise", 'police_quantity': 1,
+            'police_origin_id': self.autre_provenance.id, 'police_quantity': 1,
             'police_weight': 6.4516,
             'police_entry_date': fields.Datetime.now(),
         })
@@ -653,7 +669,7 @@ class TestVentilationDuRegistre(TestLivrePolice):
             'product_id': article.product_variant_id.id,
             'company_id': self.company.id,
             'police_seller_id': self.vendeur.id,
-            'police_origin': "Rachat", 'police_quantity': 1,
+            'police_origin_id': self.autre_provenance.id, 'police_quantity': 1,
             'police_weight': 31.5,
             'police_entry_date': fields.Datetime.now(),
         })
@@ -704,3 +720,155 @@ class TestVentilationDuRegistre(TestLivrePolice):
             self.assertEqual(ligne.count('<td'), colonnes,
                              "ligne %d : %d cellules pour %d colonnes"
                              % (rang, ligne.count('<td'), colonnes))
+
+
+@tagged('post_install', '-at_install')
+class TestReferentiels(TestLivrePolice):
+    """Provenance et qualité : deux mentions tenues en liste fermée.
+
+    Le texte libre ne les tient pas : « Succession », « succession » et
+    « SUCC. » cessent d'être une information dès qu'il faut retrouver ou
+    contrôler. Mais une liste administrable ouvre une brèche — renommer une
+    valeur réécrirait toutes les lignes passées, sans trace. D'où l'archivage
+    à la place du renommage.
+    """
+
+    def test_valeur_employee_non_renommable(self):
+        self._rachat(origine=self.succession)
+        with self.assertRaises(UserError):
+            self.succession.name = "Autre chose"
+
+    def test_valeur_employee_non_supprimable(self):
+        self._rachat(origine=self.succession)
+        with self.assertRaises(UserError):
+            self.succession.unlink()
+
+    def test_valeur_employee_archivable(self):
+        """Archiver la retire de la saisie sans toucher au registre."""
+        lot = self._rachat(origine=self.succession).invoice_line_ids.police_lot_id
+        self.succession.active = False
+        self.assertEqual(lot.police_origin_id, self.succession)
+        self.assertEqual(lot.police_origin_id.name, "Héritage ou succession")
+
+    def test_valeur_inemployee_renommable(self):
+        libre = self.env['livre.police.provenance'].create(
+            {'name': "Provenance de test"})
+        libre.name = "Autre libellé"
+        self.assertEqual(libre.name, "Autre libellé")
+
+    def test_libelles_uniques(self):
+        from psycopg2 import IntegrityError
+        with self.assertRaises(IntegrityError), self.cr.savepoint():
+            self.env['livre.police.provenance'].create(
+                {'name': self.succession.name})
+
+
+@tagged('post_install', '-at_install')
+class TestQualiteVendeur(TestLivrePolice):
+    """Art. R321-3 1° : « les nom, prénoms, qualité et domicile »."""
+
+    def _particulier(self, qualite=None):
+        """Fiche complète au regard du DMET, dont le contrôle s'exécute avant
+        le nôtre : seule la qualité est en jeu ici."""
+        return self.env['res.partner'].create({
+            'lastname': "Kieffer", 'firstname': "Marie-Claire",
+            'is_company': False,
+            'street': "14 rue des Clercs", 'zip': '57000', 'city': "Metz",
+            'birth_country_id': self.env.ref('base.fr').id,
+            'id_doc_type': 'cni', 'id_doc_number': '051257304118',
+            'id_doc_issue_date': fields.Date.to_date('2019-06-03'),
+            'id_doc_authority': "Préfecture de la Moselle",
+            'police_qualite_id': qualite.id if qualite else False,
+        })
+
+    def _rachat_par(self, partenaire):
+        return self._rachat(vendeur=partenaire)
+
+    def test_particulier_sans_qualite_refuse(self):
+        with self.assertRaises(UserError) as refus:
+            self._rachat_par(self._particulier())
+        self.assertIn("qualité", str(refus.exception))
+
+    def test_particulier_avec_qualite_accepte(self):
+        move = self._rachat_par(self._particulier(self.qualite))
+        lot = move.invoice_line_ids.police_lot_id
+        self.assertEqual(lot.police_seller_qualite_id, self.qualite)
+
+    def test_qualite_figee_a_l_entree(self):
+        """Le vendeur change de métier ; la ligne déjà inscrite ne bouge pas."""
+        vendeur = self._particulier(self.qualite)
+        lot = self._rachat_par(vendeur).invoice_line_ids.police_lot_id
+        vendeur.police_qualite_id = self.env.ref(
+            'fr_livre_police.qualite_salarie')
+        self.assertEqual(lot.police_seller_qualite_id, self.qualite)
+
+    def test_societe_dispensee_faute_de_representant(self):
+        """Une personne morale relève du 2°, qui vise le représentant : tant
+        qu'il n'est pas recueilli, ne rien exiger ici."""
+        lot = self._rachat().invoice_line_ids.police_lot_id
+        self.assertTrue(lot.police_seller_id.is_company)
+        self.assertNotIn("qualité", lot.police_missing_mentions or "")
+
+
+@tagged('post_install', '-at_install')
+class TestReglementAuLettrage(TestLivrePolice):
+    """Le mode de règlement se constate, il ne se déclare pas.
+
+    C'est la seule mention obligatoire inconnue au comptoir : le rachat est
+    saisi, le virement part ensuite. La reprendre du paiement lettré évite
+    qu'elle diverge de la réalité, et l'écran de contrôle montre l'attente.
+    """
+
+    def _banque(self):
+        journal = self.env['account.journal'].search(
+            [('type', '=', 'bank'), ('company_id', '=', self.company.id)],
+            limit=1)
+        if not journal:
+            journal = self.env['account.journal'].create({
+                'name': "Banque de test", 'type': 'bank', 'code': 'BNKT',
+                'company_id': self.company.id})
+        return journal
+
+    def _mode_attendu(self):
+        """Ce que le registre doit porter : le libellé du mode de paiement."""
+        journal = self._banque()
+        ligne = journal.inbound_payment_method_line_ids[:1] \
+            or journal.outbound_payment_method_line_ids[:1]
+        return ligne.name or journal.name
+
+    def _payer(self, move):
+        return self.env['account.payment.register'].with_context(
+            active_model='account.move', active_ids=move.ids,
+        ).create({'journal_id': self._banque().id})._create_payments()
+
+    def test_mention_vide_et_ligne_signalee_avant_paiement(self):
+        lot = self._rachat().invoice_line_ids.police_lot_id
+        self.assertFalse(lot.police_payment_mode)
+        self.assertFalse(lot.police_complete)
+        self.assertIn("mode de règlement", lot.police_missing_mentions)
+
+    def test_le_lettrage_complete_la_ligne(self):
+        move = self._rachat()
+        lot = move.invoice_line_ids.police_lot_id
+        self._payer(move)
+        self.assertEqual(lot.police_payment_mode, self._mode_attendu())
+        self.assertTrue(lot.police_complete)
+        self.assertFalse(lot.police_missing_mentions)
+
+    def test_le_lettrage_laisse_une_correction_au_journal(self):
+        move = self._rachat()
+        lot = move.invoice_line_ids.police_lot_id
+        self._payer(move)
+        journal = self.env['livre.police.evenement'].sudo().search(
+            [('lot_id', '=', lot.id)], order='sequence_number')
+        self.assertEqual(journal.mapped('event_type'), ['entree', 'correction'])
+        self.assertIn("Mode de règlement", journal[1].description)
+
+    def test_le_delettrage_rouvre_la_ligne(self):
+        move = self._rachat()
+        lot = move.invoice_line_ids.police_lot_id
+        paiement = self._payer(move)
+        self.assertTrue(lot.police_complete)
+        paiement.action_draft()
+        self.assertFalse(lot.police_payment_mode)
+        self.assertFalse(lot.police_complete)

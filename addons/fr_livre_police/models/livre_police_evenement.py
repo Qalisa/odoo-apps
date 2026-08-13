@@ -29,8 +29,8 @@ from odoo.exceptions import UserError
 
 #: Mentions dont la modification doit laisser une trace.
 MENTIONS = (
-    'police_seller_id', 'police_origin', 'police_description',
-    'police_weight', 'police_quantity',
+    'police_seller_id', 'police_seller_qualite_id', 'police_origin_id',
+    'police_description', 'police_weight', 'police_quantity',
     'police_fineness', 'police_purchase_price', 'police_payment_mode',
 )
 

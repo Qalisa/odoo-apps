@@ -18,10 +18,11 @@ from odoo.exceptions import UserError
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
-    police_origin = fields.Char(
-        string="Provenance",
-        help="Origine déclarée par le vendeur : succession, héritage, achat "
-             "antérieur, vide-grenier… Mention obligatoire du registre "
+    police_origin_id = fields.Many2one(
+        'livre.police.provenance', string="Provenance", ondelete='restrict',
+        index='btree_not_null',
+        help="Origine déclarée par le vendeur : héritage, bijoux personnels, "
+             "achat antérieur… Mention obligatoire du registre "
              "(art. R321-3 3° du code pénal).",
     )
     police_lot_id = fields.Many2one(
@@ -138,18 +139,77 @@ class AccountMove(models.Model):
                 "peut pas enregistrer d'entrée.", self.company_id.name))
         return entrepot
 
-    def _police_payment_mode(self):
-        """Mode de règlement lu sur les paiements rapprochés, s'il y en a.
+    #: États d'un paiement qui valent règlement constaté. `draft` et les états
+    #: d'échec n'ont rien réglé : le registre ne doit pas les mentionner.
+    ETATS_REGLES = ('in_process', 'paid')
 
-        Souvent vide à la comptabilisation : le règlement suit. La mention
-        reste alors à compléter, et l'écran de contrôle la réclame.
+    def _police_payment_mode(self):
+        """Mode de règlement constaté, lu sur le paiement Odoo.
+
+        Le registre ne demande pas au comptoir de *déclarer* un mode de
+        règlement : il constate celui qui a été employé. La source est donc le
+        paiement rattaché à l'avoir, ce qui rend impossible une mention
+        invérifiable : pas de paiement, pas de mention.
+
+        Deux rattachements coexistent en Odoo 18 et sont lus tous les deux :
+        le paiement enregistré depuis la pièce (`matched_payment_ids`), qui
+        n'a pas encore d'écriture tant qu'il n'est pas au relevé, et le
+        lettrage comptable classique, contre une écriture de banque ou de
+        caisse.
+
+        Le libellé retenu est celui du **mode de paiement** — c'est lui qui
+        nomme le canal (virement, chèque) —, à défaut celui du journal.
+
+        Souvent vide à la comptabilisation : le règlement suit. La ligne reste
+        alors signalée incomplète jusqu'au paiement, qui la complète tout seul
+        (cf. `_police_write_payment_mode`).
         """
         self.ensure_one()
+        modes = set()
+        for paiement in self.matched_payment_ids:
+            if paiement.state in self.ETATS_REGLES:
+                modes.add(paiement.payment_method_line_id.name
+                          or paiement.journal_id.name)
         lignes = self.line_ids
         partiels = lignes.matched_debit_ids | lignes.matched_credit_ids
         contreparties = (partiels.debit_move_id | partiels.credit_move_id).move_id
-        journaux = (contreparties - self).mapped('journal_id.name')
-        return ", ".join(sorted(set(journaux))) if journaux else False
+        modes.update((contreparties - self).mapped('journal_id.name'))
+        return ", ".join(sorted(filter(None, modes))) or False
+
+    def _police_write_payment_mode(self):
+        """Reporte le mode de règlement constaté sur les lignes du registre.
+
+        Appelée au lettrage comme au délettrage. L'écriture passe par
+        `write`, donc toute évolution laisse une correction au journal chaîné :
+        le registre montre qu'il a été complété, et quand.
+        """
+        # Le lettrage vient d'être créé (ou défait) : les champs inverses des
+        # lignes ne portent pas encore le nouvel état dans le cache.
+        self.env['account.move.line'].invalidate_model(
+            ['matched_debit_ids', 'matched_credit_ids'])
+        for piece in self:
+            mode = piece._police_payment_mode()
+            lots = piece.invoice_line_ids.police_lot_id
+            a_ecrire = lots.filtered(lambda l: l.police_payment_mode != mode)
+            if a_ecrire:
+                a_ecrire.sudo().write({'police_payment_mode': mode})
+
+    def _police_check_seller(self):
+        """Le vendeur porte-t-il les mentions que le registre exige de lui ?
+
+        L'art. R321-3 1° veut « les nom, prénoms, qualité et domicile ». La
+        qualité ne se devine pas et ne se rattrape pas : une fois le vendeur
+        reparti, personne ne sait s'il était retraité ou artisan. Le contrôle
+        est donc posé à la comptabilisation, tant qu'il est encore au comptoir.
+        """
+        self.ensure_one()
+        vendeur = self.partner_id
+        if vendeur and not vendeur.is_company and not vendeur.police_qualite_id:
+            raise UserError(_(
+                "« %s » n'a pas de qualité ou profession renseignée. Le livre "
+                "de police l'exige du vendeur (art. R321-3 1°) : complétez sa "
+                "fiche avant de comptabiliser ce rachat.",
+                vendeur.display_name))
 
     def _police_create_entry(self):
         """Crée la réception et les lots du registre pour cet avoir."""
@@ -163,6 +223,15 @@ class AccountMove(models.Model):
                 ", ".join(non_stockes.mapped('name'))))
 
         self._police_check_descriptions(lignes)
+        self._police_check_seller()
+
+        muettes = lignes.filtered(lambda l: not l.police_origin_id)
+        if muettes:
+            raise UserError(_(
+                "La provenance est une mention obligatoire du registre "
+                "(art. R321-3 3°). Elle manque sur :\n  - %s",
+                "\n  - ".join(l.name or l.product_id.display_name
+                              for l in muettes)))
 
         entrepot = self._police_warehouse()
         type_entree = entrepot.in_type_id
@@ -184,7 +253,8 @@ class AccountMove(models.Model):
                 'product_id': ligne.product_id.id,
                 'company_id': self.company_id.id,
                 'police_seller_id': self.partner_id.id,
-                'police_origin': ligne.police_origin,
+                'police_seller_qualite_id': self.partner_id.police_qualite_id.id,
+                'police_origin_id': ligne.police_origin_id.id,
                 'police_description': self._police_description(ligne),
                 'police_weight': ligne.metal_weight,
                 'police_quantity': abs(ligne.quantity),
@@ -239,6 +309,13 @@ class AccountMove(models.Model):
                 move._police_create_entry()
         return posted
 
+    def write(self, values):
+        """Rattacher un paiement à la pièce complète sa ligne au registre."""
+        resultat = super().write(values)
+        if 'matched_payment_ids' in values:
+            self.filtered('police_picking_id')._police_write_payment_mode()
+        return resultat
+
     def button_draft(self):
         """Une pièce dont les objets sont déjà sortis ne revient pas en brouillon."""
         for move in self:
@@ -261,3 +338,50 @@ class AccountMove(models.Model):
             'res_id': self.police_picking_id.id,
             'view_mode': 'form',
         }
+
+
+class AccountPayment(models.Model):
+    """Un paiement remis en brouillon ne règle plus rien.
+
+    `action_draft` ne défait pas le rattachement à la pièce : c'est l'état du
+    paiement qui dit s'il y a eu règlement. Le registre suit donc cet état,
+    dans les deux sens.
+    """
+    _inherit = 'account.payment'
+
+    def write(self, values):
+        resultat = super().write(values)
+        if 'state' in values or 'invoice_ids' in values:
+            self.invoice_ids.filtered(
+                'police_picking_id')._police_write_payment_mode()
+        return resultat
+
+
+class AccountPartialReconcile(models.Model):
+    """Le lettrage complète le registre.
+
+    Le mode de règlement est la seule mention obligatoire qui n'est pas
+    connue au comptoir : le rachat est saisi, le virement part ensuite. Plutôt
+    que de la faire ressaisir — et donc de la laisser diverger du paiement
+    réel —, on la reprend du lettrage, dans les deux sens : lettrer complète
+    la ligne, délettrer la rouvre.
+    """
+    _inherit = 'account.partial.reconcile'
+
+    def _police_pieces(self):
+        pieces = (self.debit_move_id | self.credit_move_id).move_id
+        return pieces.filtered('police_picking_id')
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        partiels = super().create(vals_list)
+        partiels._police_pieces()._police_write_payment_mode()
+        return partiels
+
+    def unlink(self):
+        # Les pièces sont relevées avant la suppression : après, le lien
+        # n'existe plus et le registre resterait sur un règlement défait.
+        pieces = self._police_pieces()
+        resultat = super().unlink()
+        pieces._police_write_payment_mode()
+        return resultat

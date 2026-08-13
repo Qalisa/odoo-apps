@@ -15,7 +15,9 @@
                 <field name="police_entry_date" string="Date d'entrée"
                        options="{'show_time': False}"/>
                 <field name="police_seller_id" string="Vendeur"/>
-                <field name="police_origin" string="Origine"/>
+                <field name="police_seller_qualite_id" string="Qualité"
+                       optional="show"/>
+                <field name="police_origin_id" string="Provenance"/>
                 <field name="product_id" string="Désignation"/>
                 <field name="police_description" string="Description des objets"
                        optional="show"/>
@@ -33,6 +35,8 @@
                 <field name="police_currency_id" column_invisible="1"/>
                 <field name="police_opening" string="Ouverture" optional="hide"/>
                 <field name="police_complete" optional="hide"/>
+                <field name="police_missing_mentions" string="Manque"
+                       optional="hide"/>
                 <field name="police_source_move_id" optional="hide"/>
             </list>
         </field>
@@ -49,11 +53,14 @@
                     <group>
                         <field name="police_registered" invisible="1"/>
                         <field name="police_seller_id"/>
-                        <field name="police_origin"/>
+                        <field name="police_seller_qualite_id"/>
+                        <field name="police_origin_id"/>
                         <field name="police_purchase_price"/>
                         <field name="police_currency_id" invisible="1"/>
-                        <field name="police_payment_mode"
-                               placeholder="Virement, chèque…"/>
+                        <field name="police_payment_mode"/>
+                        <field name="police_missing_mentions"
+                               invisible="police_complete"/>
+                        <field name="police_complete" invisible="1"/>
                     </group>
                     <group>
                         <field name="police_entry_date"/>
@@ -92,7 +99,9 @@
             <search string="Livre de police">
                 <field name="name" string="N° d'ordre"/>
                 <field name="police_seller_id"/>
+                <field name="police_origin_id"/>
                 <field name="product_id"/>
+                <field name="police_source_move_id" string="Avoir"/>
                 <filter name="en_stock" string="Détenus en stock"
                         domain="[('police_exit_date', '=', False)]"/>
                 <filter name="sortis" string="Sortis"
@@ -111,10 +120,60 @@
                             context="{'group_by': 'company_id'}"/>
                     <filter name="group_product" string="Objet"
                             context="{'group_by': 'product_id'}"/>
+                    <filter name="group_origin" string="Provenance"
+                            context="{'group_by': 'police_origin_id'}"/>
                     <filter name="group_month" string="Mois d'entrée"
                             context="{'group_by': 'police_entry_date:month'}"/>
                 </group>
             </search>
+        </field>
+    </record>
+
+    <!-- Écran de contrôle : ce que le registre attend encore. Une liste à
+         part, ordonnée par ancienneté — une mention qui manque depuis trois
+         mois n'est plus un oubli, c'est un défaut de tenue. -->
+    <record id="stock_lot_view_list_police_incomplet" model="ir.ui.view">
+        <field name="name">stock.lot.list.police.incomplet</field>
+        <field name="model">stock.lot</field>
+        <field name="arch" type="xml">
+            <list string="Mentions à compléter" create="false"
+                  default_order="police_entry_date asc"
+                  decoration-danger="not police_complete">
+                <field name="name" string="N° d'ordre"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="police_entry_date" string="Date d'entrée"
+                       options="{'show_time': False}"/>
+                <field name="police_source_move_id" string="Avoir"/>
+                <field name="police_seller_id" string="Vendeur"/>
+                <field name="product_id" string="Désignation"/>
+                <field name="police_purchase_price" string="Prix d'achat"
+                       sum="Total"/>
+                <field name="police_currency_id" column_invisible="1"/>
+                <field name="police_missing_mentions" string="Mentions manquantes"/>
+                <field name="police_complete" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_livre_police_incomplet" model="ir.actions.act_window">
+        <field name="name">Mentions à compléter</field>
+        <field name="res_model">stock.lot</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="stock_lot_view_list_police_incomplet"/>
+        <field name="search_view_id" ref="stock_lot_view_search_police"/>
+        <field name="domain">
+            [('police_registered', '=', True), ('police_complete', '=', False)]
+        </field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Le registre est complet.
+            </p>
+            <p>
+                Aucune ligne n'attend de mention. Le mode de règlement se
+                complète tout seul au lettrage du paiement : une ligne qui
+                reste ici signale un rachat non payé, ou payé sans être
+                rapproché.
+            </p>
         </field>
     </record>
 

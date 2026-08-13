@@ -10,10 +10,10 @@
             <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='metal_weight']"
                    position="after">
                 <field name="police_origin_required" column_invisible="1"/>
-                <field name="police_origin"
+                <field name="police_origin_id"
                        string="Provenance"
                        optional="show"
-                       placeholder="Succession, héritage, achat antérieur…"
+                       options="{'no_quick_create': True, 'no_create_edit': True}"
                        column_invisible="parent.move_type != 'out_refund'"
                        required="police_origin_required"
                        readonly="parent_state == 'posted'"/>

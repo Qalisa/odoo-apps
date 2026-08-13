@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - registre des métaux précieux",
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.1.0',
     'summary': """
 Registre des achats, ventes, réceptions et livraisons de métaux précieux :
 entrées depuis les avoirs de rachat, sorties par bon de relève.
@@ -25,9 +25,21 @@ l'entrée et la sortie. Ce module le matérialise sur le lot de stock
 
 - **numéro d'ordre** attribué par établissement, apparent sur l'objet ou le lot ;
 - **entrée** créée à la comptabilisation d'un avoir de rachat, avec le vendeur,
-  la provenance déclarée, le prix et le mode de règlement ;
+  sa qualité, la provenance déclarée, le prix et le mode de règlement ;
 - **sortie** relevée sur le bon de livraison au fondeur ;
 - **édition du registre** par établissement, avec les mentions obligatoires.
+
+Deux mentions ne se déduisent d'aucune donnée comptable et sont tenues dans
+des référentiels administrables plutôt qu'en texte libre : la **provenance**
+de l'objet (art. R321-3 3°) et la **qualité ou profession** du vendeur
+(art. R321-3 1°, colonne du modèle officiel fixé par l'arrêté du 15 mai 2020).
+Une valeur déjà portée par une ligne du registre ne peut plus être renommée,
+seulement archivée : la renommer réécrirait le passé.
+
+Le **mode de règlement** n'est pas saisi mais **repris du paiement lettré**
+avec l'avoir. Tant que le rachat n'est pas payé, la ligne figure à l'écran
+« Mentions à compléter », qui nomme ce qui manque ; le lettrage la complète,
+et le journal chaîné garde trace de la correction.
 
 Rien ne se déclenche tant que la **date de bascule** de la société n'est pas
 renseignée : le registre commence à une date choisie, pas à l'installation.
@@ -48,8 +60,11 @@ entrepôt et sa séquence de numéros d'ordre.
                 'contacts_citizenship_id'],
     'data': [
         'security/ir.model.access.csv',
+        'data/livre_police_referentiel_data.xml',
         'views/res_config_settings_views.xml',
         'views/product_views.xml',
+        'views/livre_police_referentiel_views.xml',
+        'views/res_partner_views.xml',
         'views/account_move_views.xml',
         'views/stock_lot_views.xml',
         'views/livre_police_evenement_views.xml',

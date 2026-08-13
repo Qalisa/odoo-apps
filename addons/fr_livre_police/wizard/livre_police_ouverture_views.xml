@@ -28,7 +28,7 @@
                         <field name="opening_date"/>
                     </group>
                     <group>
-                        <field name="origin"/>
+                        <field name="origin_id" options="{'no_create_edit': True}"/>
                         <field name="already_done" invisible="1"/>
                         <field name="confirm_complement"
                                invisible="not already_done"

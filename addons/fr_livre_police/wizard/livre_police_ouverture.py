@@ -33,9 +33,11 @@ class LivrePoliceOuverture(models.TransientModel):
         precompute=True,
         help="Date à laquelle le coffre a été compté. Par défaut, la date de "
              "début du registre de l'établissement.")
-    origin = fields.Char(
-        string="Provenance", required=True,
-        default="Reprise du registre antérieur",
+    origin_id = fields.Many2one(
+        'livre.police.provenance', string="Provenance", required=True,
+        default=lambda self: self.env.ref(
+            'fr_livre_police.provenance_registre_anterieur',
+            raise_if_not_found=False),
         help="Mention portée sur chaque ligne créée. Ces objets ayant été "
              "acquis avant la bascule, leur origine détaillée reste au "
              "registre tenu à l'époque.")
@@ -110,7 +112,7 @@ class LivrePoliceOuverture(models.TransientModel):
             lot = Lot._police_create_entry({
                 'product_id': variante.id,
                 'company_id': societe.id,
-                'police_origin': self.origin,
+                'police_origin_id': self.origin_id.id,
                 'police_weight': ligne.weight,
                 'police_quantity': ligne.quantity,
                 'police_fineness': ligne.fineness,

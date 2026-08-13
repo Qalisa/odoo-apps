@@ -7,22 +7,42 @@
               sequence="1"/>
 
 
+    <menuitem id="menu_livre_police_incomplet"
+              name="Mentions à compléter"
+              parent="fr_numismatics_metals.menu_metal_root"
+              action="action_livre_police_incomplet"
+              sequence="2"/>
+
     <menuitem id="menu_livre_police_journal"
               name="Journal du registre"
               parent="fr_numismatics_metals.menu_metal_root"
               action="action_livre_police_evenement"
-              sequence="2"/>
+              sequence="3"/>
 
     <menuitem id="menu_livre_police_ouverture"
               name="Inventaire d'ouverture"
               parent="fr_numismatics_metals.menu_metal_root"
               action="action_livre_police_ouverture"
-              sequence="3"/>
+              sequence="4"/>
 
     <menuitem id="menu_livre_police_integrite"
               name="Vérifier l'intégrité"
               parent="fr_numismatics_metals.menu_metal_root"
               action="action_verifier_integrite"
-              sequence="4"/>
+              sequence="5"/>
+
+    <menuitem id="menu_livre_police_provenance"
+              name="Provenances"
+              parent="fr_numismatics_metals.menu_metal_root"
+              action="action_livre_police_provenance"
+              groups="account.group_account_manager"
+              sequence="10"/>
+
+    <menuitem id="menu_livre_police_qualite"
+              name="Qualités et professions"
+              parent="fr_numismatics_metals.menu_metal_root"
+              action="action_livre_police_qualite"
+              groups="account.group_account_manager"
+              sequence="11"/>
 
 </odoo>

@@ -1,0 +1,97 @@
+<odoo>
+
+    <!-- ================= Provenances ================= -->
+    <record id="livre_police_provenance_view_list" model="ir.ui.view">
+        <field name="name">livre.police.provenance.list</field>
+        <field name="model">livre.police.provenance</field>
+        <field name="arch" type="xml">
+            <list string="Provenances" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="note"/>
+                <field name="lot_count" string="Lignes du registre"/>
+                <field name="active" widget="boolean_toggle" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="livre_police_provenance_view_search" model="ir.ui.view">
+        <field name="name">livre.police.provenance.search</field>
+        <field name="model">livre.police.provenance</field>
+        <field name="arch" type="xml">
+            <search string="Provenances">
+                <field name="name"/>
+                <filter name="archivees" string="Archivées"
+                        domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_livre_police_provenance" model="ir.actions.act_window">
+        <field name="name">Provenances</field>
+        <field name="res_model">livre.police.provenance</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune provenance définie.
+            </p>
+            <p>
+                La provenance de l'objet est une mention obligatoire du registre
+                (art. R321-3 3° du code pénal, art. 56 J quindecies de l'annexe
+                IV au CGI). Une valeur déjà portée par une ligne du registre ne
+                peut plus être renommée : archivez-la pour la retirer de la
+                saisie sans réécrire le passé.
+            </p>
+        </field>
+    </record>
+
+    <!-- ================= Qualités ================= -->
+    <record id="livre_police_qualite_view_list" model="ir.ui.view">
+        <field name="name">livre.police.qualite.list</field>
+        <field name="model">livre.police.qualite</field>
+        <field name="arch" type="xml">
+            <list string="Qualités et professions" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="representant" string="Représente une société"
+                       widget="boolean_toggle"/>
+                <field name="note"/>
+                <field name="lot_count" string="Lignes du registre"/>
+                <field name="active" widget="boolean_toggle" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="livre_police_qualite_view_search" model="ir.ui.view">
+        <field name="name">livre.police.qualite.search</field>
+        <field name="model">livre.police.qualite</field>
+        <field name="arch" type="xml">
+            <search string="Qualités et professions">
+                <field name="name"/>
+                <filter name="representant" string="Qualités de représentant"
+                        domain="[('representant', '=', True)]"/>
+                <filter name="archivees" string="Archivées"
+                        domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_livre_police_qualite" model="ir.actions.act_window">
+        <field name="name">Qualités et professions</field>
+        <field name="res_model">livre.police.qualite</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune qualité définie.
+            </p>
+            <p>
+                L'art. R321-3 1° veut « les nom, prénoms, qualité et domicile »
+                du vendeur ; le modèle officiel de registre parle de « qualité
+                ou profession ». Pour la personne qui vend au nom d'une société,
+                la qualité est celle par laquelle elle l'engage — cochez alors
+                « Représente une société ».
+            </p>
+        </field>
+    </record>
+
+</odoo>

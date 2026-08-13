@@ -1,0 +1,20 @@
+<odoo>
+
+    <record id="view_res_partner_form_police" model="ir.ui.view">
+        <field name="name">res.partner.form.police.qualite</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id"
+               ref="contacts_citizenship_id.view_res_partner_form_inherit"/>
+        <field name="arch" type="xml">
+            <!-- Avec la pièce d'identité : ce sont les mentions que le
+                 registre exige du vendeur, recueillies au même moment. -->
+            <field name="birthdate" position="before">
+                <field name="police_qualite_id"
+                       options="{'no_quick_create': True}"
+                       required="not is_company"
+                       placeholder="ex. Retraité(e)"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

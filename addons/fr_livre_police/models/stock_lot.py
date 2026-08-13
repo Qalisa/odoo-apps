@@ -35,10 +35,20 @@ class StockLot(models.Model):
         'res.partner', string="Vendeur", copy=False,
         help="Personne qui a vendu ou apporté l'objet (art. R321-3 1°).",
     )
-    police_origin = fields.Char(
-        string="Provenance", copy=False,
-        help="Origine déclarée par le vendeur : succession, achat antérieur, "
-             "héritage… Mention obligatoire (art. R321-3 3°).",
+    police_seller_qualite_id = fields.Many2one(
+        'livre.police.qualite', string="Qualité du vendeur", copy=False,
+        ondelete='restrict',
+        help="Qualité ou profession du vendeur au jour de l'opération "
+             "(art. R321-3 1°). Recopiée du contact à l'entrée puis figée : "
+             "un vendeur change de métier, une ligne déjà inscrite ne change "
+             "pas.",
+    )
+    police_origin_id = fields.Many2one(
+        'livre.police.provenance', string="Provenance", copy=False,
+        ondelete='restrict',
+        help="Origine déclarée par le vendeur : héritage, bijoux personnels, "
+             "achat antérieur… Mention obligatoire (art. R321-3 3° du code "
+             "pénal, art. 56 J quindecies de l'annexe IV au CGI).",
     )
     police_weight = fields.Float(
         string="Poids (g)", digits=(12, 4), copy=False,
@@ -64,9 +74,13 @@ class StockLot(models.Model):
         default=lambda self: self.env.company.currency_id,
     )
     police_payment_mode = fields.Char(
-        string="Mode de règlement", copy=False,
-        help="Art. R321-5 1°. Le paiement en espèces est interdit pour les "
-             "métaux précieux (art. L112-6 du code monétaire et financier).",
+        string="Mode de règlement", copy=False, readonly=True,
+        help="Art. R321-5 1°. Repris du paiement rapproché avec l'avoir : le "
+             "registre atteste le règlement constaté, il ne le déclare pas. "
+             "Vide tant que le rachat n'est pas payé — la ligne reste alors "
+             "signalée incomplète. Le paiement en espèces est interdit pour "
+             "les métaux précieux (art. L112-6 du code monétaire et "
+             "financier).",
     )
     police_description = fields.Text(
         string="Description des objets",
@@ -115,6 +129,12 @@ class StockLot(models.Model):
         store=True,
         help="Toutes les mentions exigées par le registre sont renseignées.",
     )
+    police_missing_mentions = fields.Char(
+        string="Mentions manquantes", compute='_compute_police_complete',
+        store=True,
+        help="Ce qui manque à cette ligne pour être conforme. Le plus souvent "
+             "le mode de règlement, qui n'est connu qu'une fois le rachat payé.",
+    )
 
     @api.depends('quant_ids.quantity', 'quant_ids.location_id')
     def _compute_police_quantity_on_hand(self):
@@ -122,24 +142,47 @@ class StockLot(models.Model):
             lot.police_quantity_on_hand = sum(lot.quant_ids.filtered(
                 lambda q: q.location_id.usage == 'internal').mapped('quantity'))
 
-    @api.depends('police_registered', 'police_seller_id', 'police_origin',
-                 'police_weight', 'police_purchase_price', 'police_payment_mode',
+    @api.depends('police_registered', 'police_seller_id', 'police_origin_id',
+                 'police_seller_qualite_id', 'police_weight',
+                 'police_purchase_price', 'police_payment_mode',
                  'police_entry_date', 'police_opening')
     def _compute_police_complete(self):
         """Une ligne d'ouverture atteste une détention, pas une acquisition.
 
         Lui réclamer un vendeur et un prix d'achat conduirait à en inventer :
         ces mentions appartiennent au registre tenu avant la bascule.
+
+        Le manque est nommé, pas seulement signalé : « incomplet » n'aide
+        personne à corriger, « mode de règlement » se traite.
         """
         for lot in self:
-            socle = bool(lot.police_registered and lot.police_origin
-                         and lot.police_weight and lot.police_entry_date)
-            if lot.police_opening:
-                lot.police_complete = socle
-            else:
-                lot.police_complete = bool(
-                    socle and lot.police_seller_id
-                    and lot.police_purchase_price and lot.police_payment_mode)
+            manques = []
+            if not lot.police_registered:
+                lot.police_complete = False
+                lot.police_missing_mentions = False
+                continue
+            if not lot.police_origin_id:
+                manques.append(_("provenance"))
+            if not lot.police_weight:
+                manques.append(_("poids"))
+            if not lot.police_entry_date:
+                manques.append(_("date d'entrée"))
+            if not lot.police_opening:
+                if not lot.police_seller_id:
+                    manques.append(_("vendeur"))
+                elif (not lot.police_seller_id.is_company
+                        and not lot.police_seller_qualite_id):
+                    # Pour une personne morale, l'art. R321-3 2° veut la
+                    # qualité du *représentant* — que le module ne recueille
+                    # pas encore. Ne rien exiger ici plutôt que d'exiger la
+                    # mauvaise mention.
+                    manques.append(_("qualité du vendeur"))
+                if not lot.police_purchase_price:
+                    manques.append(_("prix d'achat"))
+                if not lot.police_payment_mode:
+                    manques.append(_("mode de règlement (rachat non payé)"))
+            lot.police_complete = not manques
+            lot.police_missing_mentions = ", ".join(manques) or False
 
     def unlink(self):
         """Un objet inscrit au registre ne s'efface pas.
@@ -178,7 +221,8 @@ class StockLot(models.Model):
             'poids': round(self.police_weight or 0.0, 4),
             'titre': round(self.police_fineness or 0.0, 1),
             'vendeur': self.police_seller_id.display_name or None,
-            'provenance': self.police_origin or None,
+            'qualite': self.police_seller_qualite_id.name or None,
+            'provenance': self.police_origin_id.name or None,
             'description': self.police_description or None,
             'prix': round(self.police_purchase_price or 0.0, 2),
             'devise': self.police_currency_id.name or None,
@@ -314,13 +358,16 @@ class StockLot(models.Model):
         return '\n'.join(lignes)
 
     def _police_vendeur(self):
-        """Nom, prénoms et domicile du vendeur, tels que le registre les exige.
+        """Nom, prénoms, qualité et domicile du vendeur.
 
-        L'art. R321-4 du code pénal veut « les nom, prénoms, qualité et
+        L'art. R321-3 1° du code pénal veut « les nom, prénoms, qualité et
         domicile » ; l'art. 56 J quindecies de l'annexe IV au CGI, « les noms,
         prénoms et adresses ». Le seul nom d'usage ne suffit donc pas.
         Une ligne d'inventaire d'ouverture n'a pas de vendeur : ce qui
         précède la bascule est attesté par le registre antérieur.
+
+        La qualité vient du lot, pas du contact : c'est celle constatée au
+        comptoir, que le contact ait changé depuis ou non.
         """
         self.ensure_one()
         partenaire = self.police_seller_id
@@ -332,7 +379,8 @@ class StockLot(models.Model):
         domicile = ', '.join(filter(None, [
             partenaire.street, partenaire.street2,
             ' '.join(filter(None, [partenaire.zip, partenaire.city]))]))
-        return '\n'.join(filter(None, [etat_civil, domicile]))
+        return '\n'.join(filter(None, [
+            etat_civil, self.police_seller_qualite_id.name, domicile]))
 
     def _police_piece_identite(self):
         """Nature, numéro, date et lieu de délivrance, autorité émettrice.
