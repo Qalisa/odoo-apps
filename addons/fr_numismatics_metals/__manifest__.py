@@ -2,10 +2,10 @@
 
 {
     'name': "Numismatique - Caractéristiques métal des articles",
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.1.0',
     'summary': """
 Nature, titre et poids unitaire sur les articles ; poids en grammes sur les lignes
-d'achat. Socle de données du livre de police (art. R321-4 du code pénal).
+d'achat. Socle de données du livre de police (art. 537 du CGI, ann. IV art. 56 J quindecies).
 """,
     'description': """
 Caractéristiques métal des articles

@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - registre des métaux précieux",
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.2.0',
     'summary': """
 Registre des achats, ventes, réceptions et livraisons de métaux précieux :
 entrées depuis les avoirs de rachat, sorties par bon de relève.

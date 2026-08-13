@@ -140,6 +140,7 @@ class TestLivrePolice(TransactionCase):
         """
         produit = self.env['product.template'].create(
             {'name': "Objet requalifié", 'metal_nature': self.or_.id,
+             'metal_fineness': 750,
              'metal_quantity_mode': 'unit', 'metal_unit_weight': 6.4516})
         self.assertTrue(produit.is_storable)
         produit.metal_regulated = False
@@ -692,7 +693,7 @@ class TestVentilationDuRegistre(TestLivrePolice):
         palladium = self.env.ref('fr_numismatics_metals.metal_nature_palladium')
         article = self.env['product.template'].create({
             'name': "Palladium (test)", 'metal_nature': palladium.id,
-            'metal_quantity_mode': 'gram'})
+            'metal_fineness': 999, 'metal_quantity_mode': 'gram'})
         lot = self.env['stock.lot']._police_create_entry({
             'product_id': article.product_variant_id.id,
             'company_id': self.company.id,

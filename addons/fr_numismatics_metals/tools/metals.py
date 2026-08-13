@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Dérivation du poids d'une ligne d'achat, et vraisemblance du résultat.
 
-Le livre de police (art. R321-4 du code pénal) exige la désignation de
+Le livre de police (CGI, ann. IV, art. 56 J quindecies) exige le poids de
 l'objet et, pour les métaux précieux, son poids. Les caractéristiques de
 chaque objet — nature, titre, poids unitaire — vivent sur l'article
 (``product.template``) : c'est lui le référentiel. Ce module ne porte que

@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 """Tests d'intégration : natures, caractéristiques de l'article, poids.
 
-Les caractéristiques métal se saisissent article par article — le module
-n'en impose aucune. Ces tests les posent à la main, comme le ferait un
-utilisateur depuis l'onglet « Métal précieux ».
+Depuis la 1.1.0, un bien est présumé soumis au registre et ses mentions
+(nature, régime de quantité, titre, poids unitaire) sont **exigées à
+l'enregistrement** : le registre les veut sur chaque objet (CGI, ann. IV,
+art. 56 J quindecies). Les articles qui ne désignent aucun objet acheté —
+remise, acompte, arrondi — se déclarent hors registre en décochant la case.
+
+Ces tests posent donc soit un article complet, soit un article explicitement
+hors registre, comme le ferait un utilisateur.
 """
 
 from psycopg2 import IntegrityError
 
+from odoo.exceptions import ValidationError
 from odoo.tests import TransactionCase, tagged
 from odoo.tools import mute_logger
 
@@ -43,7 +49,8 @@ class TestMetalNature(TransactionCase):
         """`ondelete='restrict'` protège le registre d'un référentiel troué."""
         nature = self.env['metal.nature'].create({'name': "Vermeil"})
         self.env['product.template'].create(
-            {'name': "Broche vermeil", 'metal_nature': nature.id})
+            {'name': "Broche vermeil", 'metal_nature': nature.id,
+             'metal_quantity_mode': 'gram', 'metal_fineness': 800})
         with self.assertRaises(IntegrityError), mute_logger('odoo.sql_db'):
             with self.cr.savepoint():
                 nature.unlink()
@@ -52,16 +59,18 @@ class TestMetalNature(TransactionCase):
         """Archiver retire des listes sans toucher aux articles."""
         nature = self.env['metal.nature'].create({'name': "Vermeil"})
         produit = self.env['product.template'].create(
-            {'name': "Broche vermeil", 'metal_nature': nature.id})
+            {'name': "Broche vermeil", 'metal_nature': nature.id,
+             'metal_quantity_mode': 'gram', 'metal_fineness': 800})
         nature.active = False
         self.assertEqual(produit.metal_nature, nature)
 
     def test_comptage_des_articles_archives_compris(self):
         nature = self.env['metal.nature'].create({'name': "Vermeil"})
         self.assertEqual(nature.product_count, 0)
+        complet = {'metal_quantity_mode': 'gram', 'metal_fineness': 800}
         produits = self.env['product.template'].create([
-            {'name': "Broche vermeil", 'metal_nature': nature.id},
-            {'name': "Chaîne vermeil", 'metal_nature': nature.id},
+            dict(complet, name="Broche vermeil", metal_nature=nature.id),
+            dict(complet, name="Chaîne vermeil", metal_nature=nature.id),
         ])
         nature.invalidate_recordset(['product_count'])
         self.assertEqual(nature.product_count, 2)
@@ -82,16 +91,26 @@ class TestMetalProduct(TransactionCase):
     def _product(self, **values):
         return self.env['product.template'].create(dict({'name': "Article"}, **values))
 
-    def test_article_sans_caracteristique_hors_perimetre(self):
-        """Par défaut, un article n'entre pas dans le périmètre du registre."""
-        product = self._product(name="Remise")
+    def test_article_declare_hors_registre_reste_sans_caracteristique(self):
+        """Décocher la case est la seule façon de garder un bien sans
+        caractéristiques : sinon le registre les exige."""
+        product = self._product(name="Remise", metal_regulated=False)
         self.assertFalse(product.metal_nature)
         self.assertFalse(product.metal_quantity_mode)
         self.assertFalse(product.metal_is_object)
 
+    def test_bien_incomplet_refuse(self):
+        """La vue exige déjà ces champs ; la contrainte les exige aussi d'un
+        import, d'une duplication ou d'un script."""
+        with self.assertRaises(ValidationError):
+            self._product(name="Chevalière or", type='consu')
+
     def test_bien_presume_soumis_au_registre(self):
         """Coche automatique à la création d'un bien."""
-        self.assertTrue(self._product(name="Chevalière or", type='consu').metal_regulated)
+        product = self._product(
+            name="Chevalière or", type='consu', metal_nature=self.or_.id,
+            metal_quantity_mode='gram', metal_fineness=750)
+        self.assertTrue(product.metal_regulated)
 
     def test_service_jamais_soumis(self):
         self.assertFalse(self._product(name="Frais de dossier", type='service')
@@ -99,17 +118,21 @@ class TestMetalProduct(TransactionCase):
 
     def test_decochage_manuel_persiste(self):
         """Le dernier mot revient à l'utilisateur, y compris après réécriture."""
-        product = self._product(name="Remise", type='consu')
-        self.assertTrue(product.metal_regulated)
-        product.metal_regulated = False
+        product = self._product(name="Remise", type='consu',
+                                metal_regulated=False)
+        self.assertFalse(product.metal_regulated)
         product.write({'list_price': 12.0})
         self.assertFalse(product.metal_regulated)
 
     def test_passage_en_bien_recoche(self):
-        """Requalifier un service en bien le remet dans le périmètre."""
+        """Requalifier un service en bien le remet dans le périmètre — et lui
+        réclame donc les mentions du registre."""
         product = self._product(name="Reprise", type='service')
         self.assertFalse(product.metal_regulated)
-        product.type = 'consu'
+        with self.assertRaises(ValidationError):
+            product.type = 'consu'
+        product.write({'type': 'consu', 'metal_nature': self.or_.id,
+                       'metal_quantity_mode': 'gram', 'metal_fineness': 750})
         self.assertTrue(product.metal_regulated)
 
     def test_ecran_a_caracteriser_ignore_les_articles_hors_registre(self):
@@ -117,26 +140,36 @@ class TestMetalProduct(TransactionCase):
         domaine = [('metal_regulated', '=', True),
                    '|', ('metal_quantity_mode', '=', False),
                         ('metal_weight_undetermined', '=', True)]
-        remise = self._product(name="Remise commerciale", type='consu')
+        # Un régime « au lot » laisse le poids à saisir ligne à ligne : c'est
+        # désormais le seul cas que cet écran a encore à signaler, la mention
+        # manquante étant refusée à l'enregistrement.
+        lot = self._product(name="Lot d'argenterie", type='consu',
+                            metal_nature=self.argent.id,
+                            metal_quantity_mode='lot')
         Tmpl = self.env['product.template']
-        self.assertIn(remise, Tmpl.search(domaine))
-        remise.metal_regulated = False
-        self.assertNotIn(remise, Tmpl.search(domaine))
+        self.assertIn(lot, Tmpl.search(domaine))
+        lot.metal_regulated = False
+        self.assertNotIn(lot, Tmpl.search(domaine))
 
     def test_regime_renseigne_fait_entrer_dans_le_perimetre(self):
         product = self._product(name="Argent (g)", metal_nature=self.argent.id,
-                                metal_quantity_mode='gram')
+                                metal_quantity_mode='gram', metal_fineness=800)
         self.assertTrue(product.metal_is_object)
         self.assertFalse(product.metal_weight_undetermined)
 
-    def test_piece_sans_poids_unitaire_signalee(self):
-        """Régime « à la pièce » sans poids : le poids ne sera pas déductible."""
-        product = self._product(name="Pièce inconnue", metal_nature=self.or_.id,
-                                metal_quantity_mode='unit')
-        self.assertTrue(product.metal_is_object)
-        self.assertTrue(product.metal_weight_undetermined)
-        product.metal_unit_weight = 6.4516
-        self.assertFalse(product.metal_weight_undetermined)
+    def test_piece_sans_poids_unitaire_refusee(self):
+        """Régime « à la pièce » sans poids : le poids ne serait pas
+        déductible, et le registre l'exige. L'article est refusé tant qu'il
+        reste soumis au registre."""
+        with self.assertRaises(ValidationError):
+            self._product(name="Pièce inconnue", metal_nature=self.or_.id,
+                          metal_fineness=900, metal_quantity_mode='unit')
+        hors_registre = self._product(
+            name="Pièce inconnue", metal_regulated=False,
+            metal_nature=self.or_.id, metal_quantity_mode='unit')
+        self.assertTrue(hors_registre.metal_weight_undetermined)
+        hors_registre.metal_unit_weight = 6.4516
+        self.assertFalse(hors_registre.metal_weight_undetermined)
 
     def test_lot_toujours_sans_poids_deductible(self):
         product = self._product(name="Lot de pièces Argent",
@@ -158,7 +191,7 @@ class TestMetalProduct(TransactionCase):
     def test_precision_du_poids_unitaire(self):
         """Le poids unitaire est stocké au dixième de milligramme."""
         product = self._product(name="1/2 Souverain Or", metal_nature=self.or_.id,
-                                metal_quantity_mode='unit',
+                                metal_fineness=916.7, metal_quantity_mode='unit',
                                 metal_unit_weight=3.99402)
         self.assertAlmostEqual(product.metal_unit_weight, 3.9940, places=4)
 
@@ -188,7 +221,8 @@ class TestMetalWeightOnLines(TransactionCase):
             'name': "Lot de pièces Argent", 'metal_nature': cls.argent.id,
             'metal_quantity_mode': 'lot',
         }).product_variant_id
-        cls.hors_metal = Tmpl.create({'name': "Remise"}).product_variant_id
+        cls.hors_metal = Tmpl.create(
+            {'name': "Remise", 'metal_regulated': False}).product_variant_id
 
     def _refund(self, product, qty, price):
         return self.env['account.move'].create({
@@ -266,7 +300,7 @@ class TestMetalPricePerGram(TransactionCase):
             {'name': "Fondeur de test", 'is_company': True})
         cls.au_gramme = cls.env['product.template'].create({
             'name': "Argent (g)", 'metal_nature': cls.argent.id,
-            'metal_quantity_mode': 'gram',
+            'metal_fineness': 800, 'metal_quantity_mode': 'gram',
         }).product_variant_id
 
     def _line(self, qty, price):
@@ -305,3 +339,74 @@ class TestMetalPricePerGram(TransactionCase):
                 'price_unit': 300.0, 'tax_ids': [(5, 0, 0)]})],
         }).invoice_line_ids
         self.assertFalse(line.metal_price_per_gram)
+
+
+@tagged('post_install', '-at_install')
+class TestMentionsObligatoiresCatalogue(TransactionCase):
+    """Les mentions que le registre exige de chaque objet se tiennent au
+    catalogue : « la nature, le nombre, le poids, le titre » (CGI, ann. IV,
+    art. 56 J quindecies). Le nombre vient de la ligne d'achat ; les trois
+    autres sont des attributs de l'article.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.or_ = self.env.ref('fr_numismatics_metals.metal_nature_or')
+
+    def _article(self, **valeurs):
+        base = {
+            'name': "Article de test", 'type': 'consu',
+            'metal_nature': self.or_.id, 'metal_quantity_mode': 'gram',
+            'metal_fineness': 750.0,
+        }
+        base.update(valeurs)
+        return self.env['product.template'].create(base)
+
+    def test_bien_complet_accepte(self):
+        article = self._article()
+        self.assertTrue(article.metal_regulated)
+
+    def test_nature_exigee(self):
+        with self.assertRaises(ValidationError) as refus:
+            self._article(metal_nature=False)
+        self.assertIn("nature", str(refus.exception))
+
+    def test_regime_de_quantite_exige(self):
+        with self.assertRaises(ValidationError) as refus:
+            self._article(metal_quantity_mode=False)
+        self.assertIn("régime de quantité", str(refus.exception))
+
+    def test_titre_exige(self):
+        with self.assertRaises(ValidationError) as refus:
+            self._article(metal_fineness=0.0)
+        self.assertIn("titre", str(refus.exception))
+
+    def test_poids_unitaire_exige_au_regime_piece(self):
+        with self.assertRaises(ValidationError) as refus:
+            self._article(metal_quantity_mode='unit', metal_unit_weight=0.0)
+        self.assertIn("poids unitaire", str(refus.exception))
+
+    def test_lot_heterogene_dispense_de_titre(self):
+        """Un lot n'a pas de titre unique : en exiger un ferait porter au
+        registre une mention fausse."""
+        article = self._article(metal_quantity_mode='lot', metal_fineness=0.0)
+        self.assertTrue(article.metal_regulated)
+        self.assertFalse(article.metal_fineness)
+
+    def test_service_hors_registre(self):
+        service = self.env['product.template'].create(
+            {'name': "Remise", 'type': 'service'})
+        self.assertFalse(service.metal_regulated)
+
+    def test_article_de_gestion_exempte_par_decochage(self):
+        """La sortie de secours : un bien qui ne désigne aucun objet."""
+        article = self.env['product.template'].create({
+            'name': "Arrondi de règlement", 'type': 'consu',
+            'metal_regulated': False,
+        })
+        self.assertFalse(article.metal_regulated)
+
+    def test_retrait_d_une_mention_refuse(self):
+        article = self._article()
+        with self.assertRaises(ValidationError):
+            article.metal_nature = False
