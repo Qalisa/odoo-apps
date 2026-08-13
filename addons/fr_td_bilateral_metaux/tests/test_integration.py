@@ -6,6 +6,8 @@ couche ORM : projection ``res.partner`` -> dict vendeur, helpers de la
 déclaration, et assemblage d'un fichier réel via ces données.
 """
 
+from odoo import fields
+from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 from odoo.addons.fr_td_bilateral_metaux.tools import dmet as dmet_tools
 
@@ -102,3 +104,77 @@ class TestDmetIntegration(TransactionCase):
         })
         decl.action_precheck()
         self.assertEqual(decl.state, 'checked')
+
+
+@tagged('post_install', '-at_install')
+class TestVendeurEntiteCommerciale(TransactionCase):
+    """Le vendeur déclaré est la société, jamais celui qui vend pour elle.
+
+    Quand une personne morale vend, la personne physique qui s'est présentée
+    la représente (livre de police, art. R321-3 2°). La déclarer comme
+    vendeuse personne physique serait doublement faux : elle n'a rien vendu
+    pour son compte, et le montant échapperait à la société.
+    """
+
+    def _avoir(self, partenaire, montant):
+        move = self.env['account.move'].create({
+            'move_type': 'out_refund',
+            'partner_id': partenaire.id,
+            'invoice_date': fields.Date.to_date('2025-06-15'),
+            'date': fields.Date.to_date('2025-06-15'),
+            'invoice_line_ids': [(0, 0, {
+                'name': "Rachat métal", 'quantity': 1,
+                'price_unit': montant, 'tax_ids': [(5, 0, 0)],
+            })],
+        })
+        move.action_post()
+        return move
+
+    def setUp(self):
+        super().setUp()
+        self.societe = self.env['res.partner'].create({
+            'name': "Joaillerie Test", 'is_company': True,
+            'street': "3 rue Serpenoise", 'zip': '57000', 'city': "Metz",
+            'siret': '12345678200028',
+        })
+        self.gerant = self.env['res.partner'].create({
+            'lastname': "Weber", 'firstname': "Paul", 'is_company': False,
+            'parent_id': self.societe.id,
+        })
+        self.vendeuse = self.env['res.partner'].create({
+            'lastname': "Muller", 'firstname': "Anne", 'is_company': False,
+            'parent_id': self.societe.id,
+        })
+
+    def test_contact_de_societe_ne_bloque_pas_la_validation(self):
+        """Sans ce correctif, le contrôle « rachat à un particulier »
+        réclamait à un salarié sa date et son pays de naissance."""
+        move = self._avoir(self.gerant, 1000.0)
+        self.assertEqual(move.state, 'posted')
+
+    def test_particulier_reste_controle(self):
+        seul = self.env['res.partner'].create({
+            'lastname': "Dupont", 'firstname': "Jean", 'is_company': False})
+        with self.assertRaises(UserError):
+            self._avoir(seul, 1000.0)
+
+    def test_les_ventes_des_contacts_reviennent_a_la_societe(self):
+        self._avoir(self.gerant, 1000.0)
+        self._avoir(self.vendeuse, 500.0)
+        decl = self.env['fr.dmet.declaration'].create({
+            'millesime': 2025,
+            'company_id': self.env.company.id,
+            'company_ids': [(6, 0, [self.env.company.id])],
+        })
+        vendeurs = [v for v in decl._collect_vendors()
+                    if v['_partner_id'] == self.societe.id]
+        self.assertEqual(len(vendeurs), 1, "les deux contacts font un vendeur")
+        vendeur = vendeurs[0]
+        self.assertTrue(vendeur['is_company'])
+        self.assertEqual(vendeur['raison_sociale'], "Joaillerie Test")
+        self.assertEqual(vendeur['siret_vendeur'], '12345678200028')
+        self.assertAlmostEqual(vendeur['montant'], 1500.0)
+        self.assertFalse(
+            [v for v in decl._collect_vendors()
+             if v['_partner_id'] in (self.gerant.id, self.vendeuse.id)],
+            "aucun contact ne doit apparaître comme vendeur")

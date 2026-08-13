@@ -951,15 +951,23 @@ class TestVenteParUneSociete(TestLivrePolice):
         message = str(refus.exception)
         self.assertIn("qualité", message)
         self.assertIn("pièce d'identité", message)
+        # Le domicile n'y figure pas : Odoo recopie l'adresse de la société
+        # sur ses contacts, la mention est donc toujours servie. Pour le
+        # domicile *personnel* du représentant, il faut une adresse typée
+        # « privée » — le contrôle ne peut pas le deviner.
 
     def test_contact_retenu_vaut_representant(self):
         """Retenir directement le contact rattaché suffit : la société est
         son parent commercial, on ne la redemande pas."""
         societe = self._societe()
         representant = self._representant(societe)
-        move = self._avoir_brouillon(vendeur=representant)
+        move = self._rachat(vendeur=representant)
         self.assertEqual(move.police_seller_company_id, societe)
         self.assertEqual(move.police_representative_id, representant)
+        lot = move.invoice_line_ids.police_lot_id
+        self.assertEqual(lot.police_seller_id, societe,
+                         "le vendeur inscrit est la société, pas son contact")
+        self.assertEqual(lot.police_representative_id, representant)
 
     def test_societe_avec_representant_designe(self):
         societe = self._societe()
