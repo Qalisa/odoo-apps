@@ -442,9 +442,10 @@ class TestMentionsEditees(TestLivrePolice):
     """Les mentions portées sur l'édition du registre.
 
     L'art. 56 J quindecies de l'annexe IV veut « les noms, prénoms et
-    adresses » ; l'art. R321-4 du code pénal y ajoute « la nature, le numéro
-    et la date de délivrance de la pièce d'identité […] avec l'indication de
-    l'autorité qui l'a établie ». Le seul nom d'usage ne suffit pas.
+    adresses » ; l'art. R321-3 1° du code pénal y ajoute « la nature, le
+    numéro et la date de délivrance de la pièce d'identité […] avec
+    l'indication de l'autorité qui l'a établie ». Le seul nom d'usage ne
+    suffit pas.
     """
 
     def _particulier(self):
@@ -481,7 +482,7 @@ class TestMentionsEditees(TestLivrePolice):
 
     def test_piece_identite_porte_les_quatre_mentions(self):
         """Nature, numéro, date de délivrance, autorité — et rien de plus :
-        l'art. R321-4 n'exige pas le lieu de délivrance."""
+        l'art. R321-3 1° n'exige pas le lieu de délivrance."""
         lot = self._lot_vendu_par(self._particulier())
         mention = lot._police_piece_identite()
         self.assertIn("Carte nationale d'identité", mention)

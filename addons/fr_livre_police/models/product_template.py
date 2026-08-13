@@ -26,7 +26,15 @@ class ProductTemplate(models.Model):
 
     @api.constrains('metal_regulated', 'is_storable', 'tracking')
     def _check_police_tracking(self):
-        """Le suivi par lot n'est pas un confort, c'est le numéro d'ordre."""
+        """Le suivi par lot n'est pas un confort, c'est le numéro d'ordre.
+
+        Muette pendant le chargement des modules, pour la même raison que
+        `_check_police_mentions` : à l'installation, le catalogue existant
+        devient soumis au registre sans que personne l'ait demandé, et refuser
+        ferait échouer l'installation au lieu d'informer.
+        """
+        if not self.env.registry.ready:
+            return
         for product in self:
             if not product.metal_regulated:
                 continue

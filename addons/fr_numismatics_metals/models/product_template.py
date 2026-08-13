@@ -131,7 +131,18 @@ class ProductTemplate(models.Model):
         Le registre veut, pour chaque objet, « la nature, le nombre, le poids,
         le titre » (CGI, ann. IV, art. 56 J quindecies). Le nombre vient de la
         ligne d'achat ; les trois autres se tiennent ici.
+
+        **Muette pendant le chargement des modules.** À l'installation, Odoo
+        calcule `metal_regulated` pour tout le catalogue existant : chaque bien
+        déjà au catalogue devient soumis au registre sans porter aucune des
+        mentions, qui n'existaient pas la veille. Refuser à ce moment-là
+        n'exprimerait rien — l'utilisateur n'a rien déclaré — et ferait échouer
+        l'installation. Ces articles sont ensuite listés à l'écran « Articles à
+        caractériser », et toute écriture ultérieure sur l'un d'eux passe par
+        cette contrainte.
         """
+        if not self.env.registry.ready:
+            return
         for product in self:
             if not product.metal_regulated:
                 continue

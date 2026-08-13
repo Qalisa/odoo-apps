@@ -88,16 +88,20 @@
             </p>
             <p>
                 Cet écran liste les articles soumis au livre de police dont le
-                poids ne se déduit pas de la quantité : les lots hétérogènes,
-                dont le poids se pèse et se saisit sur chaque ligne d'achat.
+                régime de quantité manque, et ceux dont le poids ne se déduit
+                pas de la quantité — lots hétérogènes, dont le poids se pèse et
+                se saisit sur chaque ligne d'achat.
             </p>
             <p>
-                Il ne devrait plus rien contenir d'autre : depuis la 1.1.0, un
-                article sans régime de quantité, sans nature, sans titre ou
-                sans poids unitaire est refusé à l'enregistrement — le registre
-                exige ces mentions de chaque objet (CGI, ann. IV, art. 56 J
-                quindecies). Le domaine les cherche encore, pour rattraper un
-                article entré avant cette version.
+                <b>Au lendemain de l'installation, tout le catalogue existant
+                s'y trouve</b> : un bien est présumé soumis au registre, et
+                aucun ne portait encore ces mentions. Reprenez-les un par un —
+                en complétant nature, titre et régime pour les objets, en
+                décochant « Soumis au livre de police » pour ce qui n'en est
+                pas (remise, acompte, arrondi). Tant qu'un article reste ici,
+                toute modification de sa fiche est refusée : le registre exige
+                ces mentions de chaque objet (CGI, ann. IV, art. 56 J
+                quindecies).
             </p>
         </field>
     </record>

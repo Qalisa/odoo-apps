@@ -412,10 +412,11 @@ class StockLot(models.Model):
     def _police_piece_identite(self):
         """Nature, numéro, date et lieu de délivrance, autorité émettrice.
 
-        Mentions imposées par l'art. R321-4 : « la nature, le numéro et la
-        date de délivrance de la pièce d'identité produite […] avec
+        Mentions imposées par l'art. R321-3 1° : « la nature, le numéro et
+        la date de délivrance de la pièce d'identité produite […] avec
         l'indication de l'autorité qui l'a établie ». Le lieu de délivrance
         n'en fait pas partie — le texte demande l'autorité émettrice.
+        (L'art. R321-4, lui, ne traite que du numéro d'ordre.)
         """
         self.ensure_one()
         # La pièce est celle de la personne physique qui s'est présentée : le

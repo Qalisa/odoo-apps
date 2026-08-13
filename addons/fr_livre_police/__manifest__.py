@@ -53,8 +53,8 @@ entrepôt et sa séquence de numéros d'ordre.
     'license': "AGPL-3",
     'website': 'https://odoo-docs.qalisa.fr/',
     # `contacts_citizenship_id` porte les mentions de la pièce d'identité
-    # (nature, numéro, date et lieu de délivrance, autorité) exigées au
-    # registre par l'art. R321-4 du code pénal, et dépend lui-même de
+    # (nature, numéro, date de délivrance, autorité) exigées au registre par
+    # l'art. R321-3 1° du code pénal, et dépend lui-même de
     # `partner_firstname` pour l'éclatement nom / prénoms.
     'depends': ['fr_numismatics_metals', 'stock_account',
                 'contacts_citizenship_id'],
