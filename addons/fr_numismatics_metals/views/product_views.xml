@@ -9,15 +9,19 @@
                  mentions se saisissent à la création de l'article, pas plus
                  tard. Un onglet séparé, personne ne l'ouvre. -->
             <xpath expr="//page[@name='general_information']/group" position="after">
-                <group string="Livre de police (art. R321-4)" name="metal">
+                <group string="Livre de police (CGI ann. IV, art. 56 J quindecies)" name="metal">
                     <group>
                         <field name="metal_regulated"/>
                         <field name="metal_nature"
                                options="{'no_quick_create': True}"
                                invisible="not metal_regulated"
                                required="metal_regulated"/>
+                        <!-- Le titre est une mention obligatoire du
+                             registre ; seul un lot hétérogène n'en a pas. -->
                         <field name="metal_fineness"
-                               invisible="not metal_regulated"/>
+                               invisible="not metal_regulated"
+                               required="metal_regulated and
+                                         metal_quantity_mode != 'lot'"/>
                     </group>
                     <group>
                         <field name="metal_quantity_mode"
@@ -38,7 +42,9 @@
                     <div class="text-muted" colspan="2"
                          invisible="metal_quantity_mode != 'lot'">
                         Lot hétérogène : le poids ne se déduit pas de la quantité,
-                        il doit être saisi sur chaque ligne d'achat.
+                        il doit être saisi sur chaque ligne d'achat. Le titre
+                        n'est pas exigé — un lot n'en a pas d'unique ; le détail
+                        se porte dans la description de l'achat.
                     </div>
                     <div class="text-muted" colspan="2"
                          invisible="metal_quantity_mode != 'gram'">
@@ -82,9 +88,16 @@
             </p>
             <p>
                 Cet écran liste les articles soumis au livre de police dont le
-                régime de quantité manque, et ceux dont le poids ne peut pas se
-                déduire de la quantité — lots hétérogènes, ou pièces dont le
-                poids unitaire reste à renseigner.
+                poids ne se déduit pas de la quantité : les lots hétérogènes,
+                dont le poids se pèse et se saisit sur chaque ligne d'achat.
+            </p>
+            <p>
+                Il ne devrait plus rien contenir d'autre : depuis la 1.1.0, un
+                article sans régime de quantité, sans nature, sans titre ou
+                sans poids unitaire est refusé à l'enregistrement — le registre
+                exige ces mentions de chaque objet (CGI, ann. IV, art. 56 J
+                quindecies). Le domaine les cherche encore, pour rattraper un
+                article entré avant cette version.
             </p>
         </field>
     </record>

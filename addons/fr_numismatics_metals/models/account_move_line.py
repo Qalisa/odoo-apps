@@ -22,7 +22,7 @@ class AccountMoveLine(models.Model):
         string="Poids (g)", digits=(12, 4),
         compute='_compute_metal_weight', store=True, readonly=False,
         help="Poids en grammes du métal acheté sur cette ligne, mention "
-             "exigée au livre de police (art. R321-4 du code pénal). "
+             "exigée au livre de police (CGI, ann. IV, art. 56 J quindecies). "
              "Déduit de l'article quand c'est possible, à saisir sinon.",
     )
     metal_weight_missing = fields.Boolean(
