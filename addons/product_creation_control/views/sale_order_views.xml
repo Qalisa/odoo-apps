@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        `active` n'est volontairement pas déclaré ici : une mise à jour du
+        module ne réécrit que les champs présents dans l'enregistrement, si
+        bien que le choix fait dans les paramètres survit aux mises à jour.
+
+        Les options sont réécrites en entier, `position="attributes"` ne sachant
+        pas fusionner un dictionnaire. Valeur amont (Odoo 18) : {'no_open': True}.
+    -->
+    <record id="view_order_form_no_inline_product" model="ir.ui.view">
+        <field name="name">sale.order.form.article.sans.creation.a.la.volee</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_template_id']"
+                   position="attributes">
+                <attribute name="options">{'no_open': True, 'no_create': True}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_id']"
+                   position="attributes">
+                <attribute name="options">{'no_open': True, 'no_create': True}</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
