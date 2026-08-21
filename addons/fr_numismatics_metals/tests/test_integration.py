@@ -87,9 +87,13 @@ class TestMetalProduct(TransactionCase):
         super().setUpClass()
         cls.or_ = cls.env.ref('fr_numismatics_metals.metal_nature_or')
         cls.argent = cls.env.ref('fr_numismatics_metals.metal_nature_argent')
+        # La contrainte ne juge que la saisie : sous `cls.env`, qui est en
+        # super-utilisateur, elle se tait volontairement.
+        cls.env_utilisateur = cls.env(user=cls.env.ref('base.user_admin'))
 
     def _product(self, **values):
-        return self.env['product.template'].create(dict({'name': "Article"}, **values))
+        return self.env_utilisateur['product.template'].create(
+            dict({'name': "Article"}, **values))
 
     def test_article_declare_hors_registre_reste_sans_caracteristique(self):
         """Décocher la case est la seule façon de garder un bien sans
@@ -100,8 +104,8 @@ class TestMetalProduct(TransactionCase):
         self.assertFalse(product.metal_is_object)
 
     def test_bien_incomplet_refuse(self):
-        """La vue exige déjà ces champs ; la contrainte les exige aussi d'un
-        import, d'une duplication ou d'un script."""
+        """La vue exige déjà ces champs ; la contrainte les exige aussi
+        d'un import ou d'une duplication."""
         with self.assertRaises(ValidationError):
             self._product(name="Chevalière or", type='consu')
 
@@ -352,6 +356,9 @@ class TestMentionsObligatoiresCatalogue(TransactionCase):
     def setUp(self):
         super().setUp()
         self.or_ = self.env.ref('fr_numismatics_metals.metal_nature_or')
+        # Voir `_police_juge_la_saisie` : la contrainte se tait en
+        # super-utilisateur, il faut donc écrire sous une identité réelle.
+        self.env_utilisateur = self.env(user=self.env.ref('base.user_admin'))
 
     def _article(self, **valeurs):
         base = {
@@ -360,7 +367,7 @@ class TestMentionsObligatoiresCatalogue(TransactionCase):
             'metal_fineness': 750.0,
         }
         base.update(valeurs)
-        return self.env['product.template'].create(base)
+        return self.env_utilisateur['product.template'].create(base)
 
     def test_bien_complet_accepte(self):
         article = self._article()
