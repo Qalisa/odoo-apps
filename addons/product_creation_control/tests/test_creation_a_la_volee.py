@@ -23,6 +23,17 @@ class TestCreationALaVolee(TransactionCase):
             [self.env.ref(xmlid).id for xmlid in VUES]
         )
 
+    def _creer(self, nom, env):
+        """Crée par `name_create`, en service.
+
+        Le type importe : `fr_numismatics_metals`, s'il est installé à côté,
+        exige de tout *bien* ses mentions de registre — ce qu'un article créé
+        par son seul nom ne peut pas porter. Un service ne désigne aucun objet
+        acheté, la fixture reste donc valable que ce module soit là ou non.
+        """
+        return env["product.template"].with_context(
+            default_type='service').name_create(nom)
+
     def _regler(self, autorise):
         reglages = self.env["res.config.settings"].create({
             "product_allow_inline_creation": autorise,
@@ -48,7 +59,7 @@ class TestCreationALaVolee(TransactionCase):
             any(self._vues().mapped("active")),
             "les vues qui suppriment « Créer … » doivent être désactivées",
         )
-        article = self.env_utilisateur["product.template"].name_create("Lingot d'essai")
+        article = self._creer("Lingot d'essai", self.env_utilisateur)
         self.assertTrue(article[0])
 
     def test_option_decochee_bloque_de_nouveau(self):
@@ -60,5 +71,5 @@ class TestCreationALaVolee(TransactionCase):
 
     def test_super_utilisateur_toujours_autorise(self):
         """Installations de modules et scripts de reprise ne sont pas des saisies."""
-        article = self.env["product.template"].name_create("Lingot de reprise")
+        article = self._creer("Lingot de reprise", self.env)
         self.assertTrue(article[0])
