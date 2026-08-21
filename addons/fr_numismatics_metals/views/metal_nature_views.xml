@@ -1,0 +1,74 @@
+<odoo>
+
+    <record id="metal_nature_view_list" model="ir.ui.view">
+        <field name="name">metal.nature.list</field>
+        <field name="model">metal.nature</field>
+        <field name="arch" type="xml">
+            <!-- Liste éditable : ajouter ou renommer une nature ne doit pas
+                 demander d'ouvrir un formulaire. -->
+            <list string="Natures de métal" editable="bottom">
+                <field name="name"/>
+                <field name="product_count" string="Articles"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="metal_nature_view_form" model="ir.ui.view">
+        <field name="name">metal.nature.form</field>
+        <field name="model">metal.nature</field>
+        <field name="arch" type="xml">
+            <form string="Nature de métal">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_products" type="object"
+                                class="oe_stat_button" icon="fa-diamond">
+                            <field name="product_count" widget="statinfo"
+                                   string="Articles"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archivé" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Or"/></h1>
+                    </div>
+                    <field name="active" invisible="1"/>
+                    <div class="text-muted">
+                        Ce nom est la mention portée au livre de police pour tous
+                        les articles rattachés à cette nature.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="metal_nature_view_search" model="ir.ui.view">
+        <field name="name">metal.nature.search</field>
+        <field name="model">metal.nature</field>
+        <field name="arch" type="xml">
+            <search string="Natures de métal">
+                <field name="name"/>
+                <filter name="inactive" string="Archivées"
+                        domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_metal_nature" model="ir.actions.act_window">
+        <field name="name">Natures de métal</field>
+        <field name="res_model">metal.nature</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Créer une nature de métal
+            </p>
+            <p>
+                Les natures rattachées aux articles du catalogue et reportées au
+                livre de police. Les cinq natures usuelles sont créées à
+                l'installation ; cette liste se complète et se corrige librement.
+            </p>
+        </field>
+    </record>
+
+</odoo>
