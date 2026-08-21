@@ -118,30 +118,50 @@ class ProductTemplate(models.Model):
         for product in self:
             product.metal_regulated = product.type == 'consu'
 
+    def _police_juge_la_saisie(self):
+        """La contrainte ne juge que ce qu'une personne a saisi.
+
+        Elle se tait dans deux cas.
+
+        **Pendant le chargement des modules.** À l'installation, Odoo calcule
+        `metal_regulated` pour tout le catalogue existant : chaque bien déjà
+        présent devient soumis au registre sans porter aucune des mentions,
+        qui n'existaient pas la veille. Refuser à cet instant n'exprimerait
+        rien — personne n'a rien déclaré — et ferait échouer l'installation.
+
+        **Devant une écriture en super-utilisateur.** Odoo crée des articles
+        pour son propre compte, et les scripts de reprise aussi. Leur opposer
+        une mention de registre n'a pas de sens : ces articles ne désignent
+        aucun objet acheté, et la contrainte y bloquait des fonctionnements
+        internes sans rien protéger.
+
+        Ce que cela ne rouvre pas : un import CSV et une duplication depuis
+        l'interface s'exécutent sous l'identité de l'utilisateur, jamais en
+        super-utilisateur. Ils restent contrôlés, ce qui était la raison
+        d'être de cette contrainte.
+
+        Les articles qui échappent ainsi au contrôle restent présumés soumis
+        au registre et figurent à l'écran « Articles à caractériser ».
+        """
+        return self.env.registry.ready and not self.env.su
+
     @api.constrains('metal_regulated', 'metal_nature', 'metal_quantity_mode',
                     'metal_unit_weight', 'metal_fineness')
     def _check_police_mentions(self):
         """Un objet soumis au registre porte ses mentions dès le catalogue.
 
-        Les exiger dans la vue ne suffit pas : un import, une duplication ou
-        une écriture par script passent à côté, et le manque n'apparaît alors
-        qu'au comptoir — au moment où l'on ne peut plus ni peser ni titrer ce
-        qui vient d'être acheté.
+        Les exiger dans la vue ne suffit pas : un import ou une duplication
+        passent à côté, et le manque n'apparaît alors qu'au comptoir — au
+        moment où l'on ne peut plus ni peser ni titrer ce qui vient d'être
+        acheté.
 
         Le registre veut, pour chaque objet, « la nature, le nombre, le poids,
         le titre » (CGI, ann. IV, art. 56 J quindecies). Le nombre vient de la
         ligne d'achat ; les trois autres se tiennent ici.
 
-        **Muette pendant le chargement des modules.** À l'installation, Odoo
-        calcule `metal_regulated` pour tout le catalogue existant : chaque bien
-        déjà au catalogue devient soumis au registre sans porter aucune des
-        mentions, qui n'existaient pas la veille. Refuser à ce moment-là
-        n'exprimerait rien — l'utilisateur n'a rien déclaré — et ferait échouer
-        l'installation. Ces articles sont ensuite listés à l'écran « Articles à
-        caractériser », et toute écriture ultérieure sur l'un d'eux passe par
-        cette contrainte.
+        Voir `_police_juge_la_saisie` pour ce que la contrainte laisse passer.
         """
-        if not self.env.registry.ready:
+        if not self._police_juge_la_saisie():
             return
         for product in self:
             if not product.metal_regulated:
