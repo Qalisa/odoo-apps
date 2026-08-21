@@ -1,0 +1,98 @@
+<odoo>
+
+    <record id="view_move_form_metal" model="ir.ui.view">
+        <field name="name">account.move.form.metal</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='quantity']"
+                   position="after">
+                <field name="metal_weight"
+                       string="Poids (g)"
+                       optional="show"
+                       readonly="parent_state == 'posted'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_move_line_list_metal_anomaly" model="ir.ui.view">
+        <field name="name">account.move.line.list.metal.anomaly</field>
+        <field name="model">account.move.line</field>
+        <field name="arch" type="xml">
+            <list string="Contrôle des poids" create="false" delete="false"
+                  editable="bottom"
+                  decoration-danger="metal_weight_missing">
+                <field name="move_id" readonly="1"/>
+                <field name="date" readonly="1"/>
+                <field name="company_id" readonly="1" groups="base.group_multi_company"/>
+                <field name="partner_id" readonly="1"/>
+                <field name="product_id" readonly="1"/>
+                <field name="name" readonly="1"/>
+                <field name="quantity" readonly="1"/>
+                <field name="price_unit" readonly="1"/>
+                <field name="metal_weight"/>
+                <field name="metal_price_per_gram" readonly="1"/>
+                <field name="metal_weight_missing" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_move_line_search_metal" model="ir.ui.view">
+        <field name="name">account.move.line.search.metal</field>
+        <field name="model">account.move.line</field>
+        <field name="arch" type="xml">
+            <search string="Contrôle des poids">
+                <field name="move_id"/>
+                <field name="partner_id"/>
+                <field name="product_id"/>
+                <filter name="weight_missing" string="Poids manquant"
+                        domain="[('metal_weight_missing', '=', True)]"/>
+                <filter name="weight_filled" string="Poids renseigné"
+                        domain="[('metal_weight', '!=', 0)]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_product" string="Article"
+                            context="{'group_by': 'product_id'}"/>
+                    <filter name="group_company" string="Établissement"
+                            context="{'group_by': 'company_id'}"/>
+                    <filter name="group_date" string="Mois"
+                            context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_move_line_metal_anomaly" model="ir.actions.act_window">
+        <field name="name">Contrôle des poids</field>
+        <field name="res_model">account.move.line</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_move_line_list_metal_anomaly"/>
+        <field name="search_view_id" ref="view_move_line_search_metal"/>
+        <field name="domain">
+            ['|', ('metal_weight_missing', '=', True),
+                  ('metal_weight', '!=', 0)]
+        </field>
+        <field name="context">{'search_default_weight_missing': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune ligne à contrôler.
+            </p>
+            <p>
+                Le poids est une mention obligatoire du livre de police
+                (art. R321-4 du code pénal). En rouge, les lignes dont le poids
+                manque.
+            </p>
+            <p>
+                La colonne « Prix au gramme » n'est pas un contrôle : c'est le
+                simple quotient du montant par le poids. Trier dessus fait
+                remonter en tête les lignes dont la quantité, le prix ou le
+                poids est erroné — un « Argent (g) » à 3 500 €/g n'était pas
+                un gramme d'argent.
+            </p>
+            <p>
+                Le poids se corrige directement ici, y compris sur des écritures
+                comptabilisées : ce champ n'est pas comptable.
+            </p>
+        </field>
+    </record>
+
+</odoo>
