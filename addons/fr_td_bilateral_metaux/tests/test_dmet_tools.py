@@ -100,6 +100,19 @@ class TestAddress(unittest.TestCase):
         r = address.parse_street("5-1 rue Traversière")
         self.assertEqual((r["num_voie"], r["indice_rep"]), ("0005", "1"))
 
+    def test_virgule_apres_le_numero(self):
+        """Constaté sur le fichier client : « 19, rue Maurice Barrès ».
+
+        La virgule restait en tête du libellé, occupait le premier jeton et
+        empêchait la reconnaissance du type de voie — la zone partait en
+        « , RUE MAURICE BARRES », sans code FANTOIR.
+        """
+        r = address.parse_street("19, rue Maurice Barrès")
+        self.assertEqual(r["num_voie"], "0019")
+        self.assertEqual(r["voie_code"], "RUE")
+        self.assertEqual(r["nom_voie"], "MAURICE BARRES")
+        self.assertEqual(self._zone("19, rue Maurice Barrès"), "RUE  MAURICE BARRES")
+
     def test_longest_type_match(self):
         self.assertEqual(address.parse_street("chemin rural du Bois")["voie_code"], "CR")
         self.assertEqual(address.parse_street("route departementale 9")["voie_code"], "D")
