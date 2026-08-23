@@ -1,0 +1,26 @@
+<odoo>
+
+    <record id="view_order_form_police_description" model="ir.ui.view">
+        <field name="name">sale.order.form.police.description</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!--
+                Aucune colonne n'est ajoutée : la description existe déjà, sous
+                la désignation de l'article, et c'est là que le comptoir écrit.
+
+                Le manque se signale donc sur la ligne elle-même. Le refus à la
+                confirmation arrive après la fenêtre de `sales_confirm_popup`,
+                trop tard pour être le seul avertissement.
+            -->
+            <xpath expr="//field[@name='order_line']/list" position="attributes">
+                <attribute name="decoration-danger">police_description_missing</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']"
+                   position="after">
+                <field name="police_description_missing" column_invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

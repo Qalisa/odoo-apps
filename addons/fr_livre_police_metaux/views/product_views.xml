@@ -1,0 +1,30 @@
+<odoo>
+
+    <record id="product_template_form_view_police" model="ir.ui.view">
+        <field name="name">product.template.form.police.description</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <!-- Dans l'onglet principal : le choix se fait à la création de
+                 l'article, pas dans un onglet que personne n'ouvre. -->
+            <xpath expr="//page[@name='general_information']/group" position="after">
+                <group string="Registre d'objets mobiliers (c. pén., art. R321-3)"
+                       name="police_description">
+                    <field name="police_description_required"/>
+                    <div class="text-muted" colspan="2"
+                         invisible="not police_description_required">
+                        Un rachat portant cet article ne pourra pas être
+                        confirmé ni comptabilisé tant que les objets ne sont
+                        pas décrits, ligne par ligne.
+                    </div>
+                    <div class="text-muted" colspan="2"
+                         invisible="police_description_required">
+                        Article réputé ne désigner aucun objet acheté — remise,
+                        acompte, arrondi, régularisation.
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
