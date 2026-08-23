@@ -2,10 +2,32 @@
 
 Addons Odoo 18 CE pour un négociant en métaux précieux. Plusieurs modules
 matérialisent des obligations légales — livre de police, registre des métaux
-précieux, déclaration d'achats au détail de métaux. Les articles qu'ils citent
-ont été vérifiés un à un sur Légifrance : ne les paraphrase pas, ne les
-« simplifie » pas, et ne déplace pas une citation d'un texte à l'autre sans la
-revérifier.
+précieux, déclaration d'achats au détail de métaux.
+
+## Citations légales
+
+Les articles cités dans ce dépôt ont été vérifiés un à un sur Légifrance. Ne
+les paraphrase pas, ne les « simplifie » pas, et ne déplace pas une citation
+d'un texte à l'autre sans la revérifier — onze attributions erronées de
+l'art. R321-4 y ont déjà été corrigées d'un coup.
+
+**Une citation entre guillemets nomme sa source.** Sans attribution, elle
+devient une affirmation de l'auteur, et le lecteur en tire des obligations qui
+n'existent pas. Le cas s'est produit : une infobulle citait « 00 accepté dans
+l'attente de la mise à jour du livre de police » sans dire que la phrase était
+de la DGFiP, ce qui laissait croire que le livre de police réclamait le
+département de naissance — il ne le réclame pas.
+
+Distingue toujours trois choses, et dis laquelle tu écris :
+
+- ce que **le droit exige aujourd'hui** — un article, un arrêté en vigueur ;
+- ce qu'une **administration tolère** — un seuil, une valeur par défaut admise
+  dans un cahier des charges ;
+- ce qu'elle **annonce pour plus tard** — une évolution mentionnée, qui
+  n'oblige à rien tant qu'elle n'est pas publiée.
+
+Une mention « non bloquante » relève de la deuxième catégorie : elle dit qu'un
+fichier passera, pas qu'une donnée est facultative.
 
 ## Tests
 
