@@ -51,6 +51,13 @@ class ProductTemplate(models.Model):
     metal_regulated = fields.Boolean(
         string="Soumis au livre de police",
         compute='_compute_metal_regulated', store=True, readonly=False,
+        # Sans cela, Odoo recalcule le champ en super-utilisateur (un calcul
+        # stocké l'est par défaut, fields.py : `compute_sudo = store`). La
+        # contrainte, déclenchée par ce recalcul, se croirait alors face à du
+        # code et se tairait — juste au moment où c'est un utilisateur qui
+        # vient de créer un bien nu. Le calcul ne lit que `type` : il n'a
+        # aucun besoin d'élévation.
+        compute_sudo=False,
         help="Coché d'office sur les biens : un objet acheté d'occasion doit "
              "figurer au registre des achats, ventes, réceptions et "
              "livraisons de métaux précieux (art. 537 du code général des "
