@@ -1,0 +1,19 @@
+<odoo>
+
+    <record id="view_move_form_police_description" model="ir.ui.view">
+        <field name="name">account.move.form.police.description</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <!-- Voir la note dans views/sale_order_views.xml. -->
+            <xpath expr="//field[@name='invoice_line_ids']/list" position="attributes">
+                <attribute name="decoration-danger">police_description_missing</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='quantity']"
+                   position="after">
+                <field name="police_description_missing" column_invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
