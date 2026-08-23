@@ -106,7 +106,11 @@
                                     <field name="nom" optional="hide"/>
                                     <field name="prenoms" optional="hide"/>
                                     <field name="birthdate"/>
-                                    <field name="commune_naiss" optional="hide"/>
+                                    <field name="dept_naiss" optional="hide"/>
+                                    <field name="insee_naiss" optional="hide"/>
+                                    <field name="dept_naiss" optional="hide"/>
+                <field name="insee_naiss" optional="hide"/>
+                <field name="commune_naiss" optional="hide"/>
                                     <field name="num_voie" optional="hide"/>
                                     <field name="indice_rep" optional="hide"/>
                                     <field name="voie" optional="hide"/>

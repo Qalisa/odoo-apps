@@ -252,6 +252,8 @@ class DmetDeclaration(models.Model):
                 'nom': v.get('nom') or '',
                 'prenoms': v.get('prenoms') or '',
                 'siret_vendeur': v.get('siret_vendeur') or '',
+                'dept_naiss': v.get('dept_naiss') or '',
+                'insee_naiss': v.get('insee_naiss') or '',
                 'commune_naiss': v.get('commune_naiss') or '',
                 'num_voie': v.get('num_voie') or '',
                 'indice_rep': v.get('indice_rep') or '',
@@ -398,7 +400,9 @@ class DmetLine(models.Model):
     nom = fields.Char(string="Nom de famille (Q014)")
     prenoms = fields.Char(string="Prénoms (Q015)")
     siret_vendeur = fields.Char(string="SIRET (Q005)")
-    commune_naiss = fields.Char(string="Commune de naissance (Q010-012)")
+    dept_naiss = fields.Char(string="Département de naissance (Q010)")
+    insee_naiss = fields.Char(string="Code INSEE naissance (Q011)")
+    commune_naiss = fields.Char(string="Commune de naissance (Q012)")
     num_voie = fields.Char(string="N° de voie")
     indice_rep = fields.Char(string="Indice de répétition")
     voie = fields.Char(string="Voie (zone déclarée)")
