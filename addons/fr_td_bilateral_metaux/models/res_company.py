@@ -8,7 +8,7 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
     dmet_responsable_name = fields.Char(
-        string="DMET — Responsable (nom, prénom, qualité)",
+        string="Cerfa 2093-SD — Responsable (nom, prénom, qualité)",
         help="Personne à contacter par la DGFiP (zone T 007 du fichier).",
     )
     dmet_responsable_phone = fields.Char(string="DMET — Téléphone du responsable")

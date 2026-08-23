@@ -24,7 +24,7 @@ _SEVERITY = [
 
 class DmetDeclaration(models.Model):
     _name = 'fr.dmet.declaration'
-    _description = "Déclaration DMET (achats au détail de métaux)"
+    _description = "Déclaration d'achats au détail de métaux (formulaire 2093)"
     _order = 'millesime desc, id desc'
 
     name = fields.Char(compute='_compute_name', store=True)
@@ -105,7 +105,7 @@ class DmetDeclaration(models.Model):
     @api.depends('millesime', 'company_id')
     def _compute_name(self):
         for rec in self:
-            rec.name = "DMET %s — %s" % (
+            rec.name = "Cerfa 2093-SD %s — %s" % (
                 rec.millesime or '', rec.company_id.name or '')
 
     @api.depends('millesime')
@@ -185,6 +185,15 @@ class DmetDeclaration(models.Model):
     def _collect_vendors(self):
         """Agrège les rachats (avoirs) par vendeur sur les établissements.
 
+        Le vendeur est l'**entité commerciale**, pas le contact retenu sur la
+        pièce : quand une société vend, la personne qui s'est présentée pour
+        elle n'est pas un vendeur particulier — elle la représente (livre de
+        police, art. R321-3 2°). Grouper sur `commercial_partner_id` évite
+        deux erreurs de déclaration : déclarer un salarié comme vendeur
+        personne physique, et scinder les ventes d'une même société entre ses
+        contacts. Pour un particulier, l'entité commerciale est lui-même : le
+        groupement est inchangé.
+
         Retourne (liste de dicts vendeur, map référence -> res.partner).
         """
         self.ensure_one()
@@ -197,7 +206,7 @@ class DmetDeclaration(models.Model):
             ('invoice_date', '<=', d_end),
         ]
         groups = self.env['account.move']._read_group(
-            domain, groupby=['partner_id'],
+            domain, groupby=['commercial_partner_id'],
             aggregates=['amount_total:sum', '__count'],
         )
         vendors = []
@@ -239,12 +248,39 @@ class DmetDeclaration(models.Model):
                 'commune': v.get('libelle_commune') or '',
                 'nb_rachats': v.get('_nb_moves') or 0,
                 'montant': dmet_tools.round_euro(v.get('montant') or 0),
+                'titre': v.get('titre') or '',
+                'nom': v.get('nom') or '',
+                'prenoms': v.get('prenoms') or '',
+                'siret_vendeur': v.get('siret_vendeur') or '',
+                'dept_naiss': v.get('dept_naiss') or '',
+                'insee_naiss': v.get('insee_naiss') or '',
+                'commune_naiss': v.get('commune_naiss') or '',
+                'num_voie': v.get('num_voie') or '',
+                'indice_rep': v.get('indice_rep') or '',
+                'voie': (v.get('voie') or '').rstrip(),
+                'compl_adr': v.get('compl_adr') or '',
+                'bureau': v.get('bureau') or '',
             }))
         return vals
 
     # ------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------
+    def action_open_lines(self):
+        """Ouvre les lignes dans une liste autonome.
+
+        Une liste imbriquée dans un formulaire n'a ni barre de recherche ni
+        regroupement : sur un dépôt de plus de mille vendeurs, retrouver une
+        personne ou isoler les sociétés y est impraticable.
+        """
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id(
+            'fr_td_bilateral_metaux.action_fr_dmet_line')
+        action['domain'] = [('declaration_id', '=', self.id)]
+        action['context'] = {'search_default_grp_kind': 0}
+        action['display_name'] = _("Lignes du dépôt — %s", self.display_name)
+        return action
+
     def action_precheck(self):
         self.ensure_one()
         vendors = self._collect_vendors()
@@ -313,7 +349,7 @@ class DmetDeclaration(models.Model):
 
 class DmetAnomaly(models.Model):
     _name = 'fr.dmet.anomaly'
-    _description = "Anomalie de pré-contrôle DMET"
+    _description = "Anomalie de pré-contrôle de la déclaration d'achats de métaux"
     _order = 'severity, zone'
 
     declaration_id = fields.Many2one(
@@ -339,7 +375,7 @@ class DmetAnomaly(models.Model):
 
 class DmetLine(models.Model):
     _name = 'fr.dmet.line'
-    _description = "Ligne de dépôt DMET (aperçu enregistrement Q)"
+    _description = "Ligne de la déclaration d'achats de métaux (enregistrement Q)"
     _order = 'montant desc, id'
 
     declaration_id = fields.Many2one(
@@ -356,14 +392,53 @@ class DmetLine(models.Model):
     nb_rachats = fields.Integer(string="Quantité (rachats)")
     montant = fields.Integer(string="Montant TTC annuel (€)")
 
-    def action_open_partner(self):
+    # Le reste de l'enregistrement Q, tel qu'il partira dans le fichier. Ces
+    # zones ne s'affichent pas par défaut, mais elles doivent pouvoir être
+    # ouvertes : c'est ici qu'on vérifie ce que l'administration recevra, une
+    # fois le fichier chiffré on ne relit plus rien.
+    titre = fields.Char(string="Civilité (Q013)")
+    nom = fields.Char(string="Nom de famille (Q014)")
+    prenoms = fields.Char(string="Prénoms (Q015)")
+    siret_vendeur = fields.Char(string="SIRET (Q005)")
+    dept_naiss = fields.Char(string="Département de naissance (Q010)")
+    insee_naiss = fields.Char(string="Code INSEE naissance (Q011)")
+    commune_naiss = fields.Char(string="Commune de naissance (Q012)")
+    num_voie = fields.Char(string="N° de voie")
+    indice_rep = fields.Char(string="Indice de répétition")
+    voie = fields.Char(string="Voie (zone déclarée)")
+    compl_adr = fields.Char(string="Complément d'adresse")
+    bureau = fields.Char(string="Bureau distributeur (Q029)")
+
+    def action_open_moves(self):
+        """Ouvre les rachats qui composent le montant declare de cette ligne.
+
+        Le montant d'une ligne est un cumul annuel : devant un chiffre qui
+        surprend, ce qu'on veut voir ce sont les avoirs qui le composent, pas
+        la fiche du vendeur. Le meme perimetre que `_collect_vendors` est
+        rejoue — entite commerciale, avoirs comptabilises, etablissements et
+        periode de la declaration — pour que la somme affichee corresponde
+        exactement a la ligne.
+        """
         self.ensure_one()
         if not self.partner_id:
             return False
+        declaration = self.declaration_id
+        debut, fin = declaration._period()
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'res.partner',
-            'res_id': self.partner_id.id,
-            'view_mode': 'form',
+            'name': _("Rachats %(millesime)s — %(vendeur)s",
+                      millesime=declaration.millesime,
+                      vendeur=self.personne or self.partner_id.display_name),
+            'res_model': 'account.move',
+            'view_mode': 'list,form',
+            'domain': [
+                ('move_type', '=', 'out_refund'),
+                ('state', '=', 'posted'),
+                ('commercial_partner_id', '=', self.partner_id.id),
+                ('company_id', 'in', declaration.company_ids.ids),
+                ('invoice_date', '>=', debut),
+                ('invoice_date', '<=', fin),
+            ],
+            'context': {'create': False},
             'target': 'current',
         }

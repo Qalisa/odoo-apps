@@ -50,7 +50,12 @@ def parse_street(raw):
     num = ""
     m = re.match(r"^(\d+)\s*(.*)$", s)
     if m:
-        num, s = m.group(1), m.group(2).strip()
+        # La virgule qui suit le numéro — « 19, RUE MAURICE BARRES », soit un
+        # tiers des fiches du fichier client — doit disparaître ici. Laissée en
+        # tête, elle occupe le premier jeton : le type de voie FANTOIR n'est
+        # plus reconnu, et la zone déclarée part avec la virgule. Le tiret est
+        # épargné, il porte l'indice de répétition (« 5-1 RUE … »).
+        num, s = m.group(1), m.group(2).lstrip(" ,;").strip()
 
     indice = ""
     if num:

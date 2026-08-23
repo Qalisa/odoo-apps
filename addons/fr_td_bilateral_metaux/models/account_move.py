@@ -16,7 +16,14 @@ class AccountMove(models.Model):
         données **obligatoires** du vendeur sont incomplètes.
 
         Périmètre aligné sur la sélection DMET (``out_refund``), personnes
-        physiques uniquement. Champs contrôlés :
+        physiques uniquement — au sens de l'**entité commerciale** du contact
+        retenu, non du contact lui-même : la personne qui vend pour le compte
+        d'une société n'est pas un vendeur particulier, elle la représente
+        (livre de police, art. R321-3 2°). Lui réclamer date et pays de
+        naissance reviendrait à la déclarer comme vendeuse, ce qu'elle n'est
+        pas. Pour un particulier, l'entité commerciale est lui-même.
+
+        Champs contrôlés :
 
         - **Nom** et **prénom** — DMET (Q014/Q015) et livre de police (R321-3) ;
         - **Pays de naissance** — détermine le « 99 » (naissance à l'étranger) du
@@ -51,7 +58,7 @@ class AccountMove(models.Model):
         for move in self:
             if move.move_type != "out_refund":
                 continue
-            partner = move.partner_id
+            partner = move.commercial_partner_id
             if not partner or partner.is_company:
                 continue
             missing = [label for fname, label in checks if not partner[fname]]
@@ -67,6 +74,6 @@ class AccountMove(models.Model):
             )
             raise UserError(_(
                 "Rachat à un particulier : les données obligatoires du vendeur "
-                "(déclaration DMET / livre de police) sont incomplètes. "
+                "(Cerfa 2093-SD / livre de police) sont incomplètes. "
                 "Complétez la fiche avant de valider :\n%s", details
             ))

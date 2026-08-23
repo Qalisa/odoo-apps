@@ -92,18 +92,34 @@
                             </field>
                         </page>
                         <page string="Lignes du dépôt" name="lines">
+                            <div class="oe_button_box mb-2">
+                                <button name="action_open_lines" type="object"
+                                        class="btn btn-secondary" icon="fa-filter"
+                                        string="Filtrer et regrouper les lignes"/>
+                            </div>
                             <field name="line_ids" readonly="1">
                                 <list>
                                     <field name="personne"/>
                                     <field name="vendor_kind"/>
-                                    <field name="foreign" optional="hide"/>
+                                    <field name="siret_vendeur" optional="hide"/>
+                                    <field name="titre" optional="hide"/>
+                                    <field name="nom" optional="hide"/>
+                                    <field name="prenoms" optional="hide"/>
                                     <field name="birthdate"/>
+                                    <field name="dept_naiss" optional="hide"/>
+                                    <field name="insee_naiss" optional="hide"/>
+                                    <field name="commune_naiss" optional="hide"/>
+                                    <field name="num_voie" optional="hide"/>
+                                    <field name="indice_rep" optional="hide"/>
+                                    <field name="voie" optional="hide"/>
+                                    <field name="compl_adr" optional="hide"/>
                                     <field name="code_postal"/>
                                     <field name="commune"/>
+                                    <field name="bureau" optional="hide"/>
                                     <field name="nb_rachats" sum="Rachats"/>
                                     <field name="montant" sum="Total (€)"/>
-                                    <button name="action_open_partner" type="object"
-                                            icon="fa-external-link" title="Ouvrir la fiche"
+                                    <button name="action_open_moves" type="object"
+                                            icon="fa-list-ul" title="Voir les rachats"
                                             invisible="not partner_id"/>
                                     <field name="partner_id" column_invisible="1"/>
                                 </list>
@@ -135,6 +151,77 @@
         <field name="name">Déclarations DMET (achats de métaux)</field>
         <field name="res_model">fr.dmet.declaration</field>
         <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_fr_dmet_line_list" model="ir.ui.view">
+        <field name="name">fr.dmet.line.list</field>
+        <field name="model">fr.dmet.line</field>
+        <field name="arch" type="xml">
+            <list string="Lignes du dépôt" create="false" delete="false" edit="false">
+                <field name="personne"/>
+                <field name="vendor_kind"/>
+                <field name="siret_vendeur" optional="hide"/>
+                <field name="titre" optional="hide"/>
+                <field name="nom" optional="hide"/>
+                <field name="prenoms" optional="hide"/>
+                <field name="birthdate"/>
+                <field name="dept_naiss" optional="hide"/>
+                <field name="insee_naiss" optional="hide"/>
+                <field name="commune_naiss" optional="hide"/>
+                <field name="num_voie" optional="hide"/>
+                <field name="indice_rep" optional="hide"/>
+                <field name="voie" optional="hide"/>
+                <field name="compl_adr" optional="hide"/>
+                <field name="code_postal"/>
+                <field name="commune"/>
+                <field name="bureau" optional="hide"/>
+                <field name="nb_rachats" sum="Rachats"/>
+                <field name="montant" sum="Total (€)"/>
+                <button name="action_open_moves" type="object"
+                        icon="fa-list-ul" title="Voir les rachats"
+                        invisible="not partner_id"/>
+                <field name="partner_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fr_dmet_line_search" model="ir.ui.view">
+        <field name="name">fr.dmet.line.search</field>
+        <field name="model">fr.dmet.line</field>
+        <field name="arch" type="xml">
+            <search string="Lignes du dépôt">
+                <field name="personne" string="Personne / raison sociale"
+                       filter_domain="['|', '|', ('personne', 'ilike', self),
+                                       ('nom', 'ilike', self),
+                                       ('siret_vendeur', 'ilike', self)]"/>
+                <field name="vendor_kind"/>
+                <field name="commune"/>
+                <filter name="pp" string="Personnes physiques"
+                        domain="[('vendor_kind', '=', 'pp')]"/>
+                <filter name="pm" string="Personnes morales"
+                        domain="[('vendor_kind', '=', 'pm')]"/>
+                <separator/>
+                <filter name="pm_sans_siret" string="Personne morale sans SIRET"
+                        domain="[('vendor_kind', '=', 'pm'),
+                                 ('siret_vendeur', 'in', [False, ''])]"/>
+                <filter name="sans_naissance" string="Sans date de naissance"
+                        domain="[('vendor_kind', '=', 'pp'),
+                                 ('birthdate', '=', False)]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="grp_kind" string="Nature"
+                            context="{'group_by': 'vendor_kind'}"/>
+                    <filter name="grp_commune" string="Commune"
+                            context="{'group_by': 'commune'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_fr_dmet_line" model="ir.actions.act_window">
+        <field name="name">Lignes du dépôt</field>
+        <field name="res_model">fr.dmet.line</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_fr_dmet_line_search"/>
     </record>
 
 </odoo>
