@@ -409,14 +409,36 @@ class DmetLine(models.Model):
     compl_adr = fields.Char(string="Complément d'adresse")
     bureau = fields.Char(string="Bureau distributeur (Q029)")
 
-    def action_open_partner(self):
+    def action_open_moves(self):
+        """Ouvre les rachats qui composent le montant declare de cette ligne.
+
+        Le montant d'une ligne est un cumul annuel : devant un chiffre qui
+        surprend, ce qu'on veut voir ce sont les avoirs qui le composent, pas
+        la fiche du vendeur. Le meme perimetre que `_collect_vendors` est
+        rejoue — entite commerciale, avoirs comptabilises, etablissements et
+        periode de la declaration — pour que la somme affichee corresponde
+        exactement a la ligne.
+        """
         self.ensure_one()
         if not self.partner_id:
             return False
+        declaration = self.declaration_id
+        debut, fin = declaration._period()
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'res.partner',
-            'res_id': self.partner_id.id,
-            'view_mode': 'form',
+            'name': _("Rachats %(millesime)s — %(vendeur)s",
+                      millesime=declaration.millesime,
+                      vendeur=self.personne or self.partner_id.display_name),
+            'res_model': 'account.move',
+            'view_mode': 'list,form',
+            'domain': [
+                ('move_type', '=', 'out_refund'),
+                ('state', '=', 'posted'),
+                ('commercial_partner_id', '=', self.partner_id.id),
+                ('company_id', 'in', declaration.company_ids.ids),
+                ('invoice_date', '>=', debut),
+                ('invoice_date', '<=', fin),
+            ],
+            'context': {'create': False},
             'target': 'current',
         }

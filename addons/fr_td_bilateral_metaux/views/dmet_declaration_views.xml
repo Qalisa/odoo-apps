@@ -120,8 +120,8 @@
                                     <field name="bureau" optional="hide"/>
                                     <field name="nb_rachats" sum="Rachats"/>
                                     <field name="montant" sum="Total (€)"/>
-                                    <button name="action_open_partner" type="object"
-                                            icon="fa-external-link" title="Ouvrir la fiche"
+                                    <button name="action_open_moves" type="object"
+                                            icon="fa-list-ul" title="Voir les rachats"
                                             invisible="not partner_id"/>
                                     <field name="partner_id" column_invisible="1"/>
                                 </list>
@@ -177,8 +177,8 @@
                 <field name="bureau" optional="hide"/>
                 <field name="nb_rachats" sum="Rachats"/>
                 <field name="montant" sum="Total (€)"/>
-                <button name="action_open_partner" type="object"
-                        icon="fa-external-link" title="Ouvrir la fiche"
+                <button name="action_open_moves" type="object"
+                        icon="fa-list-ul" title="Voir les rachats"
                         invisible="not partner_id"/>
                 <field name="partner_id" column_invisible="1"/>
             </list>
