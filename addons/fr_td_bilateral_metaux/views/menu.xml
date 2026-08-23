@@ -1,12 +1,13 @@
 <odoo>
-    <menuitem id="menu_fr_td_root"
-              name="Tiers déclarants"
-              parent="account.menu_finance"
-              sequence="90"/>
-
+    <!--
+        Le menu vit sous « Aide à la déclaration », à côté du Cerfa 2091-SD :
+        les deux servent la même chose — préparer une déclaration fiscale à
+        partir des rachats — et les chercher au même endroit va de soi. La
+        rubrique « Tiers déclarants » nommait le canal de dépôt, pas l'objet.
+    -->
     <menuitem id="menu_fr_dmet_declaration"
-              name="Achats de métaux (DMET)"
-              parent="menu_fr_td_root"
+              name="Cerfa 2093-SD (Déclaration d'achat)"
+              parent="fr_numismatics_reports.menu_taxes"
               action="action_fr_dmet_declaration"
-              sequence="10"/>
+              sequence="20"/>
 </odoo>

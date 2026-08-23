@@ -1,7 +1,7 @@
 {
-    'name': "Déclaration d'achats au détail de métaux (formulaire 2093)",
+    'name': "Cerfa 2093-SD - Déclaration d'achat au détail de métaux",
     'category': "Accounting/Localizations",
-    'summary': "Déclaration annuelle d'achats au détail de métaux ferreux et non ferreux (CGI art. 1649 bis, formulaire n° 2093) : génération du fichier DMET et dépôt par la procédure DGFiP TD/bilatéral",
+    'summary': "Cerfa 2093-SD : déclaration annuelle d'achats au détail de métaux ferreux et non ferreux (CGI art. 1649 bis), génération du fichier et dépôt par la procédure DGFiP TD/bilatéral",
     'description': """
 Comment s'appelle cette déclaration
 -----------------------------------
@@ -17,9 +17,14 @@ celle des achats.
 nom de fichier** imposée par la procédure de transfert, qui identifie la nature
 des informations transmises —
 ``DMET_<millésime>_<SIREN>_<ordre>_<horodatage>.txt.gz.gpg``. Le préfixe est
-conservé dans le code (modèles, champs, méthodes) parce qu'il désigne
-exactement ce que ce module produit : le fichier. Les libellés vus par
-l'utilisateur, eux, emploient le nom officiel.
+conservé dans le code (modèles, champs, méthodes) et dans le nom du fichier
+produit, parce qu'il y désigne exactement ce qu'il nomme. Partout où
+l'utilisateur lit, c'est **Cerfa 2093-SD** qui s'affiche.
+
+Note de millésime : l'administration a publié les formulaires sous les
+références `2093-T-SD` et `2093-I-SD` jusqu'au millésime 2024, et `2093-T` /
+`2093-I` pour 2025. Le libellé retenu ici, « Cerfa 2093-SD », suit celui du
+Cerfa 2091-SD voisin pour que les deux écrans se lisent ensemble.
 
 Ce que fait le module
 ---------------------
@@ -36,11 +41,14 @@ bloquantes du cahier des charges avant transmission.
     'author': "Qalisa",
     'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
-    'version': "1.2.1",
+    'version': "1.3.0",
     # `contacts_citizenship_id` (1.2.0) apporte l'identité structurée et dépend
     # lui-même de `partner_firstname` (OCA) pour l'éclatement nom/prénom (Q 014/015).
     # `l10n_fr_account` apporte le SIRET (res.partner) et le code APE (res.company).
-    'depends': ['l10n_fr_account', 'contacts_citizenship_id'],
+    # `fr_numismatics_reports` porte le menu « Aide à la déclaration », où
+    # cette déclaration se range à côté du Cerfa 2091-SD.
+    'depends': ['l10n_fr_account', 'contacts_citizenship_id',
+                'fr_numismatics_reports'],
     'data': [
         'security/ir.model.access.csv',
         'views/dmet_declaration_views.xml',

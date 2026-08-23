@@ -74,6 +74,6 @@ class AccountMove(models.Model):
             )
             raise UserError(_(
                 "Rachat à un particulier : les données obligatoires du vendeur "
-                "(déclaration DMET / livre de police) sont incomplètes. "
+                "(Cerfa 2093-SD / livre de police) sont incomplètes. "
                 "Complétez la fiche avant de valider :\n%s", details
             ))

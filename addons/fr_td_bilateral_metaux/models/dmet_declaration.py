@@ -248,12 +248,37 @@ class DmetDeclaration(models.Model):
                 'commune': v.get('libelle_commune') or '',
                 'nb_rachats': v.get('_nb_moves') or 0,
                 'montant': dmet_tools.round_euro(v.get('montant') or 0),
+                'titre': v.get('titre') or '',
+                'nom': v.get('nom') or '',
+                'prenoms': v.get('prenoms') or '',
+                'siret_vendeur': v.get('siret_vendeur') or '',
+                'commune_naiss': v.get('commune_naiss') or '',
+                'num_voie': v.get('num_voie') or '',
+                'indice_rep': v.get('indice_rep') or '',
+                'voie': (v.get('voie') or '').rstrip(),
+                'compl_adr': v.get('compl_adr') or '',
+                'bureau': v.get('bureau') or '',
             }))
         return vals
 
     # ------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------
+    def action_open_lines(self):
+        """Ouvre les lignes dans une liste autonome.
+
+        Une liste imbriquée dans un formulaire n'a ni barre de recherche ni
+        regroupement : sur un dépôt de plus de mille vendeurs, retrouver une
+        personne ou isoler les sociétés y est impraticable.
+        """
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id(
+            'fr_td_bilateral_metaux.action_fr_dmet_line')
+        action['domain'] = [('declaration_id', '=', self.id)]
+        action['context'] = {'search_default_grp_kind': 0}
+        action['display_name'] = _("Lignes du dépôt — %s", self.display_name)
+        return action
+
     def action_precheck(self):
         self.ensure_one()
         vendors = self._collect_vendors()
@@ -364,6 +389,21 @@ class DmetLine(models.Model):
     commune = fields.Char(string="Commune")
     nb_rachats = fields.Integer(string="Quantité (rachats)")
     montant = fields.Integer(string="Montant TTC annuel (€)")
+
+    # Le reste de l'enregistrement Q, tel qu'il partira dans le fichier. Ces
+    # zones ne s'affichent pas par défaut, mais elles doivent pouvoir être
+    # ouvertes : c'est ici qu'on vérifie ce que l'administration recevra, une
+    # fois le fichier chiffré on ne relit plus rien.
+    titre = fields.Char(string="Civilité (Q013)")
+    nom = fields.Char(string="Nom de famille (Q014)")
+    prenoms = fields.Char(string="Prénoms (Q015)")
+    siret_vendeur = fields.Char(string="SIRET (Q005)")
+    commune_naiss = fields.Char(string="Commune de naissance (Q010-012)")
+    num_voie = fields.Char(string="N° de voie")
+    indice_rep = fields.Char(string="Indice de répétition")
+    voie = fields.Char(string="Voie (zone déclarée)")
+    compl_adr = fields.Char(string="Complément d'adresse")
+    bureau = fields.Char(string="Bureau distributeur (Q029)")
 
     def action_open_partner(self):
         self.ensure_one()
