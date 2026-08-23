@@ -135,6 +135,11 @@ class TestMetalProduct(TransactionCase):
         self.assertFalse(product.metal_regulated)
         with self.assertRaises(ValidationError):
             product.type = 'consu'
+            # `metal_regulated` est recalculé au vidage du cache : c'est là
+            # que la contrainte se prononce, comme à l'enregistrement d'une
+            # fiche. Sans ce vidage explicite, le test sortirait du bloc
+            # avant que le recalcul ait eu lieu.
+            product.flush_recordset()
         product.write({'type': 'consu', 'metal_nature': self.or_.id,
                        'metal_quantity_mode': 'gram', 'metal_fineness': 750})
         self.assertTrue(product.metal_regulated)
