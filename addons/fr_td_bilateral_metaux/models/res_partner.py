@@ -76,7 +76,12 @@ class ResPartner(models.Model):
                 'jour_naiss': ('%02d' % bd.day) if bd else '',
                 'mois_naiss': ('%02d' % bd.month) if bd else '',
                 'annee_naiss': ('%04d' % bd.year) if bd else '',
-                'dept_naiss': self.birth_department or ('99' if foreign_birth else ''),
+                # « Si les données du lieu de naissance sont inconnues, alors
+                # il convient de servir le code département et le code INSEE
+                # commune à zéro » (CDC §6.4.1). Des espaces y valent « zone
+                # non ou mal renseignée » — anomalie non bloquante, mais
+                # signalée sur autant de lignes que de naissances inconnues.
+                'dept_naiss': self.birth_department or ('99' if foreign_birth else '00'),
                 'insee_naiss': self.birth_insee_code or '',
                 'commune_naiss': commune_naiss or '',
             })
