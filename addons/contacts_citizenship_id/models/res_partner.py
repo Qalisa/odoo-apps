@@ -40,8 +40,13 @@ class ResPartner(models.Model):
     birth_department = fields.Char(
         string='Département de naissance', size=3,
         help="Cerfa 2093-SD — zone Q 010, département de naissance.\n\n"
-             "Sévérité : NON BLOQUANTE (« 00 accepté dans l'attente de la mise "
-             "à jour du livre de police »).\n\n"
+             "Sévérité : NON BLOQUANTE. Le cahier des charges DGFiP tolère "
+             "« 00 », en précisant « dans l'attente de la mise à jour du livre "
+             "de police » : l'administration annonce là une évolution à venir, "
+             "elle ne décrit pas une obligation actuelle. À ce jour, l'art. "
+             "R321-3 du code pénal n'exige du registre ni la date ni le lieu "
+             "de naissance — seuls le nom, les prénoms, la qualité, le domicile "
+             "et les mentions de la pièce d'identité y figurent.\n\n"
              "Vaut 99 pour une naissance à l'étranger, valeur déduite du pays "
              "de naissance. Laissé vide, il est déclaré « 00 » comme le veut "
              "le cahier des charges. Champ masqué de la saisie.",
