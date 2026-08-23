@@ -12,9 +12,14 @@ class ResPartner(models.Model):
     # ------------------------------------------------------------------
     birthdate = fields.Date(
         string='Date de Naissance',
-        help="DMET : date de naissance (zones Q007-009, non bloquant). "
-             "Livre de police : aide à l'identification. Fortement recommandé "
-             "(lève les homonymes).",
+        help="Cerfa 2093-SD — zones Q 007, Q 008 et Q 009 (jour, mois, année "
+             "de naissance).\n\n"
+             "Sévérité : NON BLOQUANTE. Absente, elle part en 00/00/0000 et "
+             "l'anomalie est seulement signalée. Une date non numérique, elle, "
+             "serait bloquante — le cas ne peut pas se produire ici, Odoo ne "
+             "stocke qu'une date valide.\n\n"
+             "Livre de police : aide à l'identification, lève les homonymes. "
+             "Fortement recommandée.",
     )
     # Champ historique conservé (texte libre), remplacé par « Commune de naissance ».
     birthplace = fields.Char(
@@ -25,26 +30,37 @@ class ResPartner(models.Model):
 
     birth_country_id = fields.Many2one(
         'res.country', string='Pays de naissance',
-        help="DMET : détermine le « 99 » d'une naissance à l'étranger. "
-             "Choix explicite, sans valeur par défaut.",
+        help="Cerfa 2093-SD — n'a pas de zone à lui, mais commande trois "
+             "zones : Q 010 prend « 99 » pour une naissance hors de France, "
+             "Q 011 attend alors le code INSEE du pays et Q 012 son libellé.\n\n"
+             "Sévérité : NON BLOQUANTE.\n\n"
+             "Le « 99 » se déduit du pays de NAISSANCE, jamais du pays de "
+             "l'adresse. Choix explicite, sans valeur par défaut.",
     )
     birth_department = fields.Char(
         string='Département de naissance', size=3,
-        help="DMET : département de naissance (zone dept_naiss). Non contrôlé "
-             "(« accepté à zéro ») ; vaut 99 pour une naissance à l'étranger. "
-             "Champ masqué de la saisie.",
+        help="Cerfa 2093-SD — zone Q 010, département de naissance.\n\n"
+             "Sévérité : NON BLOQUANTE (« 00 accepté dans l'attente de la mise "
+             "à jour du livre de police »).\n\n"
+             "Vaut 99 pour une naissance à l'étranger, valeur déduite du pays "
+             "de naissance. Laissé vide, il est déclaré « 00 » comme le veut "
+             "le cahier des charges. Champ masqué de la saisie.",
     )
     birth_insee_code = fields.Char(
         string='Code INSEE commune/pays de naissance', size=5,
-        help="DMET : code INSEE de la commune (ou code pays) de naissance. Non "
-             "contrôlé (« accepté à zéro »). Champ masqué de la saisie.",
+        help="Cerfa 2093-SD — zone Q 011, code INSEE de la commune de "
+             "naissance, ou code du pays pour une naissance à l'étranger.\n\n"
+             "Sévérité : NON BLOQUANTE (« 000 si inconnu »).\n\n"
+             "Champ masqué de la saisie.",
     )
     birth_city = fields.Char(
         string='Commune de naissance',
-        help="DMET : libellé de la commune de naissance (zones Q010-012, non "
-             "bloquant). Livre de police : aide à l'identification. Recommandé. "
-             "Ex. : « Metz ». Naissance à l'étranger : laisser vide (le pays "
-             "renseigné ci-dessus suffit) ou préciser la ville étrangère.",
+        help="Cerfa 2093-SD — zone Q 012, libellé de la commune de naissance "
+             "(ou du pays pour une naissance hors de France).\n\n"
+             "Sévérité : NON BLOQUANTE (« espace si inconnue »).\n\n"
+             "Livre de police : aide à l'identification. Recommandé. "
+             "Ex. : « Metz ». Naissance à l'étranger : laisser vide, le pays "
+             "renseigné ci-dessus suffit, ou préciser la ville étrangère.",
     )
 
     # ------------------------------------------------------------------
@@ -67,12 +83,14 @@ class ResPartner(models.Model):
         ],
         string="Nature de la pièce d'identité",
         help="Livre de police (art. R321-3) : nature de la pièce. Obligatoire "
-             "pour un vendeur particulier. Non utilisé par le DMET.",
+             "pour un vendeur particulier. Non repris au Cerfa 2093-SD, dont "
+             "l'enregistrement Q ne comporte aucune zone « pièce d'identité ».",
     )
     id_doc_number = fields.Char(
         string="Numéro de la pièce d'identité",
         help="Livre de police (art. R321-3) : numéro de la pièce. Obligatoire "
-             "pour un vendeur particulier. Non utilisé par le DMET.",
+             "pour un vendeur particulier. Non repris au Cerfa 2093-SD, dont "
+             "l'enregistrement Q ne comporte aucune zone « pièce d'identité ».",
     )
     id_doc_issue_date = fields.Date(
         string="Date de délivrance",
@@ -104,7 +122,7 @@ class ResPartner(models.Model):
     # produite […] avec l'indication de l'autorité qui l'a établie ». Le *lieu*
     # de délivrance n'est PAS exigé (le texte demande l'autorité émettrice), pas
     # plus que par le registre métaux précieux (CGI ann. IV, art. 56 J
-    # quindecies, qui se limite aux nom, prénoms et adresse) ni par le DMET
+    # quindecies, qui se limite aux nom, prénoms et adresse) ni par le Cerfa 2093-SD
     # (aucune zone « pièce d'identité » dans le dessin Q).
     _R321_3_ID_FIELDS = (
         'id_doc_type', 'id_doc_number', 'id_doc_issue_date',

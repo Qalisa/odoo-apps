@@ -2,10 +2,10 @@
 
 {
     'name': "Contacts - Identification civile",
-    'version': '1.3.9',
+    'version': '1.4.0',
     'summary': """
 Ajoute des informations d'état civil aux contacts (naissance structurée, pièce d'identité détaillée),
-requises pour le livre de police et la déclaration DMET.
+requises pour le livre de police et le Cerfa 2093-SD.
 """,
     'description': """
 Champs Supplémentaires pour Contacts

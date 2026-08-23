@@ -9,7 +9,7 @@
                 <group invisible="is_company" col="4" string="État civil et pièce d'identité">
                     <field name="birthdate"/>
                     <field name="birth_country_id"/>
-                    <!-- Zones non contrôlées par le DMET (lieu de naissance « accepté à
+                    <!-- Zones non bloquantes au Cerfa 2093-SD (lieu de naissance « accepté à
                          zéro ») : champs conservés (données + alimentation par l'onchange
                          du « 99 » étranger) mais masqués de la saisie. -->
                     <field name="birth_department" invisible="1"/>
