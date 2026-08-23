@@ -105,7 +105,7 @@ class DmetDeclaration(models.Model):
     @api.depends('millesime', 'company_id')
     def _compute_name(self):
         for rec in self:
-            rec.name = "DMET %s — %s" % (
+            rec.name = "Cerfa 2093-SD %s — %s" % (
                 rec.millesime or '', rec.company_id.name or '')
 
     @api.depends('millesime')
