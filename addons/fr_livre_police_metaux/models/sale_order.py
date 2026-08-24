@@ -19,6 +19,13 @@ from ..tools.description import description_ajoutee
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
+    police_description_expected = fields.Boolean(
+        string="Article à décrire",
+        compute='_compute_police_description_expected',
+        help="Vrai lorsque l'article réclame une description de ses objets. "
+             "Ne dépend pas du sens de l'opération : la zone de saisie s'ouvre "
+             "dès le choix de l'article, avant que la quantité soit connue.",
+    )
     police_description_required = fields.Boolean(
         string="Description exigée",
         compute='_compute_police_description_required',
@@ -31,14 +38,19 @@ class SaleOrderLine(models.Model):
              "l'article : les objets ne sont pas décrits.",
     )
 
-    @api.depends('display_type', 'product_uom_qty',
+    @api.depends('display_type',
                  'product_id.product_tmpl_id.police_description_required')
+    def _compute_police_description_expected(self):
+        for ligne in self:
+            ligne.police_description_expected = bool(
+                not ligne.display_type
+                and ligne.product_id.product_tmpl_id.police_description_required)
+
+    @api.depends('police_description_expected', 'product_uom_qty')
     def _compute_police_description_required(self):
         for ligne in self:
             ligne.police_description_required = bool(
-                not ligne.display_type
-                and ligne.product_uom_qty < 0
-                and ligne.product_id.product_tmpl_id.police_description_required)
+                ligne.police_description_expected and ligne.product_uom_qty < 0)
 
     def _police_description(self):
         """Description des objets lue sur le libellé de la ligne."""
