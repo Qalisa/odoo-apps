@@ -1,0 +1,47 @@
+<odoo>
+    <!--
+      Valeurs de départ, modifiables par l'établissement. `noupdate="1"` : une
+      mise à jour du module ne doit jamais réécrire un libellé déjà porté par
+      des lignes du registre.
+
+      La liste couvre ce qui se présente au comptoir. Elle n'a pas à être
+      exhaustive : une provenance imprévue se crée à la saisie.
+    -->
+    <data noupdate="1">
+
+        <record id="provenance_bijoux_personnels" model="livre.police.provenance">
+            <field name="name">Bijoux personnels</field>
+            <field name="sequence">10</field>
+            <field name="note">Objets portés ou détenus par le vendeur lui-même.</field>
+        </record>
+
+        <record id="provenance_heritage" model="livre.police.provenance">
+            <field name="name">Héritage ou succession</field>
+            <field name="sequence">20</field>
+            <field name="note">Reçus d'un parent, par succession ou donation.</field>
+        </record>
+
+        <record id="provenance_cadeau" model="livre.police.provenance">
+            <field name="name">Cadeau</field>
+            <field name="sequence">30</field>
+        </record>
+
+        <record id="provenance_achat_anterieur" model="livre.police.provenance">
+            <field name="name">Achat antérieur</field>
+            <field name="sequence">40</field>
+            <field name="note">Acheté neuf ou d'occasion par le vendeur.</field>
+        </record>
+
+        <record id="provenance_brocante" model="livre.police.provenance">
+            <field name="name">Brocante ou vide-grenier</field>
+            <field name="sequence">50</field>
+        </record>
+
+        <record id="provenance_stock_professionnel" model="livre.police.provenance">
+            <field name="name">Stock professionnel</field>
+            <field name="sequence">60</field>
+            <field name="note">Rachat à un confrère : le métal vient de son propre stock, tracé à son registre.</field>
+        </record>
+
+    </data>
+</odoo>

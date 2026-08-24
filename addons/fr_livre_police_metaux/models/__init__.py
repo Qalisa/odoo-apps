@@ -1,3 +1,4 @@
+from . import livre_police_provenance
 from . import product_template
 from . import sale_order
 from . import account_move
