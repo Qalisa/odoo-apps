@@ -64,6 +64,11 @@ saisie, pour qu'il se voie avant le refus.
         'views/sale_order_views.xml',
         'views/account_move_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'fr_livre_police_metaux/static/src/description_toujours_visible.js',
+        ],
+    },
     'installable': True,
     'application': False,
     'auto_install': False,
