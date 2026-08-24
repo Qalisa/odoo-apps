@@ -1,0 +1,83 @@
+<odoo>
+    <!--
+      Valeurs de départ, modifiables par l'établissement. `noupdate="1"` : une
+      mise à jour du module ne doit jamais réécrire un libellé déjà porté par
+      des fiches contact.
+
+      La liste couvre ce qui se présente au comptoir. Elle n'a pas à être
+      exhaustive : une qualité imprévue se crée à la saisie.
+    -->
+    <data noupdate="1">
+
+        <!-- Le vendeur agit pour lui-même : c'est sa profession (c. pén.,
+             art. R321-3 1°). -->
+
+        <record id="qualite_salarie" model="livre.police.qualite">
+            <field name="name">Salarié(e)</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="qualite_retraite" model="livre.police.qualite">
+            <field name="name">Retraité(e)</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <record id="qualite_sans_profession" model="livre.police.qualite">
+            <field name="name">Sans profession</field>
+            <field name="sequence">30</field>
+        </record>
+
+        <record id="qualite_etudiant" model="livre.police.qualite">
+            <field name="name">Étudiant(e)</field>
+            <field name="sequence">40</field>
+        </record>
+
+        <record id="qualite_artisan_commercant" model="livre.police.qualite">
+            <field name="name">Artisan ou commerçant</field>
+            <field name="sequence">50</field>
+        </record>
+
+        <record id="qualite_profession_liberale" model="livre.police.qualite">
+            <field name="name">Profession libérale</field>
+            <field name="sequence">60</field>
+        </record>
+
+        <record id="qualite_agriculteur" model="livre.police.qualite">
+            <field name="name">Agriculteur</field>
+            <field name="sequence">70</field>
+        </record>
+
+        <record id="qualite_fonctionnaire" model="livre.police.qualite">
+            <field name="name">Fonctionnaire</field>
+            <field name="sequence">80</field>
+        </record>
+
+        <!-- Le vendeur agit pour une société : la qualité est celle par
+             laquelle il l'engage (c. pén., art. R321-3 2°). -->
+
+        <record id="qualite_gerant" model="livre.police.qualite">
+            <field name="name">Gérant(e)</field>
+            <field name="sequence">100</field>
+            <field name="note">Vend au nom de la société qu'il représente.</field>
+        </record>
+
+        <record id="qualite_president" model="livre.police.qualite">
+            <field name="name">Président(e)</field>
+            <field name="sequence">110</field>
+            <field name="note">Vend au nom de la société qu'il représente.</field>
+        </record>
+
+        <record id="qualite_mandataire" model="livre.police.qualite">
+            <field name="name">Mandataire</field>
+            <field name="sequence">120</field>
+            <field name="note">Agit sur mandat : le mandat justifie la qualité.</field>
+        </record>
+
+        <record id="qualite_salarie_habilite" model="livre.police.qualite">
+            <field name="name">Salarié(e) habilité(e)</field>
+            <field name="sequence">130</field>
+            <field name="note">Salarié autorisé à engager son employeur.</field>
+        </record>
+
+    </data>
+</odoo>

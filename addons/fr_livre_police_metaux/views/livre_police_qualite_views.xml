@@ -1,0 +1,71 @@
+<odoo>
+
+    <record id="livre_police_qualite_view_list" model="ir.ui.view">
+        <field name="name">livre.police.qualite.list</field>
+        <field name="model">livre.police.qualite</field>
+        <field name="arch" type="xml">
+            <list string="Qualités et professions" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="note" optional="show"/>
+                <field name="usage_count" optional="show"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="livre_police_qualite_view_form" model="ir.ui.view">
+        <field name="name">livre.police.qualite.form</field>
+        <field name="model">livre.police.qualite</field>
+        <field name="arch" type="xml">
+            <form string="Qualité ou profession">
+                <sheet>
+                    <widget name="web_ribbon" title="Archivée" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <group>
+                        <field name="name"/>
+                        <field name="note"/>
+                        <field name="sequence"/>
+                        <field name="usage_count"/>
+                        <field name="active" widget="boolean_toggle"/>
+                    </group>
+                    <div class="text-muted" invisible="not usage_count">
+                        Des fiches contact portent cette qualité : son libellé
+                        est figé, sans quoi la renommer changerait d'un coup ce
+                        que déclarent tous ces vendeurs. Pour la retirer de la
+                        saisie, décochez « Actif » — les fiches gardent la leur.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="livre_police_qualite_action" model="ir.actions.act_window">
+        <field name="name">Qualités et professions (livre de police)</field>
+        <field name="res_model">livre.police.qualite</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Ajouter une qualité</p>
+            <p>
+                Le registre comporte « les nom, prénoms, <b>qualité</b> et
+                domicile » de chaque vendeur (c. pén., art. R321-3 1°) ; le
+                modèle officiel intitule la colonne « qualité ou profession »
+                (arrêté du 15 mai 2020, annexe I). Pour qui vend au nom d'une
+                société, la qualité est celle par laquelle il l'engage
+                (art. R321-3 2°).
+            </p>
+            <p>
+                Cette liste est celle que le comptoir voit sur la fiche
+                contact. Une valeur déjà portée par des fiches ne se renomme
+                plus : archivez-la et créez la nouvelle.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="livre_police_qualite_menu"
+              name="Qualités et professions (livre de police)"
+              parent="sale.menu_sale_config"
+              action="livre_police_qualite_action"
+              sequence="96"/>
+
+</odoo>

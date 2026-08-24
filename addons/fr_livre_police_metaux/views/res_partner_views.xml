@@ -1,0 +1,34 @@
+<odoo>
+
+    <record id="view_res_partner_form_police_qualite" model="ir.ui.view">
+        <field name="name">res.partner.form.police.qualite</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id"
+               ref="contacts_citizenship_id.view_res_partner_form_inherit"/>
+        <field name="arch" type="xml">
+            <!-- Avec l'état civil et la pièce d'identité : ce sont les
+                 mentions que le registre exige du vendeur, recueillies au
+                 même moment et devant lui. Le modèle officiel les donne
+                 d'ailleurs dans cet ordre — nom, prénom, qualité, domicile.
+
+                 Le champ n'est pas obligatoire : le comptoir doit pouvoir
+                 avancer sur une fiche incomplète. L'obligation légale est
+                 rappelée sous le champ, là où la saisie se fait. -->
+            <field name="birthdate" position="before">
+                <field name="police_qualite_id"
+                       options="{'no_quick_create': True}"
+                       placeholder="ex. Retraité(e)"/>
+                <div class="text-muted mb-2" colspan="4"
+                     invisible="police_qualite_id">
+                    Le livre de police comporte « les nom, prénoms,
+                    <b>qualité</b> et domicile » de chaque vendeur
+                    (c. pén., art. R321-3 1°) ; le modèle officiel du registre
+                    intitule la colonne « qualité ou profession » (arrêté du
+                    15 mai 2020, annexe I). Odoo ne bloque rien si le champ
+                    reste vide — c'est le registre qui sera incomplet.
+                </div>
+            </field>
+        </field>
+    </record>
+
+</odoo>

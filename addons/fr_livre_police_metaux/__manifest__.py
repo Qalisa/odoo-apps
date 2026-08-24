@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.1.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -70,17 +70,43 @@ Une ligne renommée sans être décrite ne passe pas : « 20 FRANCS OR
 Les deux mentions sont exigées deux fois : à la confirmation du devis et à
 la comptabilisation de la pièce. La ligne incomplète passe en rouge pendant
 la saisie, pour que le manque se voie avant le refus.
+
+La qualité du vendeur
+---------------------
+
+Le registre comporte aussi « les nom, prénoms, qualité et domicile de chaque
+personne qui a vendu » (art. R321-3 1°), et « les nom, prénoms, qualité et
+domicile du représentant » lorsque le vendeur est une personne morale (2°).
+Le modèle officiel intitule la colonne « NOM, PRENOM ou dénomination sociale
+du vendeur […], qualité ou profession, domicile ou siège social » (arrêté du
+15 mai 2020, annexe I, colonne 2).
+
+Cette qualité prend elle aussi une liste administrable — « Retraité(e) »,
+« Salarié(e) », « Gérant(e) »… — et se saisit sur la fiche contact, avec
+l'état civil et la pièce d'identité.
+
+**Le champ n'est pas obligatoire.** La mention l'est au registre, le champ ne
+l'est pas dans Odoo : rien ne bloque l'enregistrement d'un contact ni la
+confirmation d'un devis. C'est un choix d'exploitation — le comptoir doit
+pouvoir avancer sur une fiche incomplète — et l'obligation est rappelée sous
+le champ, là où la saisie se fait.
 """,
 
     'category': 'Accounting/Localizations',
     'author': 'Qalisa',
     'license': "AGPL-3",
     'website': 'https://odoo-docs.qalisa.fr/',
-    'depends': ['sale', 'account'],
+    # `contacts_citizenship_id` porte deja l'etat civil et la piece
+    # d'identite du vendeur : la qualite se saisit dans le meme groupe, au
+    # meme moment, et non dans un bloc concurrent.
+    'depends': ['sale', 'account', 'contacts_citizenship_id'],
     'data': [
         'security/ir.model.access.csv',
         'data/livre_police_provenance_data.xml',
+        'data/livre_police_qualite_data.xml',
         'views/livre_police_provenance_views.xml',
+        'views/livre_police_qualite_views.xml',
+        'views/res_partner_views.xml',
         'views/product_views.xml',
         'views/sale_order_views.xml',
         'views/account_move_views.xml',
