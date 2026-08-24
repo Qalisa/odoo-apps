@@ -41,7 +41,6 @@ from ..tools import metals
 MODE_SELECTION = [
     ('gram', "Au gramme (quantité = poids)"),
     ('unit', "À la pièce (poids unitaire fixe)"),
-    ('lot', "Au lot (poids saisi à la ligne)"),
 ]
 
 
@@ -84,9 +83,9 @@ class ProductTemplate(models.Model):
         help="« Le titre » des matières ou ouvrages (CGI, ann. IV, art. 56 J "
              "quindecies), exprimé en millièmes : 750 pour l'or 18 carats, "
              "900 pour les pièces de l'Union latine, 999 pour un lingot.\n\n"
-             "Obligatoire, sauf au régime « au lot » : un lot hétérogène n'a "
-             "pas de titre unique, et en afficher un serait inexact. Le "
-             "détail se porte alors dans la description de l'achat.",
+             "Obligatoire, sauf si l'article est déclaré « en lot de titres ». "
+             "Un lot hétérogène n'a pas de titre unique, et en afficher un "
+             "serait porter au registre une mention fausse.",
     )
     metal_quantity_mode = fields.Selection(
         MODE_SELECTION, string="Régime de quantité",
@@ -101,9 +100,39 @@ class ProductTemplate(models.Model):
         help="Poids d'une pièce ou d'un lingotin, en grammes — c'est de lui "
              "que se déduit « le poids » porté au registre (CGI, ann. IV, "
              "art. 56 J quindecies).\n\n"
-             "Obligatoire au régime « à la pièce », sans objet pour les "
-             "autres : au gramme la quantité vaut le poids, au lot le poids "
-             "se saisit sur chaque ligne d'achat.",
+             "Obligatoire au régime « à la pièce », sans objet au gramme où "
+             "la quantité vaut déjà le poids.",
+    )
+    metal_mixed_fineness = fields.Boolean(
+        string="Considérer en lot de titres",
+        help="Coché, l'article est réputé désigner un ensemble de titres "
+             "différents, et le titre cesse d'être exigé. Le poids, lui, "
+             "reste dû : un lot se pèse.\n\n"
+             "CE QUE DIT LE DROIT AUJOURD'HUI — le registre comporte « la "
+             "nature, le nombre, le poids, le titre, la date d'entrée et de "
+             "sortie et l'origine de ces matières ou de ces ouvrages afin de "
+             "permettre leur identification individuelle » (CGI, ann. IV, "
+             "art. 56 J quindecies). Le titre y est exigé sans exception "
+             "propre à l'occasion.\n\n"
+             "LES DEUX DISPENSES QUI EXISTENT NE COUVRENT PAS CE CAS.\n"
+             "• L'art. 56 J sexdecies, 1°, dispense du poids et du titre "
+             "quand « l'identification reste possible soit par le numéro de "
+             "série individuel ou la référence commerciale de l'ouvrage "
+             "mentionnée dans un catalogue ou tout document de nature "
+             "comptable » — mais son 1° ne vise que les ouvrages NEUFS. Un "
+             "rachat au comptoir n'a ni série ni référence catalogue.\n"
+             "• L'art. R321-3, dernier alinéa, du code pénal permet de "
+             "regrouper « les objets dont la valeur unitaire n'excède pas un "
+             "montant fixé par un arrêté […] et qui ne présentent pas un "
+             "intérêt artistique ou historique ». Mais l'art. 56 J sexdecies, "
+             "2° b, veut que « les ouvrages contenant des métaux précieux "
+             "doivent être portés individuellement, QUELLE QUE SOIT LEUR "
+             "VALEUR ». Pour un objet en métal précieux, ce seuil est donc "
+             "neutralisé.\n\n"
+             "EN CONSÉQUENCE cette case ne repose sur aucune dispense légale "
+             "vérifiée. C'est un choix d'exploitation, assumé comme tel : "
+             "elle documente ce que l'établissement décide de faire, pas une "
+             "faculté que le texte lui ouvre.",
     )
     metal_is_object = fields.Boolean(
         string="Objet soumis au livre de police", compute='_compute_metal_is_object',
@@ -153,7 +182,8 @@ class ProductTemplate(models.Model):
         return self.env.registry.ready and not self.env.su
 
     @api.constrains('metal_regulated', 'metal_nature', 'metal_quantity_mode',
-                    'metal_unit_weight', 'metal_fineness')
+                    'metal_unit_weight', 'metal_fineness',
+                    'metal_mixed_fineness')
     def _check_police_mentions(self):
         """Un objet soumis au registre porte ses mentions dès le catalogue.
 
@@ -183,9 +213,11 @@ class ProductTemplate(models.Model):
                 manques.append(_("le poids unitaire, exigé au régime « à la "
                                  "pièce »"))
             # Un lot hétérogène n'a pas de titre unique : lui en imposer un
-            # serait porter au registre une mention fausse.
-            if (product.metal_quantity_mode != 'lot'
-                    and not product.metal_fineness):
+            # serait porter au registre une mention fausse. La dispense se
+            # déclare sur l'article, elle ne se déduit pas du régime — un lot
+            # se pèse comme le reste. Voir l'aide de `metal_mixed_fineness`
+            # pour ce que cette déclaration engage.
+            if not product.metal_mixed_fineness and not product.metal_fineness:
                 manques.append(_("le titre en millièmes"))
             if manques:
                 raise ValidationError(_(

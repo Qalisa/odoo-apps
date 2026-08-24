@@ -19,9 +19,12 @@
                         <!-- Le titre est une mention obligatoire du
                              registre ; seul un lot hétérogène n'en a pas. -->
                         <field name="metal_fineness"
-                               invisible="not metal_regulated"
+                               invisible="not metal_regulated or
+                                          metal_mixed_fineness"
                                required="metal_regulated and
-                                         metal_quantity_mode != 'lot'"/>
+                                         not metal_mixed_fineness"/>
+                        <field name="metal_mixed_fineness"
+                               invisible="not metal_regulated"/>
                     </group>
                     <group>
                         <field name="metal_quantity_mode"
@@ -40,16 +43,51 @@
                         objet acheté.
                     </div>
                     <div class="text-muted" colspan="2"
-                         invisible="metal_quantity_mode != 'lot'">
-                        Lot hétérogène : le poids ne se déduit pas de la quantité,
-                        il doit être saisi sur chaque ligne d'achat. Le titre
-                        n'est pas exigé — un lot n'en a pas d'unique ; le détail
-                        se porte dans la description de l'achat.
+                         invisible="not metal_mixed_fineness">
+                        <p class="mb-1">
+                            <b>Le titre cesse d'être exigé sur cet article.</b>
+                            Le poids reste dû : un lot se pèse, et sa quantité
+                            ou son poids unitaire le donnent comme pour les
+                            autres articles.
+                        </p>
+                        <p class="mb-1">
+                            Le registre exige pourtant « la nature, le nombre,
+                            le poids, <b>le titre</b>, la date d'entrée et de
+                            sortie et l'origine » de chaque objet
+                            (CGI, ann. IV, art. 56 J quindecies), et
+                            <b>les deux dispenses qui existent ne couvrent pas
+                            le rachat au comptoir</b> :
+                        </p>
+                        <ul class="mb-1">
+                            <li>l'art. 56 J sexdecies, 1°, dispense du poids et
+                                du titre l'ouvrage identifiable par son numéro
+                                de série ou sa référence catalogue — mais son
+                                1° ne vise que les ouvrages <b>neufs</b> ;</li>
+                            <li>l'art. R321-3, dernier alinéa, du code pénal
+                                permet de regrouper les objets de faible valeur
+                                sans intérêt artistique ou historique — mais
+                                l'art. 56 J sexdecies, 2° b, veut que les
+                                ouvrages contenant des métaux précieux soient
+                                portés « individuellement, <b>quelle que soit
+                                leur valeur</b> ». Le seuil est neutralisé
+                                ici.</li>
+                        </ul>
+                        <p class="mb-0">
+                            Cette case ne repose donc sur aucune dispense
+                            légale vérifiée : c'est un <b>choix
+                            d'exploitation</b>, à assumer comme tel.
+                        </p>
                     </div>
                     <div class="text-muted" colspan="2"
                          invisible="metal_quantity_mode != 'gram'">
                         La quantité saisie sur les lignes d'achat vaut directement
-                        le poids en grammes.
+                        le poids en grammes. C'est aussi le régime d'un lot
+                        hétérogène : on le pèse, et la balance donne la quantité.
+                    </div>
+                    <div class="text-muted" colspan="2"
+                         invisible="metal_quantity_mode != 'unit'">
+                        La quantité compte des pièces ou des lingotins ; le poids
+                        de la ligne se déduit du poids unitaire ci-dessus.
                     </div>
                 </group>
             </xpath>

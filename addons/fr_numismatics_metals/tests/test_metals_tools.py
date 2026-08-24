@@ -24,8 +24,7 @@ class TestDeriveWeight(unittest.TestCase):
         self.assertAlmostEqual(metals.derive_weight('unit', 6.4516, 5), 32.258)
 
     def test_poids_non_deductible(self):
-        """Lot, article hors métal ou poids unitaire manquant : rien à déduire."""
-        self.assertIsNone(metals.derive_weight('lot', None, 1))
+        """Article hors métal ou poids unitaire manquant : rien à déduire."""
         self.assertIsNone(metals.derive_weight(None, None, 1))
         self.assertIsNone(metals.derive_weight('unit', None, 3))
         self.assertIsNone(metals.derive_weight('unit', 0.0, 3))

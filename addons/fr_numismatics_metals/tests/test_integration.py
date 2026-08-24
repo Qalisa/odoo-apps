@@ -149,16 +149,16 @@ class TestMetalProduct(TransactionCase):
         domaine = [('metal_regulated', '=', True),
                    '|', ('metal_quantity_mode', '=', False),
                         ('metal_weight_undetermined', '=', True)]
-        # Un régime « au lot » laisse le poids à saisir ligne à ligne : c'est
-        # désormais le seul cas que cet écran a encore à signaler, la mention
-        # manquante étant refusée à l'enregistrement.
-        lot = self._product(name="Lot d'argenterie", type='consu',
-                            metal_nature=self.argent.id,
-                            metal_quantity_mode='lot')
+        # La contrainte refuse desormais tout article incomplet saisi par une
+        # personne : cet ecran ne recense donc que ceux qui lui ont echappe —
+        # crees pendant le chargement d'un module, ou en super-utilisateur.
+        muet = self.env['product.template'].sudo().create({
+            'name': "Argenterie non caracterisee", 'type': 'consu',
+            'metal_nature': self.argent.id})
         Tmpl = self.env['product.template']
-        self.assertIn(lot, Tmpl.search(domaine))
-        lot.metal_regulated = False
-        self.assertNotIn(lot, Tmpl.search(domaine))
+        self.assertIn(muet, Tmpl.search(domaine))
+        muet.sudo().metal_regulated = False
+        self.assertNotIn(muet, Tmpl.search(domaine))
 
     def test_regime_renseigne_fait_entrer_dans_le_perimetre(self):
         product = self._product(name="Argent (g)", metal_nature=self.argent.id,
@@ -180,11 +180,18 @@ class TestMetalProduct(TransactionCase):
         hors_registre.metal_unit_weight = 6.4516
         self.assertFalse(hors_registre.metal_weight_undetermined)
 
-    def test_lot_toujours_sans_poids_deductible(self):
+    def test_lot_de_titres_garde_un_poids_deductible(self):
+        """Un lot n'a pas de titre unique, mais il a un poids : on le pèse.
+
+        C'est la raison d'être de la séparation entre le régime de quantité
+        et la dispense de titre — le régime « au lot » d'autrefois faisait
+        entrer au registre des lignes sans poids, ce que le CGI n'admet pas.
+        """
         product = self._product(name="Lot de pièces Argent",
                                 metal_nature=self.argent.id,
-                                metal_quantity_mode='lot')
-        self.assertTrue(product.metal_weight_undetermined)
+                                metal_quantity_mode='gram',
+                                metal_mixed_fineness=True)
+        self.assertFalse(product.metal_weight_undetermined)
 
     def test_caracteristiques_modifiables_a_tout_moment(self):
         """Aucun calcul ne verrouille ces champs : ils restent éditables."""
@@ -228,7 +235,7 @@ class TestMetalWeightOnLines(TransactionCase):
         }).product_variant_id
         cls.au_lot = Tmpl.create({
             'name': "Lot de pièces Argent", 'metal_nature': cls.argent.id,
-            'metal_quantity_mode': 'lot',
+            'metal_quantity_mode': 'gram', 'metal_mixed_fineness': True,
         }).product_variant_id
         cls.hors_metal = Tmpl.create(
             {'name': "Remise", 'metal_regulated': False}).product_variant_id
@@ -262,17 +269,12 @@ class TestMetalWeightOnLines(TransactionCase):
         self.assertFalse(line.metal_weight_missing)
         self.assertFalse(line.metal_price_per_gram)
 
-    def test_lot_sans_poids_est_signale(self):
-        move = self._refund(self.au_lot, 1, 300.0)
-        line = move.invoice_line_ids
-        self.assertFalse(line.metal_weight)
-        self.assertTrue(line.metal_weight_missing)
-
     def test_poids_saisi_sur_un_lot_est_conserve(self):
-        move = self._refund(self.au_lot, 1, 300.0)
+        move = self._refund(self.au_lot, 240.0, 1.25)
         line = move.invoice_line_ids
-        line.metal_weight = 238.6
-        line.price_unit = 310.0  # une modification quelconque ne doit rien effacer
+        self.assertAlmostEqual(line.metal_weight, 240.0)  # pesé, donc déduit
+        line.metal_weight = 238.6  # la balance du contrôle, pas celle du comptoir
+        line.price_unit = 1.30  # une modification quelconque ne doit rien effacer
         self.assertAlmostEqual(line.metal_weight, 238.6)
         self.assertFalse(line.metal_weight_missing)
 
@@ -288,7 +290,7 @@ class TestMetalWeightOnLines(TransactionCase):
 
     def test_poids_corrigeable_sur_une_ecriture_comptabilisee(self):
         """Le poids n'est pas comptable : il reste saisissable après validation."""
-        move = self._refund(self.au_lot, 1, 300.0)
+        move = self._refund(self.au_lot, 240.0, 1.25)
         move.action_post()
         line = move.invoice_line_ids
         line.metal_weight = 238.6
@@ -336,15 +338,14 @@ class TestMetalPricePerGram(TransactionCase):
         self.assertAlmostEqual(line.metal_price_per_gram, 1.34, places=2)
 
     def test_sans_poids_pas_de_prix_au_gramme(self):
-        lot = self.env['product.template'].create({
-            'name': "Lot de pièces Argent", 'metal_nature': self.argent.id,
-            'metal_quantity_mode': 'lot',
+        sans_regime = self.env['product.template'].create({
+            'name': "Remise commerciale", 'metal_regulated': False,
         }).product_variant_id
         line = self.env['account.move'].create({
             'move_type': 'out_refund',
             'partner_id': self.partner.id,
             'invoice_line_ids': [(0, 0, {
-                'product_id': lot.id, 'quantity': 1,
+                'product_id': sans_regime.id, 'quantity': 1,
                 'price_unit': 300.0, 'tax_ids': [(5, 0, 0)]})],
         }).invoice_line_ids
         self.assertFalse(line.metal_price_per_gram)
@@ -398,10 +399,10 @@ class TestMentionsObligatoiresCatalogue(TransactionCase):
             self._article(metal_quantity_mode='unit', metal_unit_weight=0.0)
         self.assertIn("poids unitaire", str(refus.exception))
 
-    def test_lot_heterogene_dispense_de_titre(self):
+    def test_lot_de_titres_dispense_de_titre(self):
         """Un lot n'a pas de titre unique : en exiger un ferait porter au
-        registre une mention fausse."""
-        article = self._article(metal_quantity_mode='lot', metal_fineness=0.0)
+        registre une mention fausse. La dispense se déclare sur l'article."""
+        article = self._article(metal_mixed_fineness=True, metal_fineness=0.0)
         self.assertTrue(article.metal_regulated)
         self.assertFalse(article.metal_fineness)
 

@@ -7,7 +7,7 @@ chaque objet — nature, titre, poids unitaire — vivent sur l'article
 (``product.template``) : c'est lui le référentiel. Ce module ne porte que
 les règles qui s'y appliquent.
 
-Trois régimes de saisie coexistent dans les avoirs de rachat :
+Deux régimes de saisie coexistent dans les avoirs de rachat :
 
 ``gram``
     la quantité de la ligne *est* le poids en grammes (« 18 carats (18k) Or
@@ -16,22 +16,26 @@ Trois régimes de saisie coexistent dans les avoirs de rachat :
     la quantité est un nombre de pièces ou de lingotins de poids normalisé
     (« 20 Francs Or », « Lingot 50 g Or 999 ‰ »…). Le poids se déduit du
     poids unitaire porté par l'article.
-``lot``
-    la ligne est un lot hétérogène facturé forfaitairement (« Lot de pièces
-    Argent »…). Aucun poids n'est déductible : il doit être saisi.
+
+Il n'y a pas de troisième régime pour les lots hétérogènes. Un lot se pèse :
+il entre au gramme, et son poids est celui que la balance affiche. Ce qu'un
+lot n'a pas, c'est un *titre* unique — et cela se dit ailleurs, par la case
+« Considérer en lot de titres » de l'article. Séparer les deux questions
+évite qu'un lot arrive au registre sans poids, ce que le CGI n'admet pas.
 
 Aucun ``import odoo`` ici : la logique est testable en isolation.
 """
 
 #: Régimes de saisie de la quantité, cf. docstring du module.
-MODES = ('gram', 'unit', 'lot')
+MODES = ('gram', 'unit')
 
 
 def derive_weight(mode, unit_weight, quantity):
     """Poids en grammes déductible d'une ligne, ou ``None``.
 
-    ``None`` signifie « non déductible » (lot, article hors métal, poids
-    unitaire manquant) : le poids devra être saisi.
+    ``None`` ne subsiste que pour un article hors métal, ou pour un article
+    « à la pièce » dont le poids unitaire manque — cas que la contrainte de
+    saisie interdit, et qui ne survit que sur les articles entrés avant elle.
     """
     if mode == 'gram':
         return quantity
