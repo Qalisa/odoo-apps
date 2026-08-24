@@ -11,6 +11,7 @@
             </xpath>
             <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='quantity']"
                    position="after">
+                <field name="police_description_required" column_invisible="1"/>
                 <field name="police_description_missing" column_invisible="1"/>
             </xpath>
         </field>
