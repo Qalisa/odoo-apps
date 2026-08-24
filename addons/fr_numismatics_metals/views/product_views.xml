@@ -10,31 +10,42 @@
                  tard. Un onglet séparé, personne ne l'ouvre. -->
             <xpath expr="//page[@name='general_information']/group" position="after">
                 <group string="Livre de police (CGI ann. IV, art. 56 J quindecies)" name="metal">
+                    <!-- À gauche, comment la ligne d'achat se compte ; à
+                         droite, ce que l'objet est et ce qu'il pèse.
+
+                         Grisé plutôt que masqué : un champ qui disparaît
+                         laisse croire qu'il n'existe pas, et le paramétrage
+                         d'un article se lit d'un coup d'œil, y compris ce
+                         qu'il ne demande pas. Chaque condition `readonly` est
+                         l'exacte négation du `required` correspondant : un
+                         champ grisé n'est jamais exigé, sans quoi il
+                         bloquerait l'enregistrement sans pouvoir être
+                         rempli. -->
                     <group>
                         <field name="metal_regulated"/>
+                        <field name="metal_quantity_mode"
+                               readonly="not metal_regulated"
+                               required="metal_regulated"/>
+                        <field name="metal_mixed_fineness"
+                               readonly="not metal_regulated"/>
+                        <field name="metal_is_object" invisible="1"/>
+                        <field name="metal_weight_undetermined" invisible="1"/>
+                    </group>
+                    <group>
                         <field name="metal_nature"
                                options="{'no_quick_create': True}"
-                               invisible="not metal_regulated"
+                               readonly="not metal_regulated"
                                required="metal_regulated"/>
                         <!-- Le titre est une mention obligatoire du
                              registre ; seul un lot hétérogène n'en a pas. -->
                         <field name="metal_fineness"
-                               invisible="not metal_regulated or
-                                          metal_mixed_fineness"
+                               readonly="not metal_regulated or
+                                         metal_mixed_fineness"
                                required="metal_regulated and
                                          not metal_mixed_fineness"/>
-                        <field name="metal_mixed_fineness"
-                               invisible="not metal_regulated"/>
-                    </group>
-                    <group>
-                        <field name="metal_quantity_mode"
-                               invisible="not metal_regulated"
-                               required="metal_regulated"/>
                         <field name="metal_unit_weight"
-                               invisible="metal_quantity_mode != 'unit'"
+                               readonly="metal_quantity_mode != 'unit'"
                                required="metal_quantity_mode == 'unit'"/>
-                        <field name="metal_is_object" invisible="1"/>
-                        <field name="metal_weight_undetermined" invisible="1"/>
                     </group>
                     <div class="text-muted" colspan="2"
                          invisible="metal_regulated">
