@@ -8,7 +8,7 @@
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="note" optional="show"/>
-                <field name="line_count" optional="show"/>
+                <field name="usage_count" optional="show"/>
                 <field name="active" column_invisible="1"/>
             </list>
         </field>
@@ -26,10 +26,10 @@
                         <field name="name"/>
                         <field name="note"/>
                         <field name="sequence"/>
-                        <field name="line_count"/>
+                        <field name="usage_count"/>
                         <field name="active" widget="boolean_toggle"/>
                     </group>
-                    <div class="text-muted" invisible="not line_count">
+                    <div class="text-muted" invisible="not usage_count">
                         Cette provenance figure sur des lignes comptabilisées :
                         son libellé est figé. Pour la retirer de la saisie,
                         décochez « Actif » — les pièces déjà passées gardent

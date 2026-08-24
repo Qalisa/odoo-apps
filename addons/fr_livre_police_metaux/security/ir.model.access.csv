@@ -2,3 +2,6 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_livre_police_provenance_user,livre.police.provenance utilisateur,model_livre_police_provenance,base.group_user,1,0,0,0
 access_livre_police_provenance_salesman,livre.police.provenance comptoir,model_livre_police_provenance,sales_team.group_sale_salesman,1,0,1,0
 access_livre_police_provenance_manager,livre.police.provenance responsable,model_livre_police_provenance,sales_team.group_sale_manager,1,1,1,1
+access_livre_police_qualite_user,livre.police.qualite utilisateur,model_livre_police_qualite,base.group_user,1,0,0,0
+access_livre_police_qualite_salesman,livre.police.qualite comptoir,model_livre_police_qualite,sales_team.group_sale_salesman,1,0,1,0
+access_livre_police_qualite_manager,livre.police.qualite responsable,model_livre_police_qualite,sales_team.group_sale_manager,1,1,1,1
