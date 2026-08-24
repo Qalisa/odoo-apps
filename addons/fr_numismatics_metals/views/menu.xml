@@ -18,7 +18,7 @@
               sequence="10"/>
 
     <menuitem id="menu_move_line_metal_anomaly"
-              name="Contrôle des poids"
+              name="Contrôle des saisies"
               parent="menu_metal_root"
               action="action_move_line_metal_anomaly"
               sequence="20"/>

@@ -19,8 +19,12 @@
         <field name="name">account.move.line.list.metal.anomaly</field>
         <field name="model">account.move.line</field>
         <field name="arch" type="xml">
-            <list string="Contrôle des poids" create="false" delete="false"
+            <!-- Trié par prix au gramme décroissant : la saisie la plus
+                 improbable arrive en tête, sans qu'aucun seuil n'ait à être
+                 tenu à jour dans le code. -->
+            <list string="Contrôle des saisies" create="false" delete="false"
                   editable="bottom"
+                  default_order="metal_price_per_gram desc"
                   decoration-danger="metal_weight_missing">
                 <field name="move_id" readonly="1"/>
                 <field name="date" readonly="1"/>
@@ -41,7 +45,7 @@
         <field name="name">account.move.line.search.metal</field>
         <field name="model">account.move.line</field>
         <field name="arch" type="xml">
-            <search string="Contrôle des poids">
+            <search string="Contrôle des saisies">
                 <field name="move_id"/>
                 <field name="partner_id"/>
                 <field name="product_id"/>
@@ -62,7 +66,7 @@
     </record>
 
     <record id="action_move_line_metal_anomaly" model="ir.actions.act_window">
-        <field name="name">Contrôle des poids</field>
+        <field name="name">Contrôle des saisies</field>
         <field name="res_model">account.move.line</field>
         <field name="view_mode">list</field>
         <field name="view_id" ref="view_move_line_list_metal_anomaly"/>
@@ -71,26 +75,39 @@
             ['|', ('metal_weight_missing', '=', True),
                   ('metal_weight', '!=', 0)]
         </field>
-        <field name="context">{'search_default_weight_missing': 1}</field>
+        <!-- Le défaut porte sur les lignes qui ONT un poids : ce sont les
+             seules dont le prix au gramme se calcule, et c'est ce prix qui
+             fait le contrôle. Le poids ne peut plus manquer sur une saisie
+             nouvelle — les deux régimes le déduisent toujours — de sorte que
+             le filtre « Poids manquant » ne ramène que l'historique d'avant
+             le module. Il reste accessible, mais il n'ouvre plus l'écran. -->
+        <field name="context">{'search_default_weight_filled': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Aucune ligne à contrôler.
             </p>
             <p>
-                Le poids est une mention obligatoire du livre de police
-                (CGI, ann. IV, art. 56 J quindecies). En rouge, les lignes dont le poids
-                manque.
+                Les lignes sont classées par <b>prix au gramme décroissant</b>.
+                Ce prix n'est pas un contrôle paramétré : c'est le simple
+                quotient du montant par le poids. Les saisies improbables
+                remontent donc d'elles-mêmes — un « Argent (g) » à 3 500 €/g
+                n'était pas un gramme d'argent, c'était un montant tapé dans
+                la colonne du prix unitaire.
             </p>
             <p>
-                La colonne « Prix au gramme » n'est pas un contrôle : c'est le
-                simple quotient du montant par le poids. Trier dessus fait
-                remonter en tête les lignes dont la quantité, le prix ou le
-                poids est erroné — un « Argent (g) » à 3 500 €/g n'était pas
-                un gramme d'argent.
+                Rien à tenir à jour : aucun seuil n'est écrit dans le code, et
+                le cours peut varier sans que l'écran devienne faux.
             </p>
             <p>
                 Le poids se corrige directement ici, y compris sur des écritures
-                comptabilisées : ce champ n'est pas comptable.
+                comptabilisées : ce champ n'est pas comptable. Le poids est une
+                mention obligatoire du livre de police (CGI, ann. IV,
+                art. 56 J quindecies).
+            </p>
+            <p>
+                Le filtre « Poids manquant » ne ramène que les lignes
+                antérieures au module : les deux régimes de quantité déduisent
+                désormais toujours le poids.
             </p>
         </field>
     </record>
