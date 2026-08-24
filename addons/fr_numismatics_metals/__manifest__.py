@@ -17,10 +17,13 @@ métaux précieux — son poids. Ce module porte ces caractéristiques :
 - sur l'article : nature du métal — un référentiel que le client complète
   librement —, titre en millièmes, régime de quantité (au gramme / à la
   pièce) et poids unitaire en grammes ;
-- sur la ligne d'achat : le poids en grammes, déduit de l'article quand c'est
-  possible, saisi sinon, et figé dès l'écriture comptabilisée ;
-- un écran de contrôle : articles à caractériser, lignes sans poids, et prix
-  au gramme constaté pour repérer les saisies aberrantes.
+- sur la ligne d'achat : le poids en grammes, déduit de l'article — les deux
+  régimes le donnent toujours — corrigeable à la main, et figé dès l'écriture
+  comptabilisée ;
+- deux écrans de contrôle : les articles à caractériser, et les saisies
+  classées par prix au gramme décroissant — le quotient du montant par le
+  poids, qui fait remonter de lui-même la ligne dont la quantité, le prix ou
+  le poids est faux, sans qu'aucun seuil ne soit écrit dans le code.
 
 Le titre, et la case « Considérer en lot de titres »
 ---------------------------------------------------
