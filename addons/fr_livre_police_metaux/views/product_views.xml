@@ -13,9 +13,25 @@
                     <field name="police_description_required"/>
                     <div class="text-muted" colspan="2"
                          invisible="not police_description_required">
-                        Un rachat portant cet article ne pourra pas être
-                        confirmé ni comptabilisé tant que les objets ne sont
-                        pas décrits, ligne par ligne.
+                        <p class="mb-1">
+                            Un rachat portant cet article ne pourra être ni
+                            confirmé ni comptabilisé tant que, ligne par ligne :
+                        </p>
+                        <ul class="mb-1">
+                            <li>les objets ne sont pas <b>décrits</b> sous la
+                                désignation de l'article ;</li>
+                            <li>leur <b>provenance</b> n'est pas choisie dans
+                                la colonne du même nom.</li>
+                        </ul>
+                        <p class="mb-0">
+                            Les deux tiennent dans la même phrase de
+                            l'art. R321-3 3° — « la nature, la provenance et la
+                            description des objets acquis » — et dans la même
+                            colonne du registre officiel. Une seule case les
+                            exige donc toutes les deux. La liste des
+                            provenances se règle dans
+                            <i>Ventes ▸ Configuration ▸ Provenances</i>.
+                        </p>
                     </div>
                     <div class="text-muted" colspan="2"
                          invisible="police_description_required">

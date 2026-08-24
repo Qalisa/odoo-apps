@@ -12,8 +12,9 @@ une facture** lorsque le rachat est adossé à une vente. Les deux font entrer
 l'objet. À l'inverse, une quantité négative sur un avoir défait un rachat :
 elle ne fait rien entrer, et n'est pas contrôlée.
 
-Le libellé de la ligne est recopié du devis par Odoo : la description suit
-donc la ligne sans qu'on ait à la transporter.
+Le libellé de la ligne est recopié du devis par Odoo, et la provenance l'est
+par ``_prepare_invoice_line`` : les deux mentions suivent la ligne sans qu'on
+ait à les ressaisir.
 """
 
 from odoo import models, fields, api, _
@@ -25,6 +26,13 @@ from ..tools.description import description_ajoutee
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
+    police_origin_id = fields.Many2one(
+        'livre.police.provenance', string="Provenance",
+        ondelete='restrict', index='btree_not_null',
+        help="Origine déclarée par le vendeur. Mention obligatoire du "
+             "registre (art. R321-3 3° du code pénal). Reprise du devis "
+             "lorsque la pièce en vient.",
+    )
     police_description_expected = fields.Boolean(
         string="Article à décrire",
         compute='_compute_police_description_expected',
@@ -41,6 +49,11 @@ class AccountMoveLine(models.Model):
         compute='_compute_police_description_missing',
         help="Le libellé de la ligne n'ajoute rien à la désignation de "
              "l'article : les objets ne sont pas décrits.",
+    )
+    police_origin_missing = fields.Boolean(
+        string="Provenance manquante",
+        compute='_compute_police_origin_missing',
+        help="La ligne fait entrer un objet dont l'origine n'est pas déclarée.",
     )
 
     @api.depends('display_type',
@@ -75,20 +88,53 @@ class AccountMoveLine(models.Model):
             ligne.police_description_missing = bool(
                 ligne.police_description_required and not ligne._police_description())
 
+    @api.depends('police_description_required', 'police_origin_id')
+    def _compute_police_origin_missing(self):
+        for ligne in self:
+            ligne.police_origin_missing = bool(
+                ligne.police_description_required and not ligne.police_origin_id)
+
+    def _police_manques(self):
+        """Mentions du registre absentes de cette ligne, dans l'ordre du texte."""
+        self.ensure_one()
+        manques = []
+        if self.police_origin_missing:
+            manques.append("la provenance")
+        if self.police_description_missing:
+            manques.append("la description")
+        return manques
+
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    def _police_check_descriptions(self):
+    police_registre_concerne = fields.Boolean(
+        string="Document soumis au registre",
+        compute='_compute_police_registre_concerne',
+        help="Vrai dès qu'une ligne porte un article à décrire. Commande "
+             "l'affichage de la colonne « Provenance ».",
+    )
+
+    @api.depends('invoice_line_ids.police_description_expected')
+    def _compute_police_registre_concerne(self):
         for piece in self:
-            muettes = piece.invoice_line_ids.filtered('police_description_missing')
-            if muettes:
+            piece.police_registre_concerne = any(
+                piece.invoice_line_ids.mapped('police_description_expected'))
+
+    def _police_check_registre(self):
+        for piece in self:
+            fautives = piece.invoice_line_ids.filtered(
+                lambda l: l.police_description_missing or l.police_origin_missing)
+            if fautives:
                 raise UserError(_(
-                    "Les objets rachetés doivent être décrits (art. R321-3 3° "
-                    "du code pénal). Complétez la description sous la "
-                    "désignation, sur :\n  - %s",
-                    "\n  - ".join(l.product_id.display_name for l in muettes)))
+                    "Le registre exige de chaque objet acquis sa provenance et "
+                    "sa description (art. R321-3 3° du code pénal). Il "
+                    "manque :\n  - %s",
+                    "\n  - ".join(
+                        "%s : %s" % (l.product_id.display_name,
+                                     ", ".join(l._police_manques()))
+                        for l in fautives)))
 
     def _post(self, soft=True):
-        self._police_check_descriptions()
+        self._police_check_registre()
         return super()._post(soft=soft)

@@ -6,21 +6,34 @@
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
             <!--
-                Aucune colonne n'est ajoutée : la description existe déjà, sous
+                La description n'ajoute aucune colonne : elle existe déjà, sous
                 la désignation de l'article, et c'est là que le comptoir écrit.
+                La provenance, elle, ne s'écrit nulle part et en réclame une.
 
-                Le manque se signale donc sur la ligne elle-même. Le refus à la
+                Cette colonne ne se montre que sur les documents qui portent un
+                article à décrire : sur une vente, elle n'aurait rien à dire.
+
+                Le manque se signale sur la ligne elle-même. Le refus à la
                 confirmation arrive après la fenêtre de `sales_confirm_popup`,
                 trop tard pour être le seul avertissement.
             -->
+            <field name="order_line" position="before">
+                <field name="police_registre_concerne" invisible="1"/>
+            </field>
             <xpath expr="//field[@name='order_line']/list" position="attributes">
-                <attribute name="decoration-danger">police_description_missing</attribute>
+                <attribute name="decoration-danger">police_description_missing or police_origin_missing</attribute>
             </xpath>
             <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']"
                    position="after">
                 <field name="police_description_expected" column_invisible="1"/>
                 <field name="police_description_required" column_invisible="1"/>
                 <field name="police_description_missing" column_invisible="1"/>
+                <field name="police_origin_missing" column_invisible="1"/>
+                <field name="police_origin_id"
+                       optional="show"
+                       column_invisible="not parent.police_registre_concerne"
+                       readonly="not police_description_required"
+                       placeholder="D'où vient l'objet ?"/>
             </xpath>
         </field>
     </record>

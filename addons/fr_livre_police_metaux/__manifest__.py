@@ -25,6 +25,24 @@ Le choix se fait article par article, dans sa fiche : un rachat d'or au
 gramme désigne des objets à décrire, une remise ou un arrondi n'en désigne
 aucun.
 
+Deux mentions, une seule case
+-----------------------------
+
+L'article R321-3 3° tient la provenance et la description dans la même
+phrase, et le modèle officiel du registre dans la même colonne. Elles sont
+donc exigées ensemble, par la même case sur la fiche de l'article.
+
+La description se met là où le comptoir la met déjà (voir plus bas). La
+provenance ne s'écrit nulle part aujourd'hui : elle prend une colonne, remplie
+depuis une liste administrable — « Bijoux personnels », « Héritage ou
+succession », « Achat antérieur »… Le comptoir peut en créer une à la volée,
+mais pas une simple variante d'écriture d'une valeur existante : « héritage »
+serait renvoyé vers « Héritage ou succession ».
+
+Une provenance déjà portée par une pièce comptabilisée ne se renomme plus.
+Elle s'archive — les pièces passées gardent la leur (art. R321-6 et
+R321-6-1).
+
 Le sens de la quantité désigne le rachat
 ----------------------------------------
 
@@ -49,9 +67,9 @@ l'article, donc jamais vide : ce qui est contrôlé, c'est ce que le libellé
 Une ligne renommée sans être décrite ne passe pas : « 20 FRANCS OR
 (Non-Scellé) » nomme une variante, il ne désigne aucun objet particulier.
 
-La description est exigée deux fois : à la confirmation du devis et à la
-comptabilisation de la pièce. Une colonne signale le manque pendant la
-saisie, pour qu'il se voie avant le refus.
+Les deux mentions sont exigées deux fois : à la confirmation du devis et à
+la comptabilisation de la pièce. La ligne incomplète passe en rouge pendant
+la saisie, pour que le manque se voie avant le refus.
 """,
 
     'category': 'Accounting/Localizations',
@@ -60,6 +78,9 @@ saisie, pour qu'il se voie avant le refus.
     'website': 'https://odoo-docs.qalisa.fr/',
     'depends': ['sale', 'account'],
     'data': [
+        'security/ir.model.access.csv',
+        'data/livre_police_provenance_data.xml',
+        'views/livre_police_provenance_views.xml',
         'views/product_views.xml',
         'views/sale_order_views.xml',
         'views/account_move_views.xml',
