@@ -25,6 +25,12 @@ from ..tools.description import description_ajoutee
 class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
 
+    police_description_expected = fields.Boolean(
+        string="Article à décrire",
+        compute='_compute_police_description_expected',
+        help="Vrai lorsque l'article réclame une description de ses objets, "
+             "indépendamment du sens de l'opération.",
+    )
     police_description_required = fields.Boolean(
         string="Description exigée",
         compute='_compute_police_description_required',
@@ -37,8 +43,15 @@ class AccountMoveLine(models.Model):
              "l'article : les objets ne sont pas décrits.",
     )
 
-    @api.depends('display_type', 'quantity', 'move_id.move_type',
+    @api.depends('display_type',
                  'product_id.product_tmpl_id.police_description_required')
+    def _compute_police_description_expected(self):
+        for ligne in self:
+            ligne.police_description_expected = bool(
+                ligne.display_type == 'product'
+                and ligne.product_id.product_tmpl_id.police_description_required)
+
+    @api.depends('police_description_expected', 'quantity', 'move_id.move_type')
     def _compute_police_description_required(self):
         for ligne in self:
             type_piece = ligne.move_id.move_type
@@ -46,8 +59,7 @@ class AccountMoveLine(models.Model):
                 (type_piece == 'out_refund' and ligne.quantity > 0)
                 or (type_piece == 'out_invoice' and ligne.quantity < 0))
             ligne.police_description_required = bool(
-                ligne.display_type == 'product' and entree
-                and ligne.product_id.product_tmpl_id.police_description_required)
+                ligne.police_description_expected and entree)
 
     def _police_description(self):
         """Description des objets lue sur le libellé de la ligne."""
