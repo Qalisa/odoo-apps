@@ -111,15 +111,27 @@ class AccountMove(models.Model):
     police_registre_concerne = fields.Boolean(
         string="Document soumis au registre",
         compute='_compute_police_registre_concerne',
-        help="Vrai dès qu'une ligne porte un article à décrire. Commande "
-             "l'affichage de la colonne « Provenance ».",
+        help="Vrai sur une pièce client portant un article à décrire. "
+             "Commande l'affichage de la colonne « Provenance ».",
     )
 
-    @api.depends('invoice_line_ids.police_description_expected')
+    @api.depends('invoice_line_ids.police_description_required')
     def _compute_police_registre_concerne(self):
+        """La colonne ne se montre que là où elle a quelque chose à recevoir.
+
+        Sur une pièce comptable, le signe de la quantité est arrêté : on sait
+        déjà si la ligne fait entrer un objet. Inutile donc de montrer la
+        colonne sur une facture de vente, ni sur une facture fournisseur —
+        l'achat de métal à un confrère se facture ainsi, mais ne relève pas du
+        registre d'objets mobiliers, qui vise l'acquisition auprès du public.
+        Une colonne vide et non modifiable se lit comme un oubli.
+
+        Le devis suit une autre règle (voir ``sale_order.py``) : les lignes
+        s'y saisissent, et le signe n'est pas encore connu.
+        """
         for piece in self:
             piece.police_registre_concerne = any(
-                piece.invoice_line_ids.mapped('police_description_expected'))
+                piece.invoice_line_ids.mapped('police_description_required'))
 
     def _police_check_registre(self):
         for piece in self:
