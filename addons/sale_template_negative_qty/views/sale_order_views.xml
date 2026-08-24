@@ -1,0 +1,21 @@
+<odoo>
+
+    <record id="view_order_form_negative_qty" model="ir.ui.view">
+        <field name="name">sale.order.form.negative.qty</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Le champ doit être chargé par la vue : le contexte du
+                 one2many est évalué contre le devis, pas contre la base. -->
+            <field name="order_line" position="before">
+                <field name="new_line_qty" invisible="1"/>
+            </field>
+            <!-- Le champ ne porte aucun contexte en amont (Odoo 18) : rien
+                 n'est écrasé ici. -->
+            <xpath expr="//field[@name='order_line']" position="attributes">
+                <attribute name="context">{'default_product_uom_qty': new_line_qty}</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
