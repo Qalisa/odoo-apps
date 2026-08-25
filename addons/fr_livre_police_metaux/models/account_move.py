@@ -15,6 +15,11 @@ elle ne fait rien entrer, et n'est pas contrôlée.
 Le libellé de la ligne est recopié du devis par Odoo, et la provenance l'est
 par ``_prepare_invoice_line`` : les deux mentions suivent la ligne sans qu'on
 ait à les ressaisir.
+
+Les deux exigences ne portent pas sur les mêmes articles — voir l'en-tête de
+``sale_order.py`` : la provenance est due de tout article inscrit au
+registre, la description des seuls articles dont la désignation ne dit rien
+de l'objet.
 """
 
 from odoo import models, fields, api, _
@@ -39,6 +44,13 @@ class AccountMoveLine(models.Model):
         help="Vrai lorsque l'article réclame une description de ses objets, "
              "indépendamment du sens de l'opération.",
     )
+    police_origin_expected = fields.Boolean(
+        string="Article au registre",
+        compute='_compute_police_origin_expected',
+        help="Vrai lorsque l'article fait entrer un objet au registre, et "
+             "réclame donc sa provenance, indépendamment du sens de "
+             "l'opération.",
+    )
     police_description_required = fields.Boolean(
         string="Description exigée",
         compute='_compute_police_description_required',
@@ -49,6 +61,11 @@ class AccountMoveLine(models.Model):
         compute='_compute_police_description_missing',
         help="Le libellé de la ligne n'ajoute rien à la désignation de "
              "l'article : les objets ne sont pas décrits.",
+    )
+    police_origin_required = fields.Boolean(
+        string="Provenance exigée",
+        compute='_compute_police_origin_required',
+        help="Vrai lorsque la ligne fait entrer un objet au registre.",
     )
     police_origin_missing = fields.Boolean(
         string="Provenance manquante",
@@ -64,15 +81,36 @@ class AccountMoveLine(models.Model):
                 ligne.display_type == 'product'
                 and ligne.product_id.product_tmpl_id.police_description_required)
 
+    @api.depends('display_type',
+                 'product_id.product_tmpl_id.metal_regulated',
+                 'product_id.product_tmpl_id.police_description_required')
+    def _compute_police_origin_expected(self):
+        """Voir ``sale_order.py`` : les deux signaux valent."""
+        for ligne in self:
+            fiche = ligne.product_id.product_tmpl_id
+            ligne.police_origin_expected = bool(
+                ligne.display_type == 'product'
+                and (fiche.metal_regulated or fiche.police_description_required))
+
+    def _police_entree(self):
+        """La ligne fait-elle entrer un objet dans les murs ?"""
+        self.ensure_one()
+        type_piece = self.move_id.move_type
+        return bool(
+            (type_piece == 'out_refund' and self.quantity > 0)
+            or (type_piece == 'out_invoice' and self.quantity < 0))
+
     @api.depends('police_description_expected', 'quantity', 'move_id.move_type')
     def _compute_police_description_required(self):
         for ligne in self:
-            type_piece = ligne.move_id.move_type
-            entree = (
-                (type_piece == 'out_refund' and ligne.quantity > 0)
-                or (type_piece == 'out_invoice' and ligne.quantity < 0))
             ligne.police_description_required = bool(
-                ligne.police_description_expected and entree)
+                ligne.police_description_expected and ligne._police_entree())
+
+    @api.depends('police_origin_expected', 'quantity', 'move_id.move_type')
+    def _compute_police_origin_required(self):
+        for ligne in self:
+            ligne.police_origin_required = bool(
+                ligne.police_origin_expected and ligne._police_entree())
 
     def _police_description(self):
         """Description des objets lue sur le libellé de la ligne."""
@@ -88,11 +126,11 @@ class AccountMoveLine(models.Model):
             ligne.police_description_missing = bool(
                 ligne.police_description_required and not ligne._police_description())
 
-    @api.depends('police_description_required', 'police_origin_id')
+    @api.depends('police_origin_required', 'police_origin_id')
     def _compute_police_origin_missing(self):
         for ligne in self:
             ligne.police_origin_missing = bool(
-                ligne.police_description_required and not ligne.police_origin_id)
+                ligne.police_origin_required and not ligne.police_origin_id)
 
     def _police_manques(self):
         """Mentions du registre absentes de cette ligne, dans l'ordre du texte."""
@@ -111,11 +149,11 @@ class AccountMove(models.Model):
     police_registre_concerne = fields.Boolean(
         string="Document soumis au registre",
         compute='_compute_police_registre_concerne',
-        help="Vrai sur une pièce client portant un article à décrire. "
-             "Commande l'affichage de la colonne « Provenance ».",
+        help="Vrai sur une pièce client portant un article inscrit au "
+             "registre. Commande l'affichage de la colonne « Provenance ».",
     )
 
-    @api.depends('invoice_line_ids.police_description_required')
+    @api.depends('invoice_line_ids.police_origin_required')
     def _compute_police_registre_concerne(self):
         """La colonne ne se montre que là où elle a quelque chose à recevoir.
 
@@ -131,7 +169,7 @@ class AccountMove(models.Model):
         """
         for piece in self:
             piece.police_registre_concerne = any(
-                piece.invoice_line_ids.mapped('police_description_required'))
+                piece.invoice_line_ids.mapped('police_origin_required'))
 
     def _police_check_registre(self):
         for piece in self:

@@ -4,39 +4,61 @@
         <field name="name">product.template.form.police.description</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_form_view"/>
+        <!-- Après la vue de fr_numismatics_metals, dont le groupe `metal` est
+             la cible du xpath : à priorité égale, Odoo trierait les deux
+             héritages par identifiant, et rien ne garantit lequel a été créé
+             le premier. -->
+        <field name="priority">20</field>
         <field name="arch" type="xml">
             <!-- Dans l'onglet principal : le choix se fait à la création de
-                 l'article, pas dans un onglet que personne n'ouvre. -->
-            <xpath expr="//page[@name='general_information']/group" position="after">
-                <group string="Registre d'objets mobiliers (c. pén., art. R321-3)"
+                 l'article, pas dans un onglet que personne n'ouvre.
+
+                 Après le groupe « Livre de police » de fr_numismatics_metals,
+                 dont la case « Soumis au livre de police » commande la
+                 provenance : on lit d'abord ce que l'article est, ensuite ce
+                 qu'il faut en dire. -->
+            <xpath expr="//page[@name='general_information']/group[@name='metal']"
+                   position="after">
+                <group string="Description des objets (c. pén., art. R321-3 3°)"
                        name="police_description">
+                    <field name="metal_regulated" invisible="1"/>
                     <field name="police_description_required"/>
                     <div class="text-muted" colspan="2"
                          invisible="not police_description_required">
-                        <p class="mb-1">
-                            Un rachat portant cet article ne pourra être ni
-                            confirmé ni comptabilisé tant que, ligne par ligne :
-                        </p>
-                        <ul class="mb-1">
-                            <li>les objets ne sont pas <b>décrits</b> sous la
-                                désignation de l'article ;</li>
-                            <li>leur <b>provenance</b> n'est pas choisie dans
-                                la colonne du même nom.</li>
-                        </ul>
-                        <p class="mb-0">
-                            Les deux tiennent dans la même phrase de
-                            l'art. R321-3 3° — « la nature, la provenance et la
-                            description des objets acquis » — et dans la même
-                            colonne du registre officiel. Une seule case les
-                            exige donc toutes les deux. La liste des
-                            provenances se règle dans
-                            <i>Ventes ▸ Configuration ▸ Provenances</i>.
-                        </p>
+                        Un rachat portant cet article ne pourra être ni
+                        confirmé ni comptabilisé tant que les objets ne sont
+                        pas <b>décrits</b> sous la désignation de l'article,
+                        ligne par ligne.
                     </div>
                     <div class="text-muted" colspan="2"
                          invisible="police_description_required">
+                        Article réputé se décrire lui-même : sa désignation dit
+                        déjà ce qui entre — une pièce, un lingot d'un poids
+                        donné. À cocher là où elle ne dit rien de l'objet : or
+                        au gramme, lot de pièces, argent en vrac.
+                    </div>
+                    <div class="text-muted" colspan="2"
+                         invisible="not metal_regulated">
+                        <b>La provenance est exigée quoi qu'il en soit</b>, sur
+                        chaque ligne de rachat : cet article est soumis au
+                        livre de police, et le registre veut l'origine de
+                        chaque objet acquis (c. pén., art. R321-3 3° ; CGI,
+                        ann. IV, art. 56 J quindecies). Aucune désignation ne
+                        la fournit — elle est déclarée par le vendeur. La
+                        liste se règle dans
+                        <i>Ventes ▸ Configuration ▸ Provenances</i>.
+                    </div>
+                    <div class="text-muted" colspan="2"
+                         invisible="metal_regulated or not police_description_required">
+                        Cet article n'est pas soumis au livre de police, mais
+                        la case ci-dessus affirme qu'il désigne des objets
+                        achetés : leur provenance est donc exigée elle aussi.
+                    </div>
+                    <div class="text-muted" colspan="2"
+                         invisible="metal_regulated or police_description_required">
                         Article réputé ne désigner aucun objet acheté — remise,
-                        acompte, arrondi, régularisation.
+                        acompte, arrondi, régularisation. Ni description, ni
+                        provenance.
                     </div>
                 </group>
             </xpath>

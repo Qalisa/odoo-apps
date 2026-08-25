@@ -17,11 +17,13 @@
                 <field name="police_description_expected" column_invisible="1"/>
                 <field name="police_description_required" column_invisible="1"/>
                 <field name="police_description_missing" column_invisible="1"/>
+                <field name="police_origin_expected" column_invisible="1"/>
+                <field name="police_origin_required" column_invisible="1"/>
                 <field name="police_origin_missing" column_invisible="1"/>
                 <field name="police_origin_id"
                        optional="show"
                        column_invisible="not parent.police_registre_concerne"
-                       readonly="not police_description_required"
+                       readonly="not police_origin_required"
                        placeholder="D'où vient l'objet ?"/>
             </xpath>
         </field>

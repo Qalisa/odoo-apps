@@ -6,9 +6,20 @@ dit le sens de l'opération, et donc si la ligne fait entrer un objet dans les
 murs — le seul cas où le registre réclame description et provenance.
 
 L'art. R321-3 3° les tient dans la même phrase : « la nature, la provenance et
-la description des objets acquis ». Le modèle officiel du registre les tient
-dans la même colonne. Elles sont donc exigées ensemble, par la même case sur
-la fiche de l'article.
+la description des objets acquis ». **Elles ne manquent pourtant pas de la
+même façon.** La description d'une « 20 FRANCS OR » est déjà donnée par la
+désignation — c'est un type catalogué, ses caractéristiques ne varient pas.
+La provenance ne l'est jamais : elle est déclarée par le vendeur, et rien
+d'autre ne la fournit, que l'objet soit une bague anonyme ou un souverain.
+
+Les deux exigences se règlent donc séparément :
+
+* la **provenance** est due de tout article qui fait entrer un objet au
+  registre — « Soumis au livre de police » sur sa fiche, ou, à défaut, la
+  case de description ci-dessous, qui l'affirme autrement ;
+* la **description** n'est due que des articles dont la désignation ne dit
+  rien de l'objet — un rachat d'or au gramme, un lot de pièces. C'est ce que
+  déclare la case sur la fiche de l'article.
 
 La description n'a pas de champ à elle : elle se met là où le comptoir la met
 déjà, dans le champ « Description » de la ligne, sous la désignation de
@@ -39,6 +50,13 @@ class SaleOrderLine(models.Model):
              "Ne dépend pas du sens de l'opération : la zone de saisie s'ouvre "
              "dès le choix de l'article, avant que la quantité soit connue.",
     )
+    police_origin_expected = fields.Boolean(
+        string="Article au registre",
+        compute='_compute_police_origin_expected',
+        help="Vrai lorsque l'article fait entrer un objet au registre, et "
+             "réclame donc sa provenance. Ne dépend pas du sens de "
+             "l'opération : la colonne s'ouvre dès le choix de l'article.",
+    )
     police_description_required = fields.Boolean(
         string="Description exigée",
         compute='_compute_police_description_required',
@@ -49,6 +67,11 @@ class SaleOrderLine(models.Model):
         compute='_compute_police_description_missing',
         help="Le libellé de la ligne n'ajoute rien à la désignation de "
              "l'article : les objets ne sont pas décrits.",
+    )
+    police_origin_required = fields.Boolean(
+        string="Provenance exigée",
+        compute='_compute_police_origin_required',
+        help="Vrai lorsque la ligne fait entrer un objet au registre.",
     )
     police_origin_missing = fields.Boolean(
         string="Provenance manquante",
@@ -64,11 +87,34 @@ class SaleOrderLine(models.Model):
                 not ligne.display_type
                 and ligne.product_id.product_tmpl_id.police_description_required)
 
+    @api.depends('display_type',
+                 'product_id.product_tmpl_id.metal_regulated',
+                 'product_id.product_tmpl_id.police_description_required')
+    def _compute_police_origin_expected(self):
+        """Tout objet qui entre au registre doit sa provenance.
+
+        « Soumis au livre de police » le dit déjà de l'article. La case de
+        description l'affirme autrement, sur un article qu'on aurait sorti du
+        registre par ailleurs : les deux signaux valent, et le second ne peut
+        pas contredire le premier sans laisser un objet sans origine.
+        """
+        for ligne in self:
+            fiche = ligne.product_id.product_tmpl_id
+            ligne.police_origin_expected = bool(
+                not ligne.display_type
+                and (fiche.metal_regulated or fiche.police_description_required))
+
     @api.depends('police_description_expected', 'product_uom_qty')
     def _compute_police_description_required(self):
         for ligne in self:
             ligne.police_description_required = bool(
                 ligne.police_description_expected and ligne.product_uom_qty < 0)
+
+    @api.depends('police_origin_expected', 'product_uom_qty')
+    def _compute_police_origin_required(self):
+        for ligne in self:
+            ligne.police_origin_required = bool(
+                ligne.police_origin_expected and ligne.product_uom_qty < 0)
 
     def _police_description(self):
         """Description des objets lue sur le libellé de la ligne."""
@@ -84,11 +130,11 @@ class SaleOrderLine(models.Model):
             ligne.police_description_missing = bool(
                 ligne.police_description_required and not ligne._police_description())
 
-    @api.depends('police_description_required', 'police_origin_id')
+    @api.depends('police_origin_required', 'police_origin_id')
     def _compute_police_origin_missing(self):
         for ligne in self:
             ligne.police_origin_missing = bool(
-                ligne.police_description_required and not ligne.police_origin_id)
+                ligne.police_origin_required and not ligne.police_origin_id)
 
     def _police_manques(self):
         """Mentions du registre absentes de cette ligne, dans l'ordre du texte."""
@@ -119,15 +165,15 @@ class SaleOrder(models.Model):
     police_registre_concerne = fields.Boolean(
         string="Document soumis au registre",
         compute='_compute_police_registre_concerne',
-        help="Vrai dès qu'une ligne porte un article à décrire. Commande "
-             "l'affichage de la colonne « Provenance ».",
+        help="Vrai dès qu'une ligne porte un article inscrit au registre. "
+             "Commande l'affichage de la colonne « Provenance ».",
     )
 
-    @api.depends('order_line.police_description_expected')
+    @api.depends('order_line.police_origin_expected')
     def _compute_police_registre_concerne(self):
         for commande in self:
             commande.police_registre_concerne = any(
-                commande.order_line.mapped('police_description_expected'))
+                commande.order_line.mapped('police_origin_expected'))
 
     def _police_check_registre(self):
         """Refuse un rachat dont les objets ne sont ni décrits ni situés.
