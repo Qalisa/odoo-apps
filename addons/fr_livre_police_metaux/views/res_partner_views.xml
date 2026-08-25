@@ -8,17 +8,18 @@
         <field name="arch" type="xml">
             <!-- Avec l'état civil et la pièce d'identité : ce sont les
                  mentions que le registre exige du vendeur, recueillies au
-                 même moment et devant lui. Le modèle officiel les donne
-                 d'ailleurs dans cet ordre — nom, prénom, qualité, domicile.
+                 même moment et devant lui. En bas du groupe, après la pièce
+                 d'identité : c'est la seule des quatre qu'aucun document ne
+                 porte — elle se demande, elle ne se recopie pas.
 
                  Le champ n'est pas obligatoire : le comptoir doit pouvoir
                  avancer sur une fiche incomplète. L'obligation légale est
                  rappelée sous le champ, là où la saisie se fait. -->
-            <field name="birthdate" position="before">
+            <field name="id_doc_complete" position="after">
                 <field name="police_qualite_id"
                        options="{'no_quick_create': True}"
                        placeholder="ex. Retraité(e)"/>
-                <div class="text-muted mb-2" colspan="4"
+                <div class="text-muted" colspan="4"
                      invisible="police_qualite_id">
                     Le livre de police comporte « les nom, prénoms,
                     <b>qualité</b> et domicile » de chaque vendeur
