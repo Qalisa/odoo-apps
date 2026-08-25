@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.2.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -25,19 +25,29 @@ Le choix se fait article par article, dans sa fiche : un rachat d'or au
 gramme désigne des objets à décrire, une remise ou un arrondi n'en désigne
 aucun.
 
-Deux mentions, une seule case
------------------------------
+Deux mentions, deux portées
+---------------------------
 
 L'article R321-3 3° tient la provenance et la description dans la même
-phrase, et le modèle officiel du registre dans la même colonne. Elles sont
-donc exigées ensemble, par la même case sur la fiche de l'article.
+phrase, et le modèle officiel du registre dans la même colonne. Elles ne
+manquent pourtant pas de la même façon.
 
-La description se met là où le comptoir la met déjà (voir plus bas). La
-provenance ne s'écrit nulle part aujourd'hui : elle prend une colonne, remplie
-depuis une liste administrable — « Bijoux personnels », « Héritage ou
-succession », « Achat antérieur »… Le comptoir peut en créer une à la volée,
-mais pas une simple variante d'écriture d'une valeur existante : « héritage »
-serait renvoyé vers « Héritage ou succession ».
+La **provenance** n'est jamais donnée par la désignation de l'article : elle
+est déclarée par le vendeur, et rien d'autre ne la fournit. Elle est donc due
+de **tout article inscrit au registre**, et suit la case « Soumis au livre de
+police » de fr_numismatics_metals. Elle ne s'écrit nulle part aujourd'hui :
+elle prend une colonne, remplie depuis une liste administrable — « Bijoux
+personnels », « Héritage ou succession », « Achat antérieur »… Le comptoir
+peut en créer une à la volée, mais pas une simple variante d'écriture d'une
+valeur existante : « héritage » serait renvoyé vers « Héritage ou
+succession ».
+
+La **description** est déjà donnée par la désignation dès que l'article
+désigne un type catalogué : « 20 FRANCS OR » dit la nature, le diamètre, le
+millésime et l'effigie mieux qu'une phrase saisie au comptoir. Elle n'est
+donc exigée que là où l'article ne dit rien de l'objet — or au gramme, lot de
+pièces, argent en vrac — et c'est ce que déclare la case sur la fiche. Elle
+se met là où le comptoir la met déjà (voir plus bas).
 
 Une provenance déjà portée par une pièce comptabilisée ne se renomme plus.
 Elle s'archive — les pièces passées gardent la leur (art. R321-6 et
@@ -99,7 +109,11 @@ le champ, là où la saisie se fait.
     # `contacts_citizenship_id` porte deja l'etat civil et la piece
     # d'identite du vendeur : la qualite se saisit dans le meme groupe, au
     # meme moment, et non dans un bloc concurrent.
-    'depends': ['sale', 'account', 'contacts_citizenship_id'],
+    # `fr_numismatics_metals` porte « Soumis au livre de police », qui dit
+    # quels articles entrent au registre : la provenance suit cette case et
+    # n'en reclame pas une seconde.
+    'depends': ['sale', 'account', 'contacts_citizenship_id',
+                'fr_numismatics_metals'],
     'data': [
         'security/ir.model.access.csv',
         'data/livre_police_provenance_data.xml',
