@@ -1,7 +1,17 @@
 <odoo noupdate="1">
-    <!-- Update default company settings -->
+    <!-- Pays et devise : des défauts d'amorçage, vrais pour toute société
+         française, et qu'aucun exploitant ne songera à contredire.
+
+         LE NOM N'EN EST PAS UN. Il portait ici « Ma Société », et le
+         `noupdate` ne protège que les mises à jour : en mode installation
+         (`-i`), Odoo réécrit les enregistrements noupdate. Le Job d'amorçage
+         de l'IaC passant `-i` à chaque exécution d'ansible, la société
+         principale reprenait son nom d'usine — c'est arrivé deux fois le
+         3 août 2026, rattrapé à la main les deux fois.
+
+         Le nom d'une société est une donnée d'exploitation, saisie une fois
+         par le client. Un module d'amorçage n'a pas à le posséder. -->
     <record id="base.main_company" model="res.company">
-        <field name="name">Ma Société</field>
         <field name="country_id" ref="base.fr"/>  <!-- Country: France -->
         <field name="currency_id" ref="base.EUR"/>  <!-- Currency: EUR -->
     </record>
