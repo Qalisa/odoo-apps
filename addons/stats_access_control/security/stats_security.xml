@@ -1,0 +1,60 @@
+<odoo>
+
+    <!-- Dans la catégorie « Autres droits » : une simple case à cocher sur la
+         fiche utilisateur, et non un niveau dans une hiérarchie. Ce droit ne
+         se déduit d'aucun autre — un administrateur des ventes n'a pas à
+         lire les chiffres de l'établissement du seul fait qu'il paramètre
+         des tarifs. -->
+    <record id="group_global_stats" model="res.groups">
+        <field name="name">Statistiques et chiffres consolidés</field>
+        <field name="category_id" ref="base.module_category_usability"/>
+        <field name="comment">Donne accès aux écrans d'analyse : ventes par
+            vendeur, par client et par article, analyse des factures, rapport
+            analytique et tableau de bord de facturation. Les états comptables
+            (bilan, grand livre, balances, rapport de taxe) ne dépendent pas de
+            ce droit.</field>
+    </record>
+
+    <!-- Ventes ▸ Analyse. Le menu porte quatre écrans, dont « Vendeurs » :
+         restreindre le parent les couvre tous les quatre. Il était réservé à
+         « Ventes / Administrateur », droit que portent aussi les responsables
+         de comptoir. -->
+    <record id="sale.menu_sale_report" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('group_global_stats')])]"/>
+    </record>
+
+    <!-- Et ses quatre enfants, un par un. Masquer le parent les fait
+         disparaître de l'arbre affiché, mais eux ne portent aucun groupe :
+         leur action reste atteignable par son URL, et « Vendeurs » est
+         justement l'écran qu'on voulait fermer. -->
+    <record id="sale.menu_reporting_sales" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('group_global_stats')])]"/>
+    </record>
+    <record id="sale.menu_reporting_salespeople" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('group_global_stats')])]"/>
+    </record>
+    <record id="sale.menu_reporting_customer" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('group_global_stats')])]"/>
+    </record>
+    <record id="sale.menu_reporting_product" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('group_global_stats')])]"/>
+    </record>
+
+    <!-- Facturation ▸ Gestion ▸ Analyse des factures : le même chiffre, pris
+         du côté comptable. Le masquer côté ventes seulement ne masquerait
+         rien. -->
+    <record id="account.menu_action_account_invoice_report_all" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('group_global_stats')])]"/>
+    </record>
+
+    <record id="account.menu_action_analytic_reporting" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('group_global_stats')])]"/>
+    </record>
+
+    <!-- Facturation ▸ Tableau de bord : des totaux facturés, en page
+         d'accueil. -->
+    <record id="account.menu_board_journal_1" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('group_global_stats')])]"/>
+    </record>
+
+</odoo>
