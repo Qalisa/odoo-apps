@@ -1,0 +1,61 @@
+<odoo>
+
+    <record id="res_config_settings_view_form_dmet" model="ir.ui.view">
+        <field name="name">res.config.settings.form.dmet.gpg</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <!-- À côté du Cerfa 2091-SD : les deux déclarations se règlent au
+                 même endroit. -->
+            <xpath expr="//app[@name='account']" position="inside">
+                <block title="Cerfa 2093-SD — chiffrement du dépôt"
+                       name="dmet_chiffrement">
+                    <div class="text-muted mb-3" colspan="4">
+                        Le fichier déposé sur le portail Télé-TD doit être
+                        compressé puis <strong>chiffré avec une clé publique de
+                        la DGFiP</strong> (cahier des charges TD/bilatéral,
+                        § 2.4.3.4). Il en existe deux, à télécharger sur
+                        impots.gouv.fr ▸ espace Tiers déclarants : l'archive
+                        ZIP se téléverse ici telle quelle.
+                        <br/>
+                        <strong>Rien dans le fichier ne dit s'il est de test ou
+                        réel</strong> : c'est le portail de dépôt qui le décide,
+                        et se tromper de clé fait rejeter le dépôt. La clé
+                        s'annonce donc explicitement à chaque génération.
+                    </div>
+                    <setting string="Fichiers de test"
+                             help="Chiffre les dépôts sur la plateforme partenaire de tests, ouverte de novembre à fin décembre.">
+                        <field name="dmet_gpg_key_test"
+                               filename="dmet_gpg_key_test_filename"/>
+                        <field name="dmet_gpg_key_test_filename" invisible="1"/>
+                        <div class="text-muted mt-2"
+                             invisible="not dmet_gpg_key_test_info">
+                            <field name="dmet_gpg_key_test_info" nolabel="1"/>
+                        </div>
+                        <div class="text-warning mt-2"
+                             invisible="dmet_gpg_key_test_info">
+                            Aucune clé chargée : la génération d'un fichier de
+                            test sera refusée.
+                        </div>
+                    </setting>
+                    <setting string="Fichiers de production"
+                             help="Chiffre le dépôt réel, celui qui vaut déclaration au titre de l'art. 1649 bis du CGI.">
+                        <field name="dmet_gpg_key_prod"
+                               filename="dmet_gpg_key_prod_filename"/>
+                        <field name="dmet_gpg_key_prod_filename" invisible="1"/>
+                        <div class="text-muted mt-2"
+                             invisible="not dmet_gpg_key_prod_info">
+                            <field name="dmet_gpg_key_prod_info" nolabel="1"/>
+                        </div>
+                        <div class="text-warning mt-2"
+                             invisible="dmet_gpg_key_prod_info">
+                            Aucune clé chargée : la génération du dépôt réel
+                            sera refusée.
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

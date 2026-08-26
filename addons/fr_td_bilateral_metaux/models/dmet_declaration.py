@@ -13,7 +13,9 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 from ..tools import dmet as dmet_tools
+from ..tools import openpgp
 from ..tools import precheck as precheck_tools
+from .res_config_settings import ENVIRONNEMENTS, cle_publique, resume_cle
 
 _SEVERITY = [
     ('bloquante', "Bloquante"),
@@ -93,10 +95,29 @@ class DmetDeclaration(models.Model):
         'fr.dmet.line', 'declaration_id', string="Lignes du dépôt", readonly=True,
     )
 
+    environnement = fields.Selection(
+        ENVIRONNEMENTS, string="Destination du dépôt",
+        default='test', required=True,
+        help="Décide de la clé publique DGFiP qui chiffrera le fichier. Rien "
+             "dans le contenu ne distingue un fichier de test d'un fichier "
+             "réel : c'est le portail sur lequel on le dépose qui le décide, "
+             "et « l'utilisation d'un type de clé qui ne correspond pas à la "
+             "nature du fichier conduit à son rejet » (CDC TD/bilatéral, "
+             "§ 2.4.3.4).",
+    )
     file = fields.Binary(string="Fichier (.txt.gz)", readonly=True, attachment=True)
     filename = fields.Char(readonly=True)
     file_txt = fields.Binary(string="Fichier texte (.txt)", readonly=True, attachment=True)
     filename_txt = fields.Char(readonly=True)
+    file_gpg = fields.Binary(
+        string="Fichier chiffré (.txt.gz.gpg)", readonly=True, attachment=True)
+    filename_gpg = fields.Char(readonly=True)
+    gpg_key_info = fields.Char(
+        string="Clé de chiffrement employée", readonly=True,
+        help="Empreinte de la clé publique qui a chiffré ce fichier. C'est "
+             "la seule trace de la clé réellement utilisée : se tromper ne "
+             "produit aucune erreur ici, le rejet arrive chez la DGFiP.",
+    )
     date_generation = fields.Datetime(readonly=True)
 
     # ------------------------------------------------------------------
@@ -332,9 +353,26 @@ class DmetDeclaration(models.Model):
         fname = dmet_tools.build_filename(siren, self.millesime, self.ordre, now)
         gz = dmet_tools.gzip_bytes(raw, filename=fname)
 
+        # Compression AVANT chiffrement : le cahier des charges l'impose dans
+        # cet ordre (§ 2.4.3.3), et l'inverse serait de toute facon vain — un
+        # fichier chiffre ne se comprime plus.
+        matiere = cle_publique(self.env, self.environnement)
+        try:
+            chiffre = openpgp.chiffrer(gz, matiere)
+            empreinte = resume_cle(matiere)
+        except openpgp.ErreurChiffrement as erreur:
+            raise UserError(_(
+                "Le fichier n'a pas pu être chiffré avec la clé « %(env)s » :"
+                "\n\n%(motif)s",
+                env=dict(ENVIRONNEMENTS)[self.environnement],
+                motif=str(erreur)))
+
         self.write({
             'file_txt': base64.b64encode(raw), 'filename_txt': fname,
             'file': base64.b64encode(gz), 'filename': fname + '.gz',
+            'file_gpg': base64.b64encode(chiffre),
+            'filename_gpg': fname + '.gz.gpg',
+            'gpg_key_info': empreinte,
             'date_generation': fields.Datetime.now(),
             'state': 'generated',
         })
