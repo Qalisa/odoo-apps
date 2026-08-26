@@ -3,3 +3,4 @@ from . import fantoir
 from . import address
 from . import dmet
 from . import precheck
+from . import openpgp

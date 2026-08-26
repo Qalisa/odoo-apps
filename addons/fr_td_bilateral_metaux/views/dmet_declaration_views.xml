@@ -45,6 +45,11 @@
                             <field name="date_fin" readonly="1"/>
                             <field name="type_declaration"/>
                             <field name="ordre"/>
+                            <!-- Le choix de la cle de chiffrement, et rien
+                                 d'autre : le contenu du fichier est le meme
+                                 des deux cotes. -->
+                            <field name="environnement"
+                                   decoration-warning="environnement == 'production'"/>
                             <field name="verdict" widget="badge"
                                    decoration-danger="verdict == 'rejet'"
                                    decoration-success="verdict == 'ok'"/>
@@ -127,18 +132,42 @@
                         </page>
                         <page string="Fichier généré" name="file">
                             <group>
-                                <field name="date_generation" readonly="1"/>
-                                <field name="filename" invisible="1"/>
-                                <field name="file" filename="filename"
-                                       string="Fichier à chiffrer (.txt.gz)"/>
-                                <field name="filename_txt" invisible="1"/>
-                                <field name="file_txt" filename="filename_txt"
-                                       string="Fichier texte (contrôle) (.txt)"/>
+                                <group string="À déposer">
+                                    <field name="filename_gpg" invisible="1"/>
+                                    <field name="file_gpg" filename="filename_gpg"
+                                           string="Fichier chiffré (.txt.gz.gpg)"/>
+                                    <field name="gpg_key_info" readonly="1"
+                                           invisible="not gpg_key_info"/>
+                                    <field name="date_generation" readonly="1"/>
+                                </group>
+                                <group string="Pour contrôle et archivage">
+                                    <field name="filename_txt" invisible="1"/>
+                                    <field name="file_txt" filename="filename_txt"
+                                           string="Texte lisible (.txt)"/>
+                                    <field name="filename" invisible="1"/>
+                                    <field name="file" filename="filename"
+                                           string="Compressé, en clair (.txt.gz)"/>
+                                </group>
                             </group>
-                            <div class="alert alert-info" role="alert">
-                                Le fichier <strong>.txt.gz</strong> doit encore être chiffré (GPG,
-                                clé publique DGFiP) avant dépôt sur l'espace professionnel
+                            <div class="alert alert-warning" role="alert"
+                                 invisible="environnement != 'production'">
+                                <strong>Dépôt réel.</strong> Ce fichier est chiffré avec la clé de
+                                <strong>production</strong> : il vaut déclaration au titre de
+                                l'art. 1649 bis du CGI. Déposez-le sur l'espace professionnel
                                 impots.gouv.fr — service « Tiers déclarants ».
+                            </div>
+                            <div class="alert alert-info" role="alert"
+                                 invisible="environnement != 'test'">
+                                <strong>Fichier de test.</strong> Chiffré avec la clé de
+                                <strong>test</strong>, il ne vaut pas déclaration et ne se dépose
+                                que sur la plateforme partenaire de tests. Une clé qui ne
+                                correspond pas à la nature du fichier le fait rejeter
+                                (CDC TD/bilatéral, § 2.4.3.4).
+                            </div>
+                            <div class="text-muted" role="note">
+                                Les deux fichiers de droite ne se déposent nulle part : le texte
+                                sert à relire ce qui a été déclaré, le .txt.gz est ce que le
+                                chiffrement a pris en entrée.
                             </div>
                         </page>
                     </notebook>

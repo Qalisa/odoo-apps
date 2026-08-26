@@ -37,11 +37,29 @@ GZIP puis chiffrement GPG.
 
 Inclut un écran de pré-contrôle rejouant les anomalies bloquantes et non
 bloquantes du cahier des charges avant transmission.
+
+Chiffrement depuis Odoo
+-----------------------
+
+Les deux clés publiques de la DGFiP — celle des fichiers de test, celle des
+fichiers de production — se téléversent une fois dans les paramètres de
+comptabilité, telles qu'elles se téléchargent (archive ZIP acceptée). Leur
+empreinte est relevée au téléversement et affichée : c'est la seule façon de
+voir *laquelle* est en place, car se tromper de clé ne produit aucune erreur
+ici — « l'utilisation d'un type de clé qui ne correspond pas à la nature du
+fichier conduit à son rejet lors de son traitement par la DGFiP » (§ 2.4.3.4).
+
+La génération produit alors trois fichiers : le **.txt.gz.gpg** à déposer, le
+**.txt** lisible pour relire ce qui a été déclaré, et le **.txt.gz** en clair,
+qui est ce que le chiffrement a pris en entrée.
+
+Le chiffrement appelle le binaire ``gpg`` présent dans l'image Odoo ; aucune
+dépendance Python n'est ajoutée.
     """,
     'author': "Qalisa",
     'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
-    'version': "1.3.0",
+    'version': "1.4.0",
     # `contacts_citizenship_id` (1.2.0) apporte l'identité structurée et dépend
     # lui-même de `partner_firstname` (OCA) pour l'éclatement nom/prénom (Q 014/015).
     # `l10n_fr_account` apporte le SIRET (res.partner) et le code APE (res.company).
@@ -51,6 +69,7 @@ bloquantes du cahier des charges avant transmission.
                 'fr_numismatics_reports'],
     'data': [
         'security/ir.model.access.csv',
+        'views/res_config_settings_views.xml',
         'views/dmet_declaration_views.xml',
         'views/menu.xml',
     ],
