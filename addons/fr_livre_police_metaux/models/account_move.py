@@ -153,6 +153,60 @@ class AccountMove(models.Model):
              "registre. Commande l'affichage de la colonne « Provenance ».",
     )
 
+    police_representant_id = fields.Many2one(
+        'res.partner', string="Représentant",
+        domain="[('is_company', '=', False)]",
+        ondelete='restrict', index='btree_not_null',
+        help="Personne physique qui a remis les objets au nom de la société "
+             "(art. R321-3 2° du code pénal).\n\n"
+             "Le client de la pièce est la société — c'est elle qui a vendu. "
+             "La personne, elle, est ce que le registre doit nommer, et c'est "
+             "ce champ qui la porte. Repris du devis, où c'est elle qui "
+             "figurait comme client.",
+    )
+    # « Poste » (`function`) — voir la note dans `sale_order.py`.
+    police_representant_poste = fields.Char(
+        string="Poste du représentant",
+        compute='_compute_police_representant_poste',
+        help="Poste occupé dans la société, au sens du champ « Poste » de la "
+             "fiche contact. C'est la « qualité » que le registre exige du "
+             "représentant (art. R321-3 2° du code pénal). Simple report de "
+             "sa fiche, non modifiable ici.",
+    )
+    police_representant_required = fields.Boolean(
+        string="Représentant exigé",
+        compute='_compute_police_representant_required',
+        help="Vrai sur une pièce qui fait entrer au registre un objet remis "
+             "au nom d'une société.",
+    )
+    police_representant_missing = fields.Boolean(
+        string="Personne physique non désignée",
+        compute='_compute_police_representant_missing',
+        help="Aucune personne physique n'est nommée, et le registre en veut "
+             "une.",
+    )
+    police_poste_missing = fields.Boolean(
+        string="Poste manquant",
+        compute='_compute_police_poste_missing',
+        help="La personne qui engage la société est nommée, mais sa fiche ne "
+             "dit pas à quel titre elle l'engage.",
+    )
+
+    def _police_personne(self):
+        """La personne physique que le registre doit nommer.
+
+        Deux chemins mènent ici, et ils ne posent pas la personne au même
+        endroit. Une pièce issue d'un devis porte la société comme client et
+        la personne dans ``police_representant_id`` (voir
+        ``sale_order._prepare_invoice``). Une pièce saisie directement porte
+        souvent le contact comme client, et rien d'autre. Les deux valent.
+        """
+        self.ensure_one()
+        if self.police_representant_id:
+            return self.police_representant_id
+        return self.partner_id if not self.partner_id.is_company \
+            else self.env['res.partner']
+
     @api.depends('invoice_line_ids.police_origin_required')
     def _compute_police_registre_concerne(self):
         """La colonne ne se montre que là où elle a quelque chose à recevoir.
@@ -171,6 +225,81 @@ class AccountMove(models.Model):
             piece.police_registre_concerne = any(
                 piece.invoice_line_ids.mapped('police_origin_required'))
 
+    @api.onchange('partner_id')
+    def _onchange_police_societe_comme_client(self):
+        """Voir ``sale_order.py``. Limité à l'avoir : c'est la seule pièce qui
+        constate un rachat au comptoir, et donc la seule où le client doive
+        être la société plutôt que la personne venue pour elle."""
+        for piece in self:
+            if piece.move_type != 'out_refund':
+                continue
+            personne = piece.partner_id
+            societe = personne.commercial_partner_id
+            if personne and not personne.is_company and societe != personne:
+                piece.partner_id = societe
+                piece.police_representant_id = personne
+
+    # Pas de pendant à `police_representant_expected` ici : sur une pièce
+    # comptable le signe de la quantité est arrêté, on sait déjà si un objet
+    # entre. Voir `_compute_police_registre_concerne`, qui suit la même règle.
+    @api.depends('commercial_partner_id.is_company',
+                 'invoice_line_ids.police_origin_required')
+    def _compute_police_representant_required(self):
+        """Voir ``sale_order.py`` : ce qui compte est la société, pas le
+        contact par lequel on la joint."""
+        for piece in self:
+            piece.police_representant_required = bool(
+                piece.commercial_partner_id.is_company
+                and any(piece.invoice_line_ids.mapped('police_origin_required')))
+
+    @api.depends('police_representant_required', 'police_representant_id',
+                 'partner_id.is_company')
+    def _compute_police_representant_missing(self):
+        for piece in self:
+            piece.police_representant_missing = bool(
+                piece.police_representant_required and not piece._police_personne())
+
+    @api.depends('police_representant_required', 'police_representant_id',
+                 'partner_id.is_company',
+                 'police_representant_id.function', 'partner_id.function')
+    def _compute_police_poste_missing(self):
+        for piece in self:
+            personne = piece._police_personne()
+            piece.police_poste_missing = bool(
+                piece.police_representant_required
+                and personne and not personne.function)
+
+    @api.depends('police_representant_id.function', 'partner_id.function',
+                 'partner_id.is_company')
+    def _compute_police_representant_poste(self):
+        for piece in self:
+            piece.police_representant_poste = piece._police_personne().function
+
+    def _police_check_representant(self):
+        """Voir ``sale_order.py`` : une société ne se présente pas au comptoir."""
+        for piece in self:
+            societe = piece.commercial_partner_id
+            if piece.police_representant_missing:
+                raise UserError(_(
+                    "« %(societe)s » est une personne morale, et aucune "
+                    "personne physique n'est nommée sur cette pièce.\n\n"
+                    "Le registre comporte, pour une société, « la dénomination "
+                    "et le siège de celle-ci ainsi que les nom, prénoms, "
+                    "qualité et domicile du représentant » (art. R321-3 2° du "
+                    "code pénal). Indiquez qui a remis les objets.",
+                    societe=societe.display_name))
+            if piece.police_poste_missing:
+                raise UserError(_(
+                    "La fiche de « %(personne)s » ne dit pas quel poste elle "
+                    "occupe.\n\n"
+                    "Le registre veut « les nom, prénoms, qualité et domicile "
+                    "du représentant » de la personne morale (art. R321-3 2° "
+                    "du code pénal). Ouvrez sa fiche contact et renseignez "
+                    "« Poste » : à quel titre engage-t-elle « %(societe)s » — "
+                    "gérant(e), mandataire, salarié(e) ?",
+                    personne=piece._police_personne().display_name,
+                    societe=societe.display_name))
+
     def _police_check_registre(self):
         for piece in self:
             fautives = piece.invoice_line_ids.filtered(
@@ -186,5 +315,6 @@ class AccountMove(models.Model):
                         for l in fautives)))
 
     def _post(self, soft=True):
+        self._police_check_representant()
         self._police_check_registre()
         return super()._post(soft=soft)

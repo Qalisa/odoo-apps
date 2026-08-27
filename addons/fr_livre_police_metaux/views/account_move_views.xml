@@ -29,4 +29,48 @@
         </field>
     </record>
 
+    <record id="view_move_form_police_representant" model="ir.ui.view">
+        <field name="name">account.move.form.police.representant</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <!--
+                Voir views/sale_order_views.xml. Deux différences.
+
+                Le client est ici la société — repris du devis, ou basculé sur
+                elle à la facturation quand le comptoir avait saisi le contact.
+                Le représentant est donc toujours dans son propre champ.
+
+                Et pas de champ « attendu » distinct de « exigé » : sur une
+                pièce comptable le signe de la quantité est arrêté.
+
+                L'ancrage se fait sur `partner_shipping_id`, champ ordinaire du
+                groupe de gauche : `partner_id` y vit dans un `div` avec son
+                libellé, et s'y greffer déformerait la mise en page.
+            -->
+            <field name="partner_shipping_id" position="after">
+                <field name="police_representant_required" invisible="1"/>
+                <field name="police_representant_missing" invisible="1"/>
+                <field name="police_poste_missing" invisible="1"/>
+                <field name="police_representant_id"
+                       invisible="not police_representant_required"
+                       required="police_representant_required"
+                       domain="[('is_company', '=', False)]"
+                       context="{'default_parent_id': commercial_partner_id, 'default_type': 'contact'}"
+                       placeholder="Qui a remis les objets ?"/>
+                <field name="police_representant_poste" readonly="1"
+                       invisible="not police_representant_required or not police_representant_id"
+                       placeholder="Non renseigné sur sa fiche"/>
+                <div class="alert alert-warning mb-0" role="alert" colspan="2"
+                     invisible="not police_poste_missing">
+                    La fiche de cette personne ne dit pas quel <b>poste</b>
+                    elle occupe : la pièce ne pourra pas être comptabilisée.
+                    Le registre veut « les nom, prénoms, <b>qualité</b> et
+                    domicile du représentant » (c. pén., art. R321-3 2°).
+                    Ouvrez sa fiche contact et renseignez <b>Poste</b>.
+                </div>
+            </field>
+        </field>
+    </record>
+
 </odoo>

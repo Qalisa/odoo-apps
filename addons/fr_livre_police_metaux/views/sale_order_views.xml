@@ -40,4 +40,64 @@
         </field>
     </record>
 
+    <record id="view_order_form_police_representant" model="ir.ui.view">
+        <field name="name">sale.order.form.police.representant</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!--
+                Le client d'un rachat à une société est la société : c'est elle
+                qui vend et qui est payée, et c'est son nom que l'avoir porte.
+                La personne qui s'est présentée se désigne juste en dessous —
+                elle n'intéresse que le registre.
+
+                Le champ s'ouvre dès qu'un article du registre est saisi pour
+                une société, sans attendre le signe de la quantité.
+
+                Le poste est en lecture seule : il appartient à la personne,
+                pas au devis. Le corriger d'ici le changerait rétroactivement
+                pour tous ses rachats passés — il se saisit sur la fiche
+                contact, et l'encadré ci-dessous le rappelle.
+            -->
+            <field name="partner_id" position="after">
+                <field name="police_representant_expected" invisible="1"/>
+                <field name="police_representant_required" invisible="1"/>
+                <field name="police_representant_missing" invisible="1"/>
+                <field name="police_poste_missing" invisible="1"/>
+                <field name="police_representant_id"
+                       invisible="not police_representant_expected"
+                       required="police_representant_required"
+                       domain="['&amp;', ('is_company', '=', False),
+                                '|', ('parent_id', '=', partner_id),
+                                     ('id', '=', partner_id)]"
+                       context="{'default_parent_id': partner_id, 'default_type': 'contact'}"
+                       placeholder="Qui a remis les objets ?"/>
+                <field name="police_representant_poste" readonly="1"
+                       invisible="not police_representant_expected or not police_representant_id"
+                       placeholder="Non renseigné sur sa fiche"/>
+                <div class="alert alert-warning mb-0" role="alert" colspan="2"
+                     invisible="not police_representant_missing">
+                    Le client est une personne morale : <b>ce devis ne pourra
+                    pas être transformé en avoir</b> tant que personne n'est
+                    nommé. Le registre comporte, pour une société, « la
+                    dénomination et le siège de celle-ci ainsi que les nom,
+                    prénoms, qualité et domicile du représentant »
+                    (c. pén., art. R321-3 2°). Désignez ci-dessus la personne
+                    rattachée à cette société qui a remis les objets.
+                </div>
+                <div class="alert alert-warning mb-0" role="alert" colspan="2"
+                     invisible="not police_poste_missing">
+                    La fiche de cette personne ne dit pas quel
+                    <b>poste</b> elle occupe, et <b>ce devis ne pourra pas être
+                    transformé en avoir</b>. Le registre veut « les nom,
+                    prénoms, <b>qualité</b> et domicile du représentant »
+                    (c. pén., art. R321-3 2°) ; le modèle officiel intitule la
+                    colonne « qualité ou profession » (arrêté du 15 mai 2020,
+                    annexe I). Ouvrez sa fiche contact et renseignez
+                    <b>Poste</b> : gérant(e), mandataire, salarié(e)…
+                </div>
+            </field>
+        </field>
+    </record>
+
 </odoo>
