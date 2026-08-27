@@ -4,14 +4,19 @@ services:
   #
   db:
     hostname: &postgres-hostname db
-    image: postgres:15
+    image: postgres:17
     environment:
       #
       POSTGRES_DB: &postgres-db postgres
       POSTGRES_USER: &postgres-user odoo # Default expected value from Odoo
       POSTGRES_PASSWORD: &postgres-password odoo # Default expected value from Odoo
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      # The volume name carries the major version on purpose: a cluster
+      # initialised by PostgreSQL 15 is unreadable by 16 or 17, so a major
+      # upgrade means dump / new volume / restore. Naming the volume after
+      # the major turns that into a rename, and leaves the previous cluster
+      # untouched on disk until you are satisfied and delete it by hand.
+      - postgres-17-data:/var/lib/postgresql/data
     healthcheck:
       # must be defined to prevent "FATAL: role "root" does not exist" to sprawl in logs
       test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
@@ -91,6 +96,6 @@ services:
       - odoo-data:/var/lib/odoo
 
 volumes:
-  postgres-data:
+  postgres-17-data:
   pgadmin-data: 
   odoo-data:
