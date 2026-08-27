@@ -34,7 +34,7 @@ fichier passera, pas qu'une donnée est facultative.
 Cadre toujours l'exécution sur nos modules :
 
 ```
---test-tags /fr_numismatics_metals,/fr_td_bilateral_metaux,/product_creation_control,/fr_livre_police
+--test-tags /fr_numismatics_metals,/fr_td_bilateral_metaux,/product_creation_control,/fr_livre_police_metaux
 ```
 
 Sans ce drapeau, les suites d'`account`, `sale` et `product` tournent aussi et
