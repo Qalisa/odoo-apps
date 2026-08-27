@@ -222,6 +222,13 @@ class TestMetalWeightOnLines(TransactionCase):
         cls.argent = cls.env.ref('fr_numismatics_metals.metal_nature_argent')
         # Personne morale : hors du contrôle de complétude vendeur R321-3 posé
         # par `fr_td_bilateral_metaux`, sans rapport avec le poids testé ici.
+        #
+        # Les pièces créées ici restent en brouillon, et c'est ce qui permet à
+        # ce module de se tester seul : les contrôles du registre se déclenchent
+        # à la comptabilisation. Les deux constats qui exigeaient une pièce
+        # comptabilisée vivent donc dans `fr_livre_police_metaux`, seul module
+        # d'où les mentions manquantes sont renseignables — voir
+        # `tests/test_poids_apres_comptabilisation.py`.
         cls.partner = cls.env['res.partner'].create(
             {'name': "Fondeur de test", 'is_company': True})
         Tmpl = cls.env['product.template']
@@ -277,26 +284,6 @@ class TestMetalWeightOnLines(TransactionCase):
         line.price_unit = 1.30  # une modification quelconque ne doit rien effacer
         self.assertAlmostEqual(line.metal_weight, 238.6)
         self.assertFalse(line.metal_weight_missing)
-
-    def test_ligne_comptabilisee_figee(self):
-        """Le registre atteste ce qui a été consigné, pas le catalogue du jour."""
-        move = self._refund(self.a_la_piece, 5, 600.0)
-        move.action_post()
-        line = move.invoice_line_ids
-        self.assertAlmostEqual(line.metal_weight, 32.258, places=3)
-        self.a_la_piece.product_tmpl_id.metal_unit_weight = 99.0
-        line.invalidate_recordset(['metal_weight'])
-        self.assertAlmostEqual(line.metal_weight, 32.258, places=3)
-
-    def test_poids_corrigeable_sur_une_ecriture_comptabilisee(self):
-        """Le poids n'est pas comptable : il reste saisissable après validation."""
-        move = self._refund(self.au_lot, 240.0, 1.25)
-        move.action_post()
-        line = move.invoice_line_ids
-        line.metal_weight = 238.6
-        self.assertAlmostEqual(line.metal_weight, 238.6)
-        self.assertFalse(line.metal_weight_missing)
-        self.assertEqual(move.state, 'posted')
 
 
 @tagged('post_install', '-at_install')
