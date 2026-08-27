@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.2.0',
+    'version': '18.0.1.3.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -95,11 +95,65 @@ Cette qualité prend elle aussi une liste administrable — « Retraité(e) »,
 « Salarié(e) », « Gérant(e) »… — et se saisit sur la fiche contact, avec
 l'état civil et la pièce d'identité.
 
-**Le champ n'est pas obligatoire.** La mention l'est au registre, le champ ne
-l'est pas dans Odoo : rien ne bloque l'enregistrement d'un contact ni la
-confirmation d'un devis. C'est un choix d'exploitation — le comptoir doit
-pouvoir avancer sur une fiche incomplète — et l'obligation est rappelée sous
-le champ, là où la saisie se fait.
+**Le champ n'est pas obligatoire d'un vendeur particulier.** La mention l'est
+au registre, le champ ne l'est pas dans Odoo : rien ne bloque l'enregistrement
+d'un contact ni la confirmation d'un devis. C'est un choix d'exploitation — le
+comptoir doit pouvoir avancer sur une fiche incomplète — et l'obligation est
+rappelee sous le champ, la ou la saisie se fait.
+
+Le representant d'une societe
+-----------------------------
+
+Une societe ne se presente pas au comptoir : quelqu'un vient pour elle. Le
+registre ne se contente donc pas de la raison sociale — il veut savoir **qui**
+a remis les objets, et **a quel titre**.
+
+CE QUE LE DROIT EXIGE — « lorsqu'il s'agit d'une personne morale, la
+denomination et le siege de celle-ci ainsi que les nom, prenoms, qualite et
+domicile du representant » (art. R321-3 2° du code penal).
+
+Le client d'un tel rachat reste **la societe** : c'est elle qui vend, c'est
+elle qui est payee, et c'est sa denomination que l'avoir porte. La personne se
+designe juste en dessous, dans un champ **Representant** limite aux personnes
+physiques rattachees a ce client.
+
+Son **poste** s'affiche a cote, en **lecture seule**. C'est le champ standard
+« Poste » (`function`) de la fiche contact, et non la liste administrable du
+vendeur particulier : Odoo y range deja la fonction d'un contact dans sa
+societe — gerant, mandataire, salarie —, et c'est exactement ce que le 2°
+appelle la qualite du representant. La liste, elle, sert a une profession
+(« Retraite(e) »), qui ne dit rien du lien avec une personne morale.
+
+Il appartient a la personne, pas au devis : le corriger depuis un document le
+changerait retroactivement pour tous ses rachats passes. Il se saisit sur la
+fiche contact, et un encadre le rappelle quand il manque.
+
+Enfin, **choisir un contact de societe comme client le remplace par sa
+societe**, la personne rejoignant aussitot le champ que le registre lui
+reserve. Le comptoir cherche la personne qu'il a devant lui ; l'avoir doit
+porter le nom de celle qui a vendu.
+
+Le representant suit le devis jusqu'a la piece comptable. Si le comptoir a
+saisi le contact comme client plutot que la societe, la facturation bascule le
+client sur la societe et laisse la personne dans son propre champ : l'avoir
+nomme qui a vendu, le registre nomme qui s'est presente.
+
+**Ici, la qualite bloque.** Ce n'est pas une inegalite de traitement : d'une
+personne physique, la qualite complete une identite que la piece d'identite
+etablit deja ; du representant, elle *est* le lien avec la societe, et rien
+d'autre au document ne l'etablit. Le comptoir peut avancer sans savoir qu'un
+vendeur est retraite ; il ne peut pas consigner qu'une societe a vendu sans
+dire qui l'engageait.
+
+Le refus tombe a la confirmation du devis et a la comptabilisation de la
+piece, comme pour la provenance et la description. Un avertissement s'affiche
+pendant la saisie, pour que le manque se voie avant le refus.
+
+**Ce que ce module ne verifie pas** : le *domicile* du representant, que le
+meme 2° exige. Il n'a pas de place distincte dans Odoo — un contact rattache a
+une societe herite de l'adresse de celle-ci, qui est son siege et non le
+domicile de la personne. Exiger un domicile sans champ pour le porter
+n'apporterait rien.
 """,
 
     'category': 'Accounting/Localizations',
