@@ -25,8 +25,13 @@ class TestBirthMapping(TransactionCase):
 
     def test_foreign_address_does_not_force_99(self):
         # Réside à l'étranger mais né en France (défaut) -> pas de 99.
+        # Le département reste inconnu, et un département inconnu se déclare
+        # « 00 » : « si les données du lieu de naissance sont inconnues, alors
+        # il convient de servir le code département et le code INSEE commune à
+        # zéro » (CDC TD/bilatéral, § 6.4.1). Des espaces y vaudraient « zone
+        # non ou mal renseignée ».
         partner = self._vendor(country_id=self.be.id)
-        self.assertEqual(partner._dmet_vendor_dict(100.0)["dept_naiss"], "")
+        self.assertEqual(partner._dmet_vendor_dict(100.0)["dept_naiss"], "00")
 
     def test_explicit_department_wins(self):
         # Un département explicitement saisi prime toujours.
