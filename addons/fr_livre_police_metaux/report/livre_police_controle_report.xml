@@ -1,0 +1,109 @@
+<odoo>
+
+    <record id="action_report_livre_police_controle" model="ir.actions.report">
+        <field name="name">Contrôle d'intégrité du registre</field>
+        <field name="model">livre.police.controle</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">fr_livre_police_metaux.rapport_controle</field>
+        <field name="report_file">fr_livre_police_metaux.rapport_controle</field>
+    </record>
+
+    <template id="rapport_controle">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="synthese" t-value="doc._synthese()"/>
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-size: 10px;">
+
+                        <h4 class="mb-0">Contrôle d'intégrité du livre de police</h4>
+                        <div class="mb-3">
+                            <span t-field="doc.company_id.name"/> —
+                            contrôle effectué le
+                            <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y à %H:%M')"/>
+                            par <span t-field="doc.env.user.name"/>
+                            <t t-if="doc.date_debut or doc.date_fin">
+                                — période :
+                                <t t-if="doc.date_debut">du <span t-field="doc.date_debut"/></t>
+                                <t t-if="doc.date_fin">au <span t-field="doc.date_fin"/></t>
+                            </t>
+                        </div>
+
+                        <div t-attf-class="alert py-2 px-3 mb-3 #{'alert-success' if synthese['indemne'] else 'alert-danger'}">
+                            <t t-if="synthese['indemne']">
+                                <b>Aucune altération détectée.</b>
+                                <span t-esc="synthese['conformes']"/> page(s)
+                                scellée(s) contrôlée(s), chaînage continu,
+                                aucune numérotation manquante.
+                            </t>
+                            <t t-else="">
+                                <b>Anomalies détectées.</b>
+                                <span t-esc="synthese['anomalies']"/> page(s)
+                                en défaut sur
+                                <span t-esc="synthese['total']"/> contrôlée(s).
+                            </t>
+                        </div>
+
+                        <table class="table table-sm table-bordered"
+                               style="font-size: 9px;">
+                            <thead>
+                                <tr>
+                                    <th>Page</th>
+                                    <th>Date</th>
+                                    <th>Inscriptions</th>
+                                    <th>Résultat</th>
+                                    <th>Chiffre de contrôle</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="synthese['constats']" t-as="c">
+                                    <td><span t-field="c['page'].numero"/></td>
+                                    <td><span t-field="c['page'].date"/></td>
+                                    <td class="text-end">
+                                        <span t-field="c['page'].nombre_inscriptions"/>
+                                    </td>
+                                    <td>
+                                        <b t-esc="c['libelle']"/>
+                                        <div t-if="c['detail']" t-esc="c['detail']"/>
+                                    </td>
+                                    <td style="word-break: break-all;">
+                                        <t t-if="c['etat'] in ('altere', 'chaine')">
+                                            <div>attendu : <span t-esc="c['attendu']"/></div>
+                                            <div>constaté : <span t-esc="c['constate']"/></div>
+                                        </t>
+                                        <t t-else="">
+                                            <span t-esc="c['constate']"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div t-if="synthese['trous']['pages'] or synthese['trous']['inscriptions']"
+                             class="alert alert-danger py-2 px-3">
+                            <b>Numérotation interrompue.</b>
+                            <div t-if="synthese['trous']['pages']">
+                                Pages manquantes :
+                                <span t-esc="', '.join(str(n) for n in synthese['trous']['pages'])"/>
+                            </div>
+                            <div t-if="synthese['trous']['inscriptions']">
+                                Numéros d'ordre manquants :
+                                <span t-esc="', '.join(str(n) for n in synthese['trous']['inscriptions'])"/>
+                            </div>
+                        </div>
+
+                        <p style="font-size: 8px;" class="mt-3">
+                            Le chiffre de contrôle de chaque page est recalculé
+                            sur son contenu actuel puis comparé à celui scellé
+                            au moment de sa fermeture, et le contrôle porté en
+                            tête est comparé à celui scellé en pied de la page
+                            précédente (CGI, annexe IV, art. 56 J sexdecies,
+                            2° c).
+                        </p>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

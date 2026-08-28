@@ -8,3 +8,4 @@ from . import account_move
 from . import livre_police_page
 from . import livre_police_ligne
 from . import livre_police_rectification
+from . import livre_police_controle
