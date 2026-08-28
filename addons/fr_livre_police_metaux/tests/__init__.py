@@ -14,3 +14,4 @@ import importlib.util
 if importlib.util.find_spec('odoo') is not None:
     from . import test_poids_apres_comptabilisation
     from . import test_registre_concerne
+    from . import test_prix_inscrit
