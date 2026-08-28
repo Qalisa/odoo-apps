@@ -201,10 +201,25 @@
               groups="fr_livre_police_metaux.group_livre_police"
               sequence="70"/>
 
+    <!-- L'action vit ici, avec le menu qui l'appelle : sa vue est définie
+         avec le journal des consultations, qui est ce qu'elle alimente. -->
+    <record id="livre_police_acces_action" model="ir.actions.act_window">
+        <field name="name">Ouvrir le registre</field>
+        <field name="res_model">livre.police.acces</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!--
+        Le menu ouvre la déclaration, pas la liste : l'objet de la consultation
+        doit être enregistré avant qu'on lise quoi que ce soit (arrêté du
+        15 mai 2020, art. 3, 2°). L'action de la liste reste, c'est elle que
+        la déclaration renvoie une fois la trace écrite.
+    -->
     <menuitem id="livre_police_ligne_menu"
               name="Registre"
               parent="livre_police_menu_racine"
-              action="livre_police_ligne_action"
+              action="livre_police_acces_action"
               sequence="10"/>
 
 </odoo>

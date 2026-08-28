@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.9.0',
+    'version': '18.0.1.10.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -206,8 +206,47 @@ Par ricochet, une piece inscrite ne revient plus au brouillon et ses lignes ne
 se suppriment plus : le registre a consigne ce qu'elle disait le jour du
 rachat, et le laisser diverger sans trace serait pire que le refus.
 
-**Ce que ce module ne fait pas encore** : sceller une page par jour avec son
-chiffre de controle ; editer le registre du jour ; tracer les consultations. Les libelles de colonnes sont ici des libelles d'ecran ; les
+La page du jour et son chiffre de controle
+-----------------------------------------
+
+Le texte decrit une chaine d'empreintes sans la nommer ainsi : « le repertoire
+contenant ces informations [doit comprendre] un systeme d'identification des
+pages par chiffre de controle, contenant un algorithme ou un systeme fonde
+notamment sur la date de l'operation, reporte en fin et en tete des pages
+imprimees quotidiennement » (CGI, ann. IV, art. 56 J sexdecies, 2° c).
+Reporter le controle en pied d'une page et en tete de la suivante, c'est
+chainer : retirer une ligne d'une page ancienne casse tous les controles
+suivants.
+
+Une page s'ouvre au premier rachat du jour, se scelle le soir — une tache
+planifiee ferme celles des jours passes — et ne se rouvre plus. Un rachat
+arrive apres la fermeture ouvre la page suivante, a la meme date.
+
+**L'edition quotidienne** reprend les colonnes du modele officiel, en paysage,
+avec le chiffre de controle en tete et en pied : c'est sur l'imprime que la
+chaine se verifie.
+
+**Le controle d'integrite** rejoue la chaine et imprime son constat. Il
+verifie trois choses qui se cassent differemment : le contenu de chaque page,
+son chainage a la precedente, et la continuite des numeros — une suppression
+faite hors d'Odoo ne casse aucune empreinte, mais laisse un trou.
+
+Le journal des consultations
+----------------------------
+
+« Les consultations du traitement automatise font l'objet d'un enregistrement
+comprenant l'identifiant du consultant, la date, l'heure et l'objet de la
+consultation. Ces informations sont conservees pendant un delai d'un an »
+(arrete du 15 mai 2020, art. 3, 2°).
+
+C'est la seule obligation du registre qui porte sur les **lectures**. L'objet
+ne se devine pas : un logiciel sait qu'on ouvre le registre, il ne sait pas
+pourquoi. Il se declare donc avant d'entrer, dans une liste courte. C'est une
+friction assumee — sans elle, la mention exigee n'existerait pas.
+
+L'edition du jour et le controle d'integrite se tracent seuls. Une URL saisie
+a la main atteint la liste sans declaration : c'est pourquoi l'acces est
+reserve a un groupe nomme plutot qu'ouvert au comptoir. Les libelles de colonnes sont ici des libelles d'ecran ; les
 intitules exacts du modele officiel viendront avec l'edition imprimee.
 """,
 
@@ -238,6 +277,7 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
         'views/livre_police_rectification_views.xml',
         'views/livre_police_page_views.xml',
         'views/livre_police_controle_views.xml',
+        'views/livre_police_consultation_views.xml',
         'report/livre_police_page_report.xml',
         'report/livre_police_controle_report.xml',
     ],
