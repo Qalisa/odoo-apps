@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.5.0',
+    'version': '18.0.1.6.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -193,10 +193,21 @@ consultation devra un jour laisser trace de « l'identifiant du consultant, la
 date, l'heure et l'objet de la consultation » (arrete du 15 mai 2020, art. 3,
 2°), et une trace ne vaut que si l'acces est accorde a des personnes.
 
-**Ce que ce module ne fait pas encore** : refuser l'ecriture et n'admettre la
-rectification que par un nouvel enregistrement motive ; sceller une page par
-jour avec son chiffre de controle ; editer le registre du jour ; tracer les
-consultations. Les libelles de colonnes sont ici des libelles d'ecran ; les
+Une inscription **ne se modifie pas et ne se supprime pas**. « Les
+enregistrements informatiques crees pour les ouvrages d'occasion ne [peuvent]
+etre modifies que par creation d'un nouvel enregistrement avec indication de
+son motif » (CGI, ann. IV, art. 56 J sexdecies, 2° c). Un bouton
+« Rectifier » ouvre un assistant preremli des valeurs d'origine : la
+correction s'inscrit a la suite, sous son propre numero d'ordre, avec son
+motif et un renvoi a l'inscription reprise. L'originale demeure, lisible telle
+qu'elle a ete ecrite.
+
+Par ricochet, une piece inscrite ne revient plus au brouillon et ses lignes ne
+se suppriment plus : le registre a consigne ce qu'elle disait le jour du
+rachat, et le laisser diverger sans trace serait pire que le refus.
+
+**Ce que ce module ne fait pas encore** : sceller une page par jour avec son
+chiffre de controle ; editer le registre du jour ; tracer les consultations. Les libelles de colonnes sont ici des libelles d'ecran ; les
 intitules exacts du modele officiel viendront avec l'edition imprimee.
 """,
 
@@ -224,6 +235,7 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
         'views/sale_order_views.xml',
         'views/account_move_views.xml',
         'views/livre_police_ligne_views.xml',
+        'views/livre_police_rectification_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

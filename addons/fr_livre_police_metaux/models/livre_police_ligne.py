@@ -32,10 +32,18 @@ d'ordre commun » et un numéro « apparent sur chaque objet **ou lot
 d'objets** ». Un sachet de 34,3 g d'or 18k est un lot ; une ligne d'avoir en
 est un. En contrepartie, le comptoir doit porter le numéro sur le sachet.
 
+Une inscription ne se modifie pas. « Les modifications éventuelles doivent
+être justifiées par création d'un nouvel enregistrement informatique avec
+indication de son motif » (CGI, ann. IV, art. 56 J sexdecies, 1° c) — et le
+2° c, celui des ouvrages d'occasion, exige que les enregistrements « ne
+puissent être modifiés que par création d'un nouvel enregistrement avec
+indication de son motif ». Une rectification est donc une **inscription de
+plus**, qui porte son motif et renvoie à celle qu'elle corrige ; l'originale
+reste lisible, telle qu'elle a été écrite.
+
 Ce module-ci pose le registre et son affichage. Ce qu'il ne pose pas encore,
 et qui viendra :
 
-* le refus d'écriture et la rectification par nouvel enregistrement motivé ;
 * la page quotidienne et son chiffre de contrôle chaîné ;
 * l'édition quotidienne, qui reprendra les intitulés officiels du modèle ;
 * le journal des consultations (arrêté du 15 mai 2020, art. 3, 2°).
@@ -46,7 +54,8 @@ comprises — n'entreront qu'avec l'édition imprimée, une fois relus sur
 l'annexe.
 """
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class LivrePoliceLigne(models.Model):
@@ -163,8 +172,13 @@ class LivrePoliceLigne(models.Model):
     titre_lot = fields.Boolean(
         string="Lot de titres", readonly=True,
         help="L'article désignait un ensemble de titres différents, dont "
-             "aucun titre unique ne serait exact. Sans cette mention, un "
-             "titre à zéro se lirait comme un métal sans or.",
+             "aucun titre unique ne serait exact.",
+    )
+    titre_texte = fields.Char(
+        string="Titre", compute='_compute_titre_texte',
+        help="Le titre tel qu'il se lit au registre : le nombre de millièmes "
+             "quand il y en a un, « lot de titres » quand l'article n'en "
+             "porte pas, et rien du tout sinon.",
     )
     date_sortie = fields.Date(
         string="Date de sortie", readonly=True,
@@ -187,6 +201,32 @@ class LivrePoliceLigne(models.Model):
         'account.move.line', string="Ligne de l'avoir", readonly=True,
         index=True, ondelete='restrict',
     )
+    rectifie_id = fields.Many2one(
+        'livre.police.ligne', string="Rectifie l'inscription",
+        readonly=True, index='btree_not_null', ondelete='restrict',
+        help="Renseigné sur une inscription de rectification. L'inscription "
+             "d'origine n'est pas touchée : elle reste lisible telle qu'elle "
+             "a été écrite.",
+    )
+    motif_rectification = fields.Text(
+        string="Motif de la rectification", readonly=True,
+        help="Pourquoi l'inscription d'origine devait être corrigée. Le "
+             "registre ne se modifie que « par création d'un nouvel "
+             "enregistrement avec indication de son motif » (CGI, ann. IV, "
+             "art. 56 J sexdecies, 2° c).",
+    )
+    rectifiee_par_ids = fields.One2many(
+        'livre.police.ligne', 'rectifie_id', string="Rectifiée par",
+        readonly=True,
+    )
+    rectifiee = fields.Boolean(
+        string="Rectifiée", compute='_compute_rectifiee',
+        search='_search_rectifiee',
+        help="Une inscription postérieure corrige celle-ci. Les deux "
+             "demeurent : le registre montre ce qui a été écrit, et ce qui "
+             "l'a corrigé.",
+    )
+
     date_inscription = fields.Datetime(
         string="Inscrit le", required=True, readonly=True,
     )
@@ -201,6 +241,91 @@ class LivrePoliceLigne(models.Model):
         ('move_line_unique', 'unique(move_line_id)',
          "Cette ligne d'avoir est déjà inscrite au registre."),
     ]
+
+    @api.depends('titre', 'titre_lot')
+    def _compute_titre_texte(self):
+        """Un titre absent se lit vide, jamais « 0 ».
+
+        Zéro millième, ce serait un métal sans or : la colonne dirait le
+        contraire de ce qu'elle veut dire. Un article vendu en lot de titres
+        n'en a pas un seul qui soit exact, et le registre le dit avec des
+        mots ; un titre simplement inconnu ne dit rien.
+        """
+        for ligne in self:
+            if ligne.titre:
+                ligne.titre_texte = "%g" % ligne.titre
+            elif ligne.titre_lot:
+                ligne.titre_texte = "lot de titres"
+            else:
+                ligne.titre_texte = False
+
+    @api.depends('rectifiee_par_ids')
+    def _compute_rectifiee(self):
+        for ligne in self:
+            ligne.rectifiee = bool(ligne.rectifiee_par_ids)
+
+    def _search_rectifiee(self, operator, value):
+        if operator not in ('=', '!=') or not isinstance(value, bool):
+            raise UserError(_("Filtre non supporté sur « Rectifiée »."))
+        rectifiees = self.sudo().search(
+            [('rectifie_id', '!=', False)]).rectifie_id
+        positif = (operator == '=') == value
+        return [('id', 'in' if positif else 'not in', rectifiees.ids)]
+
+    # ------------------------------------------------------------------
+    # Ce qui est inscrit ne se réécrit pas
+    # ------------------------------------------------------------------
+
+    def write(self, vals):
+        """Le registre n'accepte aucune modification, d'aucun champ.
+
+        Il n'y a pas d'exception à ménager : toutes les mentions sont connues
+        à l'inscription, y compris le mode de règlement, convenu au comptoir
+        avant l'opération. Une exception ici serait une exception à expliquer
+        devant un contrôle.
+        """
+        if self:
+            raise UserError(_(
+                "Une inscription au registre ne se modifie pas.\n\n"
+                "« Les enregistrements informatiques créés pour les ouvrages "
+                "d'occasion ne peuvent être modifiés que par création d'un "
+                "nouvel enregistrement avec indication de son motif » (CGI, "
+                "ann. IV, art. 56 J sexdecies, 2° c).\n\n"
+                "Utilisez le bouton « Rectifier » : l'inscription d'origine "
+                "reste, et la correction s'inscrit à sa suite en disant "
+                "pourquoi.\n\n"
+                "Inscription concernée : %(numeros)s",
+                numeros=", ".join(self.mapped('numero_ordre'))))
+        return super().write(vals)
+
+    def unlink(self):
+        """Un registre ne perd pas de ligne : il en gagne.
+
+        Supprimer romprait la suite des numéros d'ordre, que rien ne
+        permettrait ensuite de justifier — et c'est précisément la continuité
+        qu'un contrôle vérifie.
+        """
+        if self:
+            raise UserError(_(
+                "Une inscription au registre ne se supprime pas : elle se "
+                "rectifie.\n\n"
+                "La suite des numéros d'ordre doit rester continue (c. pén., "
+                "art. R321-4). Une ligne manquante ne se justifie pas.\n\n"
+                "Inscription concernée : %(numeros)s",
+                numeros=", ".join(self.mapped('numero_ordre'))))
+        return super().unlink()
+
+    def action_rectifier(self):
+        """Ouvre l'assistant de rectification sur cette inscription."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': "Rectifier l'inscription %s" % self.numero_ordre,
+            'res_model': 'livre.police.rectification',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_ligne_id': self.id},
+        }
 
     # ------------------------------------------------------------------
     # Inscription
