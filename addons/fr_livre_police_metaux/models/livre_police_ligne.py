@@ -227,6 +227,18 @@ class LivrePoliceLigne(models.Model):
              "l'a corrigé.",
     )
 
+    page_id = fields.Many2one(
+        'livre.police.page', string="Page", readonly=True, required=True,
+        index=True, ondelete='restrict',
+        help="Page quotidienne sur laquelle cette inscription est portée. "
+             "Elle est fixée à l'inscription : une ligne ne change pas de "
+             "page, sinon le chiffre de contrôle de la page ne voudrait plus "
+             "rien dire.",
+    )
+    page_scellee = fields.Boolean(
+        related='page_id.scellee', string="Page scellée", readonly=True,
+    )
+
     date_inscription = fields.Datetime(
         string="Inscrit le", required=True, readonly=True,
     )
@@ -271,6 +283,44 @@ class LivrePoliceLigne(models.Model):
             [('rectifie_id', '!=', False)]).rectifie_id
         positif = (operator == '=') == value
         return [('id', 'in' if positif else 'not in', rectifiees.ids)]
+
+    def _empreinte_donnees(self):
+        """Ce que le chiffre de contrôle de la page couvre, sur cette ligne.
+
+        Toutes les mentions du registre y entrent, et rien d'autre : ni les
+        identifiants techniques, ni les liens vers la comptabilité, qui ne
+        sont pas ce que le registre atteste. L'ordre est fixe — un dictionnaire
+        sérialisé par clés triées donne la même chaîne à chaque calcul, faute
+        de quoi l'empreinte changerait sans que rien n'ait changé.
+        """
+        self.ensure_one()
+        return {
+            'numero_ordre': self.numero_ordre,
+            'date_achat': fields.Date.to_string(self.date_achat),
+            'description': self.description or '',
+            'provenance': self.provenance or '',
+            'vendeur_nom': self.vendeur_nom or '',
+            'vendeur_qualite': self.vendeur_qualite or '',
+            'vendeur_domicile': self.vendeur_domicile or '',
+            'representant_nom': self.representant_nom or '',
+            'representant_qualite': self.representant_qualite or '',
+            'piece_nature': self.piece_nature or '',
+            'piece_numero': self.piece_numero or '',
+            'piece_autorite': self.piece_autorite or '',
+            'piece_delivrance': fields.Date.to_string(self.piece_delivrance),
+            'prix': '%.2f' % self.prix,
+            'mode_reglement': self.mode_reglement or '',
+            'protection_patrimoine': self.protection_patrimoine or '',
+            'metal_nature': self.metal_nature or '',
+            'quantite': '%.4f' % self.quantite,
+            'regime_quantite': self.regime_quantite or '',
+            'poids': '%.4f' % self.poids,
+            'titre': '%.1f' % self.titre,
+            'titre_lot': self.titre_lot,
+            'date_sortie': fields.Date.to_string(self.date_sortie),
+            'rectifie': self.rectifie_id.numero_ordre or '',
+            'motif_rectification': self.motif_rectification or '',
+        }
 
     # ------------------------------------------------------------------
     # Ce qui est inscrit ne se réécrit pas
@@ -407,6 +457,8 @@ class LivrePoliceLigne(models.Model):
             'company_id': piece.company_id.id,
             'move_id': piece.id,
             'move_line_id': ligne.id,
+            'page_id': self.env['livre.police.page']._page_courante(
+                piece.company_id).id,
             'date_inscription': fields.Datetime.now(),
             'inscrit_par_id': self.env.user.id,
         }
