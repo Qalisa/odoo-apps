@@ -1,0 +1,186 @@
+<odoo>
+
+    <!-- La liste suit l'ordre du modèle officiel (arrêté du 15 mai 2020,
+         annexe I) : numéro d'ordre, date, description et provenance, vendeur,
+         pièce d'identité, prix et règlement, protection au titre du code du
+         patrimoine. Un contrôleur arrive avec ce formulaire en tête ; l'écran
+         doit se lire dans le même ordre que lui.
+
+         Viennent ensuite, et seulement ensuite, les mentions que le registre
+         des métaux ajoute (CGI, ann. IV, art. 56 J quindecies) : elles ne
+         s'intercalent pas dans un modèle qui ne les prévoit pas. -->
+    <record id="livre_police_ligne_view_list" model="ir.ui.view">
+        <field name="name">livre.police.ligne.list</field>
+        <field name="model">livre.police.ligne</field>
+        <field name="arch" type="xml">
+            <list string="Livre de police" create="false" edit="false"
+                  delete="false" default_order="company_id, numero_ordre">
+                <field name="numero_ordre"/>
+                <field name="date_achat"/>
+                <field name="description"/>
+                <field name="provenance"/>
+                <field name="vendeur_nom"/>
+                <field name="vendeur_qualite" optional="show"/>
+                <field name="vendeur_domicile" optional="hide"/>
+                <field name="representant_nom" optional="show"/>
+                <field name="representant_qualite" optional="hide"/>
+                <field name="piece_nature" optional="show"/>
+                <field name="piece_numero" optional="show"/>
+                <field name="piece_autorite" optional="hide"/>
+                <field name="piece_delivrance" optional="hide"/>
+                <field name="prix" sum="Total"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="mode_reglement" optional="show"/>
+                <field name="protection_patrimoine" optional="hide"/>
+                <field name="metal_nature" optional="show"/>
+                <field name="quantite" optional="hide"/>
+                <field name="regime_quantite" optional="hide"/>
+                <field name="poids" sum="Poids total" optional="show"/>
+                <field name="titre" optional="show"/>
+                <field name="titre_lot" optional="hide"/>
+                <field name="date_sortie" optional="show"/>
+                <field name="company_id" optional="hide"
+                       groups="base.group_multi_company"/>
+                <field name="move_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- La fiche existe pour lire une inscription en entier, jamais pour la
+         reprendre. Le bouton « Rectifier » viendra avec la rectification par
+         nouvel enregistrement motivé ; d'ici là, rien ne s'écrit ici. -->
+    <record id="livre_police_ligne_view_form" model="ir.ui.view">
+        <field name="name">livre.police.ligne.form</field>
+        <field name="model">livre.police.ligne</field>
+        <field name="arch" type="xml">
+            <form string="Inscription au registre" create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="numero_ordre" string="N° d'ordre"/>
+                        <h1><field name="numero_ordre" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="L'opération">
+                            <field name="date_achat" readonly="1"/>
+                            <field name="prix" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="mode_reglement" readonly="1"
+                                   placeholder="renseigné au règlement"/>
+                            <field name="company_id" readonly="1"
+                                   groups="base.group_multi_company"/>
+                            <field name="move_id" readonly="1"/>
+                        </group>
+                        <group string="Les objets">
+                            <field name="metal_nature" readonly="1"/>
+                            <field name="quantite" readonly="1"/>
+                            <field name="regime_quantite" readonly="1"/>
+                            <field name="poids" readonly="1"/>
+                            <field name="titre" readonly="1"
+                                   invisible="titre_lot"/>
+                            <field name="titre_lot" readonly="1"
+                                   invisible="not titre_lot"/>
+                            <field name="date_sortie" readonly="1"
+                                   placeholder="sortie non enregistrée"/>
+                        </group>
+                    </group>
+                    <group string="Description et provenance">
+                        <field name="description" readonly="1" nolabel="1"
+                               colspan="2"/>
+                        <field name="provenance" readonly="1"/>
+                        <field name="protection_patrimoine" readonly="1"
+                               invisible="not protection_patrimoine"/>
+                    </group>
+                    <group>
+                        <group string="Le vendeur">
+                            <field name="vendeur_nom" readonly="1"/>
+                            <field name="vendeur_qualite" readonly="1"/>
+                            <field name="vendeur_domicile" readonly="1"/>
+                            <field name="representant_nom" readonly="1"
+                                   invisible="not representant_nom"/>
+                            <field name="representant_qualite" readonly="1"
+                                   invisible="not representant_nom"/>
+                        </group>
+                        <group string="La pièce d'identité présentée">
+                            <field name="piece_nature" readonly="1"/>
+                            <field name="piece_numero" readonly="1"/>
+                            <field name="piece_autorite" readonly="1"/>
+                            <field name="piece_delivrance" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Inscription">
+                        <field name="date_inscription" readonly="1"/>
+                        <field name="inscrit_par_id" readonly="1"/>
+                        <field name="move_line_id" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="livre_police_ligne_view_search" model="ir.ui.view">
+        <field name="name">livre.police.ligne.search</field>
+        <field name="model">livre.police.ligne</field>
+        <field name="arch" type="xml">
+            <search string="Livre de police">
+                <field name="numero_ordre"/>
+                <field name="vendeur_nom"
+                       filter_domain="['|', ('vendeur_nom', 'ilike', self),
+                                            ('representant_nom', 'ilike', self)]"
+                       string="Vendeur ou représentant"/>
+                <field name="description"/>
+                <field name="metal_nature"/>
+                <field name="move_id"/>
+                <filter name="filtre_aujourdhui" string="Aujourd'hui"
+                        domain="[('date_achat', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <!-- Le métal entré et jamais ressorti : la colonne « date de
+                     sortie » du registre des métaux, tant qu'elle est vide. -->
+                <filter name="filtre_sans_sortie" string="Sans date de sortie"
+                        domain="[('date_sortie', '=', False)]"/>
+                <separator/>
+                <filter name="filtre_annee" string="Cette année"
+                        domain="[('date_achat', '&gt;=',
+                                  (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="groupe_jour" string="Jour de l'achat"
+                            context="{'group_by': 'date_achat:day'}"/>
+                    <filter name="groupe_societe" string="Société"
+                            context="{'group_by': 'company_id'}"/>
+                    <filter name="groupe_nature" string="Nature du métal"
+                            context="{'group_by': 'metal_nature'}"/>
+                    <filter name="groupe_provenance" string="Provenance"
+                            context="{'group_by': 'provenance'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="livre_police_ligne_action" model="ir.actions.act_window">
+        <field name="name">Livre de police</field>
+        <field name="res_model">livre.police.ligne</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'group_by': 'date_achat:day'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Le registre est vide</p>
+            <p>
+                Une ligne s'y inscrit à la comptabilisation de chaque avoir de
+                rachat, pour chaque lot d'objets entré. Rien ne s'y saisit à
+                la main.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu racine, et non un écran de plus sous Comptabilité : le registre
+         relève d'une obligation distincte, son accès est nommément accordé,
+         et l'entrée dans ce menu est ce qu'il faudra tracer. -->
+    <menuitem id="livre_police_menu_racine"
+              name="Livre de police"
+              groups="fr_livre_police_metaux.group_livre_police"
+              sequence="70"/>
+
+    <menuitem id="livre_police_ligne_menu"
+              name="Registre"
+              parent="livre_police_menu_racine"
+              action="livre_police_ligne_action"
+              sequence="10"/>
+
+</odoo>

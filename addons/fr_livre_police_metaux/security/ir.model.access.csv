@@ -5,3 +5,4 @@ access_livre_police_provenance_manager,livre.police.provenance responsable,model
 access_livre_police_qualite_user,livre.police.qualite utilisateur,model_livre_police_qualite,base.group_user,1,0,0,0
 access_livre_police_qualite_salesman,livre.police.qualite comptoir,model_livre_police_qualite,sales_team.group_sale_salesman,1,0,1,0
 access_livre_police_qualite_manager,livre.police.qualite responsable,model_livre_police_qualite,sales_team.group_sale_manager,1,1,1,1
+access_livre_police_ligne_consultation,livre.police.ligne consultation,model_livre_police_ligne,fr_livre_police_metaux.group_livre_police,1,0,0,0

@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.3.0',
+    'version': '18.0.1.4.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -154,6 +154,40 @@ meme 2° exige. Il n'a pas de place distincte dans Odoo — un contact rattache 
 une societe herite de l'adresse de celle-ci, qui est son siege et non le
 domicile de la personne. Exiger un domicile sans champ pour le porter
 n'apporterait rien.
+
+Le registre lui-meme
+--------------------
+
+Recueillir les mentions ne suffit pas a tenir un registre. Tant qu'elles
+vivent sur l'avoir et sur la fiche contact, le registre les **relit** : changer
+le nom d'un vendeur ou corriger son adresse reecrit ses rachats passes, sans
+trace et sans intention. Le code penal veut l'inverse — d'un registre tenu par
+traitement automatise, il exige qu'il garantisse « l'integrite, l'intangibilite
+et la securite des donnees enregistrees » (art. R321-6-1).
+
+Ce module materialise donc le registre : **une ligne par lot entre**, ecrite a
+la comptabilisation de l'avoir, qui ne relit plus rien ensuite. Les colonnes
+suivent l'ordre du modele officiel (arrete du 15 mai 2020, annexe I), puis
+viennent les mentions propres aux metaux precieux que ce modele ne porte pas —
+poids, titre, date de sortie (CGI, ann. IV, art. 56 J quindecies).
+
+Chaque ligne recoit un **numero d'ordre** continu par societe. « Chaque objet
+expose a la vente ou detenu en stock est affecte d'un numero d'ordre. […] Le
+numero d'ordre est porte sur le registre et figure de maniere apparente sur
+chaque objet ou lot d'objets » (art. R321-4). La maille est donc le **lot**,
+que le meme article admet expressement — et le comptoir doit porter ce numero
+sur le sachet.
+
+Le registre s'ouvre depuis son propre menu, reserve a un droit nomme : la
+consultation devra un jour laisser trace de « l'identifiant du consultant, la
+date, l'heure et l'objet de la consultation » (arrete du 15 mai 2020, art. 3,
+2°), et une trace ne vaut que si l'acces est accorde a des personnes.
+
+**Ce que ce module ne fait pas encore** : refuser l'ecriture et n'admettre la
+rectification que par un nouvel enregistrement motive ; sceller une page par
+jour avec son chiffre de controle ; editer le registre du jour ; tracer les
+consultations. Les libelles de colonnes sont ici des libelles d'ecran ; les
+intitules exacts du modele officiel viendront avec l'edition imprimee.
 """,
 
     'category': 'Accounting/Localizations',
@@ -169,6 +203,7 @@ n'apporterait rien.
     'depends': ['sale', 'account', 'contacts_citizenship_id',
                 'fr_numismatics_metals'],
     'data': [
+        'security/livre_police_security.xml',
         'security/ir.model.access.csv',
         'data/livre_police_provenance_data.xml',
         'data/livre_police_qualite_data.xml',
@@ -178,6 +213,7 @@ n'apporterait rien.
         'views/product_views.xml',
         'views/sale_order_views.xml',
         'views/account_move_views.xml',
+        'views/livre_police_ligne_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
