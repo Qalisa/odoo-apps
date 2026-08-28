@@ -99,5 +99,35 @@
             </field>
         </field>
     </record>
+    <record id="view_order_form_police_reglement" model="ir.ui.view">
+        <field name="name">sale.order.form.police.reglement</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!--
+                Le mode de règlement se convient au comptoir, dans la même
+                phrase que le prix — et le modèle officiel du registre les
+                range dans la même colonne. Il se saisit donc ici, avant
+                l'opération, et non après le paiement : le registre le connaît
+                dès l'inscription et n'a jamais à être complété ensuite.
+
+                La liste ne propose que le chèque barré et le virement. Ce
+                n'est pas une précaution : « lorsqu'un professionnel achète
+                des métaux à un particulier ou à un autre professionnel, le
+                paiement est effectué par chèque barré ou par virement à un
+                compte ouvert au nom du vendeur » (c. mon. fin., art. L112-6).
+
+                Le champ est simplement `required` : le manque se signale
+                comme n'importe quel champ obligatoire d'Odoo, en rouge à la
+                validation. Un encadré d'explication en dessous ferait du
+                bruit sur un choix à deux valeurs.
+            -->
+            <field name="partner_shipping_id" position="after">
+                <field name="police_reglement"
+                       invisible="not police_registre_concerne"
+                       required="police_registre_concerne"/>
+            </field>
+        </field>
+    </record>
 
 </odoo>

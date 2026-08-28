@@ -26,6 +26,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 from ..tools.description import description_ajoutee
+from ..tools.reglement import MODES_REGLEMENT
 
 
 class AccountMoveLine(models.Model):
@@ -153,6 +154,18 @@ class AccountMove(models.Model):
              "registre. Commande l'affichage de la colonne « Provenance ».",
     )
 
+    police_reglement = fields.Selection(
+        MODES_REGLEMENT, string="Mode de règlement",
+        help="Comment le vendeur a été payé. Repris du devis, ou saisi ici "
+             "lorsque l'avoir est établi directement.\n\n"
+             "Le modèle officiel du registre range cette mention avec le "
+             "prix (arrêté du 15 mai 2020, annexe I). Seuls le chèque barré "
+             "et le virement sont proposés : « lorsqu'un professionnel "
+             "achète des métaux à un particulier ou à un autre "
+             "professionnel, le paiement est effectué par chèque barré ou "
+             "par virement à un compte ouvert au nom du vendeur » (code "
+             "monétaire et financier, art. L112-6).",
+    )
     police_representant_id = fields.Many2one(
         'res.partner', string="Représentant",
         domain="[('is_company', '=', False)]",
@@ -314,9 +327,29 @@ class AccountMove(models.Model):
                                      ", ".join(l._police_manques()))
                         for l in fautives)))
 
+    def _police_check_reglement(self):
+        """Voir ``sale_order.py``. Répété ici : un avoir se saisit aussi
+        directement, et la mention est due de la pièce, pas du devis."""
+        for piece in self:
+            if piece.police_registre_concerne and not piece.police_reglement:
+                raise UserError(_(
+                    "Le registre veut savoir comment le rachat « %(piece)s » "
+                    "a été payé : le modèle officiel porte le prix d'achat et "
+                    "le mode de règlement dans la même colonne (arrêté du "
+                    "15 mai 2020, annexe I).\n\n"
+                    "Seuls le chèque barré et le virement sont proposés : "
+                    "« lorsqu'un professionnel achète des métaux à un "
+                    "particulier ou à un autre professionnel, le paiement est "
+                    "effectué par chèque barré ou par virement à un compte "
+                    "ouvert au nom du vendeur » (code monétaire et financier, "
+                    "art. L112-6). Les espèces sont exclues quel que soit le "
+                    "montant.",
+                    piece=piece.display_name))
+
     def _post(self, soft=True):
         self._police_check_representant()
         self._police_check_registre()
+        self._police_check_reglement()
         pieces = super()._post(soft=soft)
         # L'inscription vient après, jamais avant : c'est la comptabilisation
         # qui arrête la pièce, et un registre n'inscrit pas un brouillon.

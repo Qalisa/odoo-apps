@@ -65,6 +65,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 from ..tools.description import description_ajoutee
+from ..tools.reglement import MODES_REGLEMENT
 
 
 class SaleOrderLine(models.Model):
@@ -203,6 +204,20 @@ class SaleOrder(models.Model):
              "Commande l'affichage de la colonne « Provenance ».",
     )
 
+    police_reglement = fields.Selection(
+        MODES_REGLEMENT, string="Mode de règlement",
+        help="Comment le vendeur sera payé.\n\n"
+             "Mention obligatoire du registre, que le modèle officiel range "
+             "avec le prix : c'est une caractéristique de l'opération, "
+             "arrêtée devant le vendeur, et non un événement comptable "
+             "postérieur.\n\n"
+             "La liste ne propose que les deux moyens que la loi admet : "
+             "« lorsqu'un professionnel achète des métaux à un particulier ou "
+             "à un autre professionnel, le paiement est effectué par chèque "
+             "barré ou par virement à un compte ouvert au nom du vendeur » "
+             "(code monétaire et financier, art. L112-6). Les espèces sont "
+             "exclues quel que soit le montant.",
+    )
     police_representant_id = fields.Many2one(
         'res.partner', string="Représentant",
         compute='_compute_police_representant_id', store=True, readonly=False,
@@ -362,6 +377,30 @@ class SaleOrder(models.Model):
                                      ", ".join(l._police_manques()))
                         for l in fautives)))
 
+    def _police_check_reglement(self):
+        """Refuse un rachat dont on ne sait pas comment il sera payé.
+
+        Le contrôle est posé à la confirmation, avec les autres : c'est le
+        moment où le prix se fixe, et le mode de règlement se convient dans la
+        même phrase. Le constater après le paiement reviendrait à enregistrer
+        au registre un fait déjà accompli — et, s'il était irrégulier, à n'en
+        prendre acte qu'une fois l'argent parti.
+        """
+        for commande in self:
+            if commande.police_registre_concerne and not commande.police_reglement:
+                raise UserError(_(
+                    "Le registre veut savoir comment ce rachat est payé : le "
+                    "modèle officiel porte « le prix d'achat et le mode de "
+                    "règlement » dans la même colonne (arrêté du 15 mai "
+                    "2020, annexe I).\n\n"
+                    "Indiquez le mode de règlement sous le client. Seuls le "
+                    "chèque barré et le virement sont proposés : « lorsqu'un "
+                    "professionnel achète des métaux à un particulier ou à un "
+                    "autre professionnel, le paiement est effectué par chèque "
+                    "barré ou par virement à un compte ouvert au nom du "
+                    "vendeur » (code monétaire et financier, art. L112-6). "
+                    "Les espèces sont exclues quel que soit le montant."))
+
     def _police_check_representant(self):
         """Refuse un rachat à une société que personne n'est venu engager.
 
@@ -417,6 +456,8 @@ class SaleOrder(models.Model):
         et un contact sans position propre hérite déjà de celle de sa société.
         """
         valeurs = super()._prepare_invoice()
+        if self.police_reglement:
+            valeurs['police_reglement'] = self.police_reglement
         if self.police_representant_id:
             valeurs['police_representant_id'] = self.police_representant_id.id
         # Filet pour l'autre chemin de saisie : quand le contact a ete choisi
@@ -431,4 +472,5 @@ class SaleOrder(models.Model):
     def action_confirm(self):
         self._police_check_representant()
         self._police_check_registre()
+        self._police_check_reglement()
         return super().action_confirm()

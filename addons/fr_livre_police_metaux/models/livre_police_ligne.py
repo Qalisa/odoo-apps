@@ -122,9 +122,11 @@ class LivrePoliceLigne(models.Model):
     currency_id = fields.Many2one('res.currency', readonly=True)
     mode_reglement = fields.Char(
         string="Mode de règlement", readonly=True,
-        help="Renseigné depuis le règlement rapproché de l'avoir. Il est "
-             "souvent vide à l'inscription : au comptoir, la pièce se "
-             "comptabilise avant que le paiement ne soit saisi.",
+        help="Chèque barré ou virement, convenu au comptoir et porté sur le "
+             "devis de rachat.\n\n"
+             "La mention se recueille avant l'opération, et non après le "
+             "paiement : c'est ainsi qu'elle est connue à l'inscription, et "
+             "que le registre n'a jamais à être complété ensuite."
     )
 
     # -- colonne 7 : la protection au titre du code du patrimoine ----------
@@ -242,10 +244,7 @@ class LivrePoliceLigne(models.Model):
             personne._fields['id_doc_type'].selection) if personne else {}
         regimes = dict(
             produit._fields['metal_quantity_mode'].selection) if produit else {}
-
-        reglements = piece.matched_payment_ids.mapped(
-            lambda p: p.payment_method_line_id.display_name
-            or p.journal_id.display_name)
+        reglements = dict(piece._fields['police_reglement'].selection)
 
         return {
             'date_achat': piece.invoice_date or piece.date,
@@ -273,7 +272,7 @@ class LivrePoliceLigne(models.Model):
             # doit porter ce que le vendeur a reçu.
             'prix': abs(ligne.price_total),
             'currency_id': piece.currency_id.id,
-            'mode_reglement': ", ".join(sorted(set(reglements))) or False,
+            'mode_reglement': reglements.get(piece.police_reglement) or False,
             'metal_nature': produit.metal_nature.display_name or False,
             'quantite': ligne.quantity,
             'regime_quantite': regimes.get(produit.metal_quantity_mode) or False,
