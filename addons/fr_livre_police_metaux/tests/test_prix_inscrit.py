@@ -49,6 +49,7 @@ class TestPrixInscrit(TransactionCase):
             'move_type': 'out_refund',
             'partner_id': self.societe.id,
             'police_representant_id': self.representant.id,
+            'police_reglement': 'virement',
             'invoice_line_ids': [(0, 0, {
                 'product_id': self.lingot.id,
                 'quantity': 1,

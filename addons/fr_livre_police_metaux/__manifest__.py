@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.4.0',
+    'version': '18.0.1.5.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -177,6 +177,16 @@ numero d'ordre est porte sur le registre et figure de maniere apparente sur
 chaque objet ou lot d'objets » (art. R321-4). La maille est donc le **lot**,
 que le meme article admet expressement — et le comptoir doit porter ce numero
 sur le sachet.
+
+Le **mode de reglement** se saisit sur le devis de rachat, obligatoire des
+qu'une ligne entre au registre : le modele officiel le range dans la meme
+colonne que le prix, c'est-a-dire du cote de l'operation et non du reglement.
+Le recueillir en amont evite au registre d'etre complete apres coup — et
+permet de n'offrir que ce que la loi admet. « Lorsqu'un professionnel achete
+des metaux a un particulier ou a un autre professionnel, le paiement est
+effectue par cheque barre ou par virement a un compte ouvert au nom du
+vendeur » (code monetaire et financier, art. L112-6) : la liste ne propose
+donc pas les especes, quel que soit le montant.
 
 Le registre s'ouvre depuis son propre menu, reserve a un droit nomme : la
 consultation devra un jour laisser trace de « l'identifiant du consultant, la

@@ -72,5 +72,22 @@
             </field>
         </field>
     </record>
+    <record id="view_move_form_police_reglement" model="ir.ui.view">
+        <field name="name">account.move.form.police.reglement</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <!--
+                Repris du devis dans le cas normal, saisi ici quand l'avoir
+                est établi directement. La mention est due de la pièce : c'est
+                elle qui entre au registre.
+            -->
+            <field name="partner_shipping_id" position="after">
+                <field name="police_reglement"
+                       invisible="not police_registre_concerne"
+                       required="police_registre_concerne"/>
+            </field>
+        </field>
+    </record>
 
 </odoo>

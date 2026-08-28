@@ -53,6 +53,7 @@ class TestPoidsApresComptabilisation(TransactionCase):
             'move_type': 'out_refund',
             'partner_id': self.societe.id,
             'police_representant_id': self.representant.id,
+            'police_reglement': 'virement',
             'invoice_line_ids': [(0, 0, {
                 'product_id': product.id, 'quantity': qty, 'price_unit': price,
                 'police_origin_id': self.provenance.id, 'tax_ids': [(5, 0, 0)]})],
