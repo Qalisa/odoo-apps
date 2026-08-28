@@ -59,8 +59,8 @@ class ProductTemplate(models.Model):
         compute_sudo=False,
         help="Coché d'office sur les biens : un objet acheté d'occasion doit "
              "figurer au registre des achats, ventes, réceptions et "
-             "livraisons de métaux précieux (art. 537 du code général des "
-             "impôts).\n\n"
+             "livraisons de métaux précieux (art. L834-6 du code de "
+             "commerce).\n\n"
              "Tant que la case est cochée, l'enregistrement de l'article "
              "exige les mentions que le registre porte sur chaque objet : "
              "nature, titre et poids (CGI, ann. IV, art. 56 J quindecies).\n\n"
