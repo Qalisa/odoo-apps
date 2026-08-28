@@ -1,0 +1,103 @@
+<odoo>
+
+    <!--
+        La porte du registre. Déclarer l'objet avant d'entrer est une friction
+        assumée : sans elle, la mention que l'arrêté exige — « l'objet de la
+        consultation » — n'existerait tout simplement pas, puisqu'un logiciel
+        sait qu'on ouvre le registre mais pas pourquoi.
+    -->
+    <record id="livre_police_acces_view_form" model="ir.ui.view">
+        <field name="name">livre.police.acces.form</field>
+        <field name="model">livre.police.acces</field>
+        <field name="arch" type="xml">
+            <form string="Ouvrir le registre">
+                <div class="alert alert-info mb-3" role="alert">
+                    Chaque consultation du registre est enregistrée avec
+                    l'identifiant du consultant, la date, l'heure et son objet
+                    (arrêté du 15 mai 2020, art. 3, 2°). Cette trace est
+                    conservée un an.
+                </div>
+                <group>
+                    <field name="objet"/>
+                    <field name="precision"
+                           placeholder="Service, numéro de réquisition, objet recherché…"
+                           required="objet == 'autre'"/>
+                </group>
+                <footer>
+                    <button string="Ouvrir le registre" type="object"
+                            name="action_ouvrir" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="livre_police_consultation_view_list" model="ir.ui.view">
+        <field name="name">livre.police.consultation.list</field>
+        <field name="model">livre.police.consultation</field>
+        <field name="arch" type="xml">
+            <list string="Consultations" create="false" edit="false"
+                  delete="false" default_order="date desc">
+                <field name="date"/>
+                <field name="user_id"/>
+                <field name="objet"/>
+                <field name="precision"/>
+                <field name="portee"/>
+                <field name="company_id" optional="hide"
+                       groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="livre_police_consultation_view_search" model="ir.ui.view">
+        <field name="name">livre.police.consultation.search</field>
+        <field name="model">livre.police.consultation</field>
+        <field name="arch" type="xml">
+            <search string="Consultations">
+                <field name="user_id"/>
+                <field name="precision"/>
+                <filter name="filtre_controles" string="Contrôles et réquisitions"
+                        domain="[('objet', 'in', ['controle_administratif', 'requisition'])]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="groupe_consultant" string="Consultant"
+                            context="{'group_by': 'user_id'}"/>
+                    <filter name="groupe_objet" string="Objet"
+                            context="{'group_by': 'objet'}"/>
+                    <filter name="groupe_jour" string="Jour"
+                            context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="livre_police_consultation_action" model="ir.actions.act_window">
+        <field name="name">Journal des consultations</field>
+        <field name="res_model">livre.police.consultation</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune consultation</p>
+            <p>
+                Chaque ouverture du registre, chaque édition et chaque contrôle
+                d'intégrité laisse ici une trace, conservée un an.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="livre_police_consultation_menu"
+              name="Journal des consultations"
+              parent="livre_police_menu_racine"
+              action="livre_police_consultation_action"
+              sequence="40"/>
+
+    <record id="cron_purger_consultations" model="ir.cron">
+        <field name="name">Livre de police : purger les consultations de plus d'un an</field>
+        <field name="model_id" ref="model_livre_police_consultation"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_purger()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+</odoo>
