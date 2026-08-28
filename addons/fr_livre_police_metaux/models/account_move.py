@@ -133,6 +133,26 @@ class AccountMoveLine(models.Model):
             ligne.police_origin_missing = bool(
                 ligne.police_origin_required and not ligne.police_origin_id)
 
+    def unlink(self):
+        """Refuse en clair ce que la base refuserait de toute façon.
+
+        La ligne est référencée par son inscription au registre : la
+        supprimer lèverait une violation de clé étrangère, illisible. Le motif
+        est le même que pour la remise au brouillon — l'inscription atteste ce
+        qui a été acheté, et ne se démonte pas.
+        """
+        inscrites = self.env['livre.police.ligne'].sudo().search(
+            [('move_line_id', 'in', self.ids)])
+        if inscrites:
+            raise UserError(_(
+                "Cette ligne est inscrite au registre sous le numéro "
+                "%(numeros)s : elle ne peut plus être supprimée.\n\n"
+                "Une erreur se corrige par une rectification, qui s'inscrit à "
+                "la suite en disant pourquoi (CGI, ann. IV, art. 56 J "
+                "sexdecies, 2° c).",
+                numeros=", ".join(inscrites.mapped('numero_ordre'))))
+        return super().unlink()
+
     def _police_manques(self):
         """Mentions du registre absentes de cette ligne, dans l'ordre du texte."""
         self.ensure_one()
@@ -357,3 +377,27 @@ class AccountMove(models.Model):
         # que ce qui est réellement posté.
         self.env['livre.police.ligne']._inscrire(pieces)
         return pieces
+
+    def button_draft(self):
+        """Une pièce inscrite au registre ne retourne pas au brouillon.
+
+        Le registre a consigné ce que la pièce disait le jour du rachat. La
+        rouvrir permettrait de la faire dire autre chose, et le registre
+        cesserait de correspondre à la comptabilité sans que rien ne le
+        signale. Une erreur constatée se corrige par une rectification, qui
+        s'inscrit à la suite en disant pourquoi (CGI, ann. IV, art. 56 J
+        sexdecies, 2° c).
+        """
+        inscrites = self.env['livre.police.ligne'].sudo().search(
+            [('move_id', 'in', self.ids)])
+        if inscrites:
+            raise UserError(_(
+                "« %(pieces)s » est inscrit au registre : la pièce ne peut "
+                "plus être remise au brouillon.\n\n"
+                "Le registre a consigné ce que cette pièce disait au moment "
+                "du rachat. Une correction s'inscrit à la suite, avec son "
+                "motif — ouvrez l'inscription %(numeros)s au livre de police "
+                "et utilisez « Rectifier ».",
+                pieces=", ".join(inscrites.move_id.mapped('display_name')),
+                numeros=", ".join(inscrites.mapped('numero_ordre'))))
+        return super().button_draft()
