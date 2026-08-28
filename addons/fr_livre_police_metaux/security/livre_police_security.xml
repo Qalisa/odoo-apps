@@ -1,0 +1,22 @@
+<odoo>
+
+    <!-- Le registre ne se consulte pas comme une liste de plus. L'arrêté du
+         15 mai 2020 (art. 3, 2°) veut que chaque consultation laisse trace de
+         « l'identifiant du consultant, la date, l'heure et l'objet ». Cette
+         trace n'a de sens que si l'accès est nommément accordé : un droit que
+         tout le comptoir porterait ne dirait rien de qui a ouvert le
+         registre.
+
+         Le droit ne se déduit d'aucun autre — comptabiliser un avoir n'est
+         pas consulter le registre — d'où une simple case dans « Autres
+         droits », et non un niveau de plus dans une hiérarchie. -->
+    <record id="group_livre_police" model="res.groups">
+        <field name="name">Livre de police - consultation</field>
+        <field name="category_id" ref="base.module_category_usability"/>
+        <field name="comment">Donne accès au registre des objets mobiliers et
+            des métaux précieux. Le registre est en lecture seule : il s'écrit
+            à la comptabilisation des avoirs, et aucun utilisateur ne peut en
+            modifier une ligne.</field>
+    </record>
+
+</odoo>

@@ -317,4 +317,10 @@ class AccountMove(models.Model):
     def _post(self, soft=True):
         self._police_check_representant()
         self._police_check_registre()
-        return super()._post(soft=soft)
+        pieces = super()._post(soft=soft)
+        # L'inscription vient après, jamais avant : c'est la comptabilisation
+        # qui arrête la pièce, et un registre n'inscrit pas un brouillon.
+        # `soft=True` peut ne poster qu'une partie de `self` — on n'inscrit
+        # que ce qui est réellement posté.
+        self.env['livre.police.ligne']._inscrire(pieces)
+        return pieces
