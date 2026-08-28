@@ -1,0 +1,207 @@
+<odoo>
+
+    <!--
+        Le registre s'imprime en paysage : le modèle officiel porte sept
+        colonnes, et les mentions propres aux métaux en ajoutent quatre. En
+        portrait, la description — celle qui compte le plus et qu'on ne peut
+        pas abréger — tomberait à deux mots par ligne.
+    -->
+    <record id="paperformat_livre_police" model="report.paperformat">
+        <field name="name">Livre de police - paysage</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">12</field>
+        <field name="margin_bottom">12</field>
+        <field name="margin_left">6</field>
+        <field name="margin_right">6</field>
+        <field name="header_spacing">6</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_livre_police_page" model="ir.actions.report">
+        <field name="name">Registre du jour</field>
+        <field name="model">livre.police.page</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">fr_livre_police_metaux.rapport_page</field>
+        <field name="report_file">fr_livre_police_metaux.rapport_page</field>
+        <field name="paperformat_id" ref="paperformat_livre_police"/>
+        <field name="binding_model_id" ref="model_livre_police_page"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="rapport_page">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="page">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-size: 9px;">
+
+                        <!--
+                            Le chiffre de contrôle se reporte « en fin et en
+                            tête des pages imprimées quotidiennement » (CGI,
+                            ann. IV, art. 56 J sexdecies, 2° c). Celui du haut
+                            est l'empreinte de la page précédente ; celui du
+                            bas, l'empreinte de celle-ci. Les deux se lisent
+                            sur le papier, sans lesquels le report n'aurait
+                            aucun sens.
+                        -->
+                        <div class="d-flex justify-content-between align-items-end mb-1">
+                            <div>
+                                <h4 class="mb-0">
+                                    Registre des objets mobiliers et des métaux précieux
+                                </h4>
+                                <div>
+                                    <span t-field="page.company_id.name"/> —
+                                    page <span t-field="page.numero"/> du
+                                    <span t-field="page.date"/>
+                                </div>
+                            </div>
+                            <div class="text-end" style="font-size: 8px;">
+                                <div>
+                                    <b>Contrôle en tête :</b>
+                                    <span t-if="page.controle_precedent"
+                                          t-field="page.controle_precedent"/>
+                                    <i t-else="">première page de la société</i>
+                                </div>
+                                <div t-if="page.page_precedente_id">
+                                    reporté de la page
+                                    <span t-field="page.page_precedente_id.numero"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div t-if="not page.scellee"
+                             class="alert alert-warning py-1 px-2 mb-1"
+                             style="font-size: 8px;">
+                            Page non scellée : elle peut encore recevoir des
+                            inscriptions, et son chiffre de contrôle n'est pas
+                            arrêté. Cette édition n'a pas valeur de feuillet.
+                        </div>
+
+                        <table class="table table-sm table-bordered mb-1"
+                               style="font-size: 8px;">
+                            <thead>
+                                <!--
+                                    Les intitulés suivent l'ordre du modèle
+                                    officiel (arrêté du 15 mai 2020, annexe I).
+                                    Ils en donnent la substance en français
+                                    courant ; les libellés exacts du modèle
+                                    restent à relire sur l'annexe avant que ce
+                                    document ne serve devant un contrôle.
+                                -->
+                                <tr>
+                                    <th>N° d'ordre</th>
+                                    <th>Date de l'achat</th>
+                                    <th>Description de l'objet et provenance</th>
+                                    <th>Nom, prénom ou dénomination — qualité — domicile</th>
+                                    <th>Pièce d'identité présentée</th>
+                                    <th class="text-end">Prix et mode de règlement</th>
+                                    <th>Protection (code du patrimoine)</th>
+                                    <th class="text-end">Poids (g)</th>
+                                    <th class="text-end">Titre</th>
+                                    <th>Sortie</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="page.ligne_ids.sorted('numero_ordre')"
+                                    t-as="ligne">
+                                    <td class="text-nowrap">
+                                        <span t-field="ligne.numero_ordre"/>
+                                        <div t-if="ligne.rectifie_id"
+                                             style="font-size: 7px;">
+                                            rectifie le
+                                            <span t-field="ligne.rectifie_id.numero_ordre"/>
+                                        </div>
+                                    </td>
+                                    <td class="text-nowrap"><span t-field="ligne.date_achat"/></td>
+                                    <td>
+                                        <span t-field="ligne.description"/>
+                                        <div t-if="ligne.provenance">
+                                            <i>Provenance :</i>
+                                            <span t-field="ligne.provenance"/>
+                                        </div>
+                                        <div t-if="ligne.motif_rectification"
+                                             style="font-size: 7px;">
+                                            <i>Motif de la rectification :</i>
+                                            <span t-field="ligne.motif_rectification"/>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span t-field="ligne.vendeur_nom"/>
+                                        <div t-if="ligne.vendeur_qualite">
+                                            <span t-field="ligne.vendeur_qualite"/>
+                                        </div>
+                                        <div t-if="ligne.representant_nom">
+                                            représenté par
+                                            <span t-field="ligne.representant_nom"/>
+                                            <t t-if="ligne.representant_qualite">
+                                                (<span t-field="ligne.representant_qualite"/>)
+                                            </t>
+                                        </div>
+                                        <div t-if="ligne.vendeur_domicile"
+                                             style="white-space: pre-line;"
+                                             t-field="ligne.vendeur_domicile"/>
+                                    </td>
+                                    <td>
+                                        <span t-field="ligne.piece_nature"/>
+                                        <span t-field="ligne.piece_numero"/>
+                                        <div t-if="ligne.piece_autorite">
+                                            <span t-field="ligne.piece_autorite"/>
+                                        </div>
+                                        <div t-if="ligne.piece_delivrance">
+                                            délivrée le
+                                            <span t-field="ligne.piece_delivrance"/>
+                                        </div>
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <span t-field="ligne.prix"
+                                              t-options="{'widget': 'monetary', 'display_currency': ligne.currency_id}"/>
+                                        <div t-if="ligne.mode_reglement">
+                                            <span t-field="ligne.mode_reglement"/>
+                                        </div>
+                                    </td>
+                                    <td><span t-field="ligne.protection_patrimoine"/></td>
+                                    <td class="text-end text-nowrap">
+                                        <span t-field="ligne.poids"/>
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <span t-field="ligne.titre_texte"/>
+                                    </td>
+                                    <td class="text-nowrap">
+                                        <span t-field="ligne.date_sortie"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="5" class="text-end">
+                                        <span t-field="page.nombre_inscriptions"/>
+                                        inscription(s)
+                                    </th>
+                                    <th class="text-end">
+                                        <span t-field="page.montant_total"
+                                              t-options="{'widget': 'monetary', 'display_currency': page.currency_id}"/>
+                                    </th>
+                                    <th/>
+                                    <th class="text-end"><span t-field="page.poids_total"/></th>
+                                    <th colspan="2"/>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div class="text-end" style="font-size: 8px;">
+                            <b>Contrôle en pied :</b>
+                            <span t-if="page.controle" t-field="page.controle"/>
+                            <i t-else="">page non scellée</i>
+                            <div t-if="page.scellee_le">
+                                scellée le <span t-field="page.scellee_le"/>
+                                par <span t-field="page.scellee_par_id.name"/>
+                            </div>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>
