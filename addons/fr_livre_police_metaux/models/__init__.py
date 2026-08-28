@@ -5,5 +5,6 @@ from . import res_partner
 from . import product_template
 from . import sale_order
 from . import account_move
+from . import livre_police_page
 from . import livre_police_ligne
 from . import livre_police_rectification

@@ -1,0 +1,149 @@
+<odoo>
+
+    <record id="livre_police_page_view_list" model="ir.ui.view">
+        <field name="name">livre.police.page.list</field>
+        <field name="model">livre.police.page</field>
+        <field name="arch" type="xml">
+            <list string="Pages du registre" create="false" edit="false"
+                  delete="false" default_order="company_id, numero desc"
+                  decoration-muted="not scellee">
+                <field name="numero"/>
+                <field name="date"/>
+                <field name="nombre_inscriptions"/>
+                <field name="poids_total" sum="Poids total"/>
+                <field name="montant_total" sum="Montant total"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="scellee" widget="boolean_toggle" readonly="1"/>
+                <field name="scellee_le" optional="show"/>
+                <field name="scellee_par_id" optional="hide"/>
+                <field name="controle" optional="hide"/>
+                <field name="company_id" optional="hide"
+                       groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="livre_police_page_view_form" model="ir.ui.view">
+        <field name="name">livre.police.page.form</field>
+        <field name="model">livre.police.page</field>
+        <field name="arch" type="xml">
+            <form string="Page du registre" create="false" edit="false">
+                <header>
+                    <button name="action_sceller" type="object"
+                            string="Sceller la page" class="btn-primary"
+                            invisible="scellee"
+                            confirm="Une fois scellée, la page ne se rouvre plus : les inscriptions du jour qui arriveraient ensuite iront sur une page suivante. Sceller ?"/>
+                    <field name="scellee" widget="statusbar" invisible="1"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="numero" string="Page"/>
+                        <h1><field name="numero" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="La page">
+                            <field name="date" readonly="1"/>
+                            <field name="company_id" readonly="1"
+                                   groups="base.group_multi_company"/>
+                            <field name="nombre_inscriptions"/>
+                            <field name="poids_total"/>
+                            <field name="montant_total"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <!--
+                            Le contrôle en tête est celui de la page
+                            précédente, reporté ici ; celui du pied est
+                            l'empreinte de cette page, qui se reportera en
+                            tête de la suivante (CGI, ann. IV, art. 56 J
+                            sexdecies, 2° c).
+                        -->
+                        <group string="Chiffre de contrôle">
+                            <field name="page_precedente_id" readonly="1"/>
+                            <field name="controle_precedent" readonly="1"
+                                   string="En tête"
+                                   placeholder="première page de la société"/>
+                            <field name="controle" readonly="1" string="En pied"
+                                   placeholder="page non scellée"/>
+                            <field name="scellee_le" readonly="1"/>
+                            <field name="scellee_par_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Inscriptions" name="inscriptions">
+                            <field name="ligne_ids" readonly="1">
+                                <list create="false" edit="false" delete="false">
+                                    <field name="numero_ordre"/>
+                                    <field name="date_achat"/>
+                                    <field name="description"/>
+                                    <field name="provenance"/>
+                                    <field name="vendeur_nom"/>
+                                    <field name="prix"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="poids"/>
+                                    <field name="titre_texte"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="livre_police_page_view_search" model="ir.ui.view">
+        <field name="name">livre.police.page.search</field>
+        <field name="model">livre.police.page</field>
+        <field name="arch" type="xml">
+            <search string="Pages du registre">
+                <field name="numero"/>
+                <field name="date"/>
+                <filter name="filtre_ouvertes" string="Non scellées"
+                        domain="[('scellee', '=', False)]"/>
+                <filter name="filtre_scellees" string="Scellées"
+                        domain="[('scellee', '=', True)]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="groupe_societe" string="Société"
+                            context="{'group_by': 'company_id'}"/>
+                    <filter name="groupe_mois" string="Mois"
+                            context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="livre_police_page_action" model="ir.actions.act_window">
+        <field name="name">Pages du registre</field>
+        <field name="res_model">livre.police.page</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune page</p>
+            <p>
+                Une page s'ouvre au premier rachat du jour et se scelle le
+                soir. Son chiffre de contrôle se reporte en tête de la page
+                suivante : c'est ce report qui rend la suite vérifiable.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="livre_police_page_menu"
+              name="Pages"
+              parent="livre_police_menu_racine"
+              action="livre_police_page_action"
+              sequence="20"/>
+
+    <!--
+        Le jour se ferme de lui-même. Une page laissée ouverte recevrait des
+        inscriptions qui ne lui appartiennent pas, et son chiffre de contrôle
+        ne dirait plus de quel jour il parle.
+    -->
+    <record id="cron_sceller_les_jours_clos" model="ir.cron">
+        <field name="name">Livre de police : sceller les pages des jours clos</field>
+        <field name="model_id" ref="model_livre_police_page"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sceller_les_jours_clos()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+</odoo>

@@ -111,6 +111,8 @@ class LivrePoliceRectification(models.TransientModel):
             'move_id': origine.move_id.id,
             'rectifie_id': origine.id,
             'motif_rectification': self.motif.strip(),
+            'page_id': self.env['livre.police.page']._page_courante(
+                origine.company_id).id,
             'date_inscription': fields.Datetime.now(),
             'inscrit_par_id': self.env.user.id,
         })

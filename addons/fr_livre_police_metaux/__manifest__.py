@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.6.0',
+    'version': '18.0.1.7.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -236,6 +236,7 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
         'views/account_move_views.xml',
         'views/livre_police_ligne_views.xml',
         'views/livre_police_rectification_views.xml',
+        'views/livre_police_page_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
