@@ -15,7 +15,8 @@
         <field name="arch" type="xml">
             <list string="Livre de police" create="false" edit="false"
                   delete="false" default_order="company_id, numero_ordre"
-                  decoration-muted="rectifiee">
+                  decoration-muted="rectifiee"
+                  class="o_livre_police_liste">
                 <field name="rectifiee" column_invisible="1"/>
                 <!-- La societe precede le numero d'ordre parce qu'elle le
                      qualifie : un registre est tenu pour chaque etablissement
@@ -30,7 +31,7 @@
                 <field name="rectifie_id" optional="show"
                        string="Rectifie"/>
                 <field name="date_achat"/>
-                <field name="description"/>
+                <field name="description" class="o_lp_description"/>
                 <field name="provenance"/>
                 <field name="vendeur_nom"/>
                 <field name="vendeur_qualite" optional="show"/>

@@ -1,0 +1,42 @@
+/*
+ * Le registre se lit en entier, pas en colonnes tronquees.
+ *
+ * Odoo repartit la largeur disponible entre les colonnes : quand elles sont
+ * trop nombreuses — et l'annexe I en compte sept, auxquelles le registre des
+ * metaux en ajoute — il les rabote toutes uniformement jusqu'a leur minimum,
+ * puis fait defiler. Un numero d'ordre, un titre, un mode de reglement se
+ * retrouvent alors aussi etroits qu'une adresse, et coupes.
+ *
+ * On rend donc la main au navigateur : chaque colonne prend la largeur de sa
+ * plus grande cellule. Une seule fait exception, la description — c'est la
+ * mention la plus longue du registre, et la laisser s'etaler repousserait
+ * tout le reste hors de l'ecran. Elle garde une largeur fixe et revient a la
+ * ligne.
+ *
+ * Le prix de ce choix : la largeur des colonnes ne se regle plus a la souris
+ * sur cet ecran.
+ */
+
+.o_livre_police_liste .o_list_renderer table.o_list_table {
+    table-layout: auto !important;
+    width: auto !important;
+    min-width: 100%;
+}
+
+.o_livre_police_liste .o_list_renderer table.o_list_table th,
+.o_livre_police_liste .o_list_renderer table.o_list_table td {
+    width: auto !important;
+    max-width: none !important;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+/* La description, et elle seule, se plie. */
+.o_livre_police_liste .o_list_renderer table.o_list_table th[data-name="description"],
+.o_livre_police_liste .o_list_renderer table.o_list_table td.o_lp_description {
+    width: 24rem !important;
+    min-width: 24rem;
+    white-space: normal;
+    overflow: hidden;
+}
