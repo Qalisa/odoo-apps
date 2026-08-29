@@ -1,34 +1,41 @@
 <odoo>
 
     <!--
-        La porte du registre. Déclarer l'objet avant d'entrer est une friction
-        assumée : sans elle, la mention que l'arrêté exige — « l'objet de la
-        consultation » — n'existerait tout simplement pas, puisqu'un logiciel
-        sait qu'on ouvre le registre mais pas pourquoi.
+        La porte du registre, et c'est une page du module — pas une boîte de
+        dialogue. Une boîte de dialogue s'ouvre par-dessus l'écran précédent :
+        on entrait dans le livre de police depuis l'inventaire, sans jamais
+        avoir mis les pieds dans l'application.
+
+        Déclarer l'objet avant d'entrer reste une friction assumée : sans
+        elle, la mention que l'arrêté exige — « l'objet de la consultation » —
+        n'existerait tout simplement pas, puisqu'un logiciel sait qu'on ouvre
+        le registre mais pas pourquoi.
     -->
     <record id="livre_police_acces_view_form" model="ir.ui.view">
         <field name="name">livre.police.acces.form</field>
         <field name="model">livre.police.acces</field>
         <field name="arch" type="xml">
-            <form string="Ouvrir le registre">
-                <div class="alert alert-info mb-3" role="alert">
-                    Chaque consultation du registre est enregistrée avec
-                    l'identifiant du consultant, la date, l'heure et son objet
-                    (arrêté du 15 mai 2020, art. 3, 2°). Cette trace est
-                    conservée un an.
-                </div>
-                <group>
-                    <field name="objet"/>
-                    <field name="precision"
-                           placeholder="Service, numéro de réquisition, objet recherché…"
-                           required="objet == 'autre'"/>
-                </group>
-                <footer>
-                    <button string="Ouvrir le registre" type="object"
+            <form string="Ouvrir le livre de police">
+                <header>
+                    <button string="Ouvrir le livre de police" type="object"
                             name="action_ouvrir" class="btn-primary"/>
-                    <button string="Annuler" special="cancel"
-                            class="btn-secondary"/>
-                </footer>
+                </header>
+                <sheet>
+                    <div class="oe_title mb-3">
+                        <h1>Ouvrir le livre de police</h1>
+                    </div>
+                    <p class="text-muted">
+                        Chaque consultation est enregistrée avec l'identifiant
+                        du consultant, la date, l'heure et son objet (arrêté du
+                        15 mai 2020, art. 3, 2°). La trace est conservée un an.
+                    </p>
+                    <group>
+                        <field name="objet"/>
+                        <field name="precision"
+                               placeholder="Service, numéro de réquisition, objet recherché…"
+                               required="objet == 'autre'"/>
+                    </group>
+                </sheet>
             </form>
         </field>
     </record>

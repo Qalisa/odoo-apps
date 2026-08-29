@@ -204,10 +204,12 @@
     <!-- L'action vit ici, avec le menu qui l'appelle : sa vue est définie
          avec le journal des consultations, qui est ce qu'elle alimente. -->
     <record id="livre_police_acces_action" model="ir.actions.act_window">
-        <field name="name">Ouvrir le registre</field>
+        <field name="name">Livre de police</field>
         <field name="res_model">livre.police.acces</field>
         <field name="view_mode">form</field>
-        <field name="target">new</field>
+        <!-- « current » explicitement : retirer le champ du XML ne remet pas
+             la valeur deja enregistree, et l'action naissait en « new ». -->
+        <field name="target">current</field>
     </record>
 
     <!--
@@ -215,6 +217,11 @@
         doit être enregistré avant qu'on lise quoi que ce soit (arrêté du
         15 mai 2020, art. 3, 2°). L'action de la liste reste, c'est elle que
         la déclaration renvoie une fois la trace écrite.
+
+        La déclaration est une page pleine, et non une fenêtre modale : on
+        entre d'abord dans l'application, on y trouve un bouton qui ouvre le
+        registre. Une modale s'ouvrait par-dessus le module précédent, et le
+        registre venait ensuite se poser au bout de son fil d'Ariane.
     -->
     <menuitem id="livre_police_ligne_menu"
               name="Registre"
