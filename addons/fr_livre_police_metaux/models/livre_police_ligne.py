@@ -254,6 +254,27 @@ class LivrePoliceLigne(models.Model):
         index=True, ondelete='restrict',
         help="Le départ de stock qui a produit cette inscription de sortie.",
     )
+    facture_vente_ids = fields.Many2many(
+        'account.move', string="Factures de vente", readonly=True,
+        compute='_compute_facture_vente_ids',
+        help="Les factures qui ont accompagné ce départ. Elles ne sont pas "
+             "une mention du registre — ni le prix de revente ni l'acheteur "
+             "n'y figurent — mais elles disent où retrouver la pièce "
+             "justificative, que le I de l'art. L102 B du LPF fait conserver.",
+    )
+
+    @api.depends('mouvement_stock_id')
+    def _compute_facture_vente_ids(self):
+        """Retrouve la facture par le chemin de la marchandise.
+
+        Calculé, et non figé à l'inscription : la livraison précède souvent la
+        facturation, et une inscription ne se réécrit pas. Le lien apparaît
+        donc le jour où la facture existe, sans que rien du registre n'ait
+        bougé — et il reste, pour la même raison, hors du chiffre de contrôle.
+        """
+        for ligne in self:
+            vente = ligne.mouvement_stock_id.move_id.sale_line_id
+            ligne.facture_vente_ids = vente.invoice_lines.move_id
     rectifie_id = fields.Many2one(
         'livre.police.ligne', string="Rectifie l'inscription",
         readonly=True, index='btree_not_null', ondelete='restrict',
