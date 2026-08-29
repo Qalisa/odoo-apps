@@ -274,11 +274,24 @@ class SaleOrder(models.Model):
              "titre il engage la société.",
     )
 
-    @api.depends('order_line.police_origin_expected')
+    @api.depends('order_line.police_origin_required')
     def _compute_police_registre_concerne(self):
+        """Un rachat, et non toute commande qui touche au métal.
+
+        `police_origin_expected` dit qu'un article relève du registre ;
+        `police_origin_required` dit que la ligne l'y fait entrer, ce qui
+        suppose une quantité négative. Seul le second convient ici : vendre de
+        l'or n'inscrit rien au registre des entrées, et réclamer un mode de
+        règlement à une vente invente une obligation. Le CMF L112-6 vise le
+        professionnel qui achète, pas celui qui vend.
+
+        C'est déjà la règle du côté de l'avoir, qui lit
+        `invoice_line_ids.police_origin_required` : les deux disent désormais
+        la même chose.
+        """
         for commande in self:
             commande.police_registre_concerne = any(
-                commande.order_line.mapped('police_origin_expected'))
+                commande.order_line.mapped('police_origin_required'))
 
     @api.depends('partner_id')
     def _compute_police_representant_id(self):
