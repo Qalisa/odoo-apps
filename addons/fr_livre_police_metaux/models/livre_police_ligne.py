@@ -66,6 +66,25 @@ class LivrePoliceLigne(models.Model):
     _rec_name = 'numero_ordre'
 
     # -- colonne 1 : le numéro d'ordre ------------------------------------
+    sens = fields.Selection(
+        [('entree', "Entrée"), ('sortie', "Sortie")],
+        string="Sens", required=True, default='entree', readonly=True,
+        index=True,
+        help="Le registre des métaux précieux réclame « la date d'entrée et "
+             "de sortie » (CGI, ann. IV, art. 56 J quindecies). Une sortie ne "
+             "modifie pas l'entrée — rien ne se modifie ici — elle s'inscrit "
+             "à sa suite et s'y rattache.",
+    )
+    entree_id = fields.Many2one(
+        'livre.police.ligne', string="Sort de l'inscription", readonly=True,
+        index=True, ondelete='restrict',
+        help="L'inscription d'entrée dont ce métal provient. Un lot peut "
+             "sortir en plusieurs fois : chaque départ a sa propre "
+             "inscription, et toutes désignent la même entrée.",
+    )
+    sortie_ids = fields.One2many(
+        'livre.police.ligne', 'entree_id', string="Sorties", readonly=True,
+    )
     numero_ordre = fields.Char(
         string="N° d'ordre", required=True, index=True, readonly=True,
         help="Numéro continu, propre à chaque société. Il doit figurer de "
@@ -180,12 +199,30 @@ class LivrePoliceLigne(models.Model):
              "quand il y en a un, « lot de titres » quand l'article n'en "
              "porte pas, et rien du tout sinon.",
     )
+    date_mouvement = fields.Date(
+        string="Date du mouvement", readonly=True,
+        help="La date du départ, sur une inscription de sortie. Une entrée "
+             "porte sa date à la colonne « date de l'achat ».",
+    )
+    poids_sorti = fields.Float(
+        string="Poids sorti (g)", digits=(12, 4), readonly=True,
+        compute='_compute_sorties', aggregator=False,
+    )
+    poids_restant = fields.Float(
+        string="Poids restant (g)", digits=(12, 4), readonly=True,
+        compute='_compute_sorties', aggregator=False,
+        help="Ce qui n'est pas encore reparti. Tant qu'il en reste, le numéro "
+             "d'ordre doit demeurer apparent sur le métal en stock (c. pén., "
+             "art. R321-4).",
+    )
     date_sortie = fields.Date(
-        string="Date de sortie", readonly=True,
-        help="Le registre des métaux précieux réclame la date d'entrée et de "
-             "sortie. Elle ne se remplira que le jour où la sortie du métal "
-             "sera saisie — aujourd'hui, la revente au fondeur n'est pas "
-             "enregistrée.",
+        string="Date de sortie", readonly=True, compute='_compute_sorties',
+        help="La date à laquelle l'inscription s'est vidée. Elle reste vide "
+             "tant qu'il reste du métal : un lot sorti pour moitié n'est pas "
+             "sorti. Le détail des départs successifs figure aux inscriptions "
+             "de sortie, chacune sous son propre numéro d'ordre.\n\n"
+             "Calculée, et hors du chiffre de contrôle : une inscription ne "
+             "se réécrit pas, et celle-ci changerait après coup.",
     )
 
     # -- rattachements et traçabilité --------------------------------------
@@ -200,6 +237,11 @@ class LivrePoliceLigne(models.Model):
     move_line_id = fields.Many2one(
         'account.move.line', string="Ligne de l'avoir", readonly=True,
         index=True, ondelete='restrict',
+    )
+    mouvement_stock_id = fields.Many2one(
+        'stock.move.line', string="Mouvement de sortie", readonly=True,
+        index=True, ondelete='restrict',
+        help="Le départ de stock qui a produit cette inscription de sortie.",
     )
     rectifie_id = fields.Many2one(
         'livre.police.ligne', string="Rectifie l'inscription",
@@ -247,6 +289,8 @@ class LivrePoliceLigne(models.Model):
     )
 
     _sql_constraints = [
+        ('mouvement_stock_unique', 'unique(mouvement_stock_id)',
+         "Ce départ de stock est déjà inscrit au registre."),
         ('numero_ordre_unique', 'unique(company_id, numero_ordre)',
          "Deux lignes du registre ne peuvent pas porter le même numéro "
          "d'ordre dans la même société."),
@@ -270,6 +314,23 @@ class LivrePoliceLigne(models.Model):
                 ligne.titre_texte = "lot de titres"
             else:
                 ligne.titre_texte = False
+
+    @api.depends('sortie_ids.poids', 'sortie_ids.date_mouvement', 'poids')
+    def _compute_sorties(self):
+        """Ce qui est reparti, ce qui reste, et le jour où il n'en reste plus.
+
+        Trois lectures d'une même chose, qu'aucune inscription ne porte : le
+        registre dit les mouvements, pas leur solde. Le solde se recalcule, et
+        c'est pour cela qu'il n'entre pas dans le chiffre de contrôle.
+        """
+        for ligne in self:
+            sorties = ligne.sortie_ids
+            ligne.poids_sorti = sum(sorties.mapped('poids'))
+            ligne.poids_restant = ligne.poids - ligne.poids_sorti
+            dates = [s.date_mouvement for s in sorties if s.date_mouvement]
+            ligne.date_sortie = (
+                max(dates) if dates and ligne.poids_restant <= 0.00005
+                else False)
 
     @api.depends('rectifiee_par_ids')
     def _compute_rectifiee(self):
@@ -317,7 +378,9 @@ class LivrePoliceLigne(models.Model):
             'poids': '%.4f' % self.poids,
             'titre': '%.1f' % self.titre,
             'titre_lot': self.titre_lot,
-            'date_sortie': fields.Date.to_string(self.date_sortie),
+            'sens': self.sens,
+            'date_mouvement': fields.Date.to_string(self.date_mouvement),
+            'entree': self.entree_id.numero_ordre or '',
             'rectifie': self.rectifie_id.numero_ordre or '',
             'motif_rectification': self.motif_rectification or '',
         }
@@ -488,3 +551,88 @@ class LivrePoliceLigne(models.Model):
                 ligne.move_id.company_id).next_by_id()
             valeurs.append(vals)
         return self.sudo().create(valeurs)
+
+    @api.model
+    def _valeurs_depuis_sortie(self, entree, mouvement):
+        """Fige ce qu'une sortie inscrit.
+
+        Elle ne recopie de l'entrée que ce qui décrit la marchandise : la
+        nature du métal, son titre, les objets. Le vendeur, sa pièce
+        d'identité, le prix d'achat n'ont rien à faire là — ils appartiennent
+        à l'entrée, qui reste, et les répéter donnerait à croire qu'une
+        seconde opération a eu lieu avec la même personne.
+
+        L'acheteur n'y figure pas davantage. Le registre des objets mobiliers
+        décrit l'entrée (c. pén., art. R321-3) et le registre des métaux
+        réclame les dates d'entrée et de sortie (CGI, ann. IV, art. 56 J
+        quindecies) : aucun des deux ne demande à qui l'on revend. Cela vit
+        dans la facturation, que l'art. L102 B du LPF fait conserver.
+        """
+        quantite = mouvement.quantity
+        # Le poids suit la quantité : un lot homogène sorti pour un tiers
+        # laisse deux tiers de son poids. Sur les articles pesés au gramme,
+        # les deux se confondent.
+        poids = (entree.poids * quantite / entree.quantite) if entree.quantite else 0.0
+        return {
+            'sens': 'sortie',
+            'entree_id': entree.id,
+            # La date de l'achat est reprise de l'entrée : c'est bien ce
+            # jour-là que ce métal a été acheté, et la colonne du modèle
+            # officiel la réclame sur chaque ligne. La date du départ, elle,
+            # se lit à la colonne « sortie ».
+            'date_achat': entree.date_achat,
+            'date_mouvement': fields.Datetime.context_timestamp(
+                mouvement, mouvement.date).date(),
+            'description': entree.description,
+            'metal_nature': entree.metal_nature,
+            'quantite': quantite,
+            'regime_quantite': entree.regime_quantite,
+            'poids': poids,
+            'titre': entree.titre,
+            'titre_lot': entree.titre_lot,
+            'prix': 0.0,
+            'currency_id': entree.currency_id.id,
+            'company_id': mouvement.company_id.id,
+            'mouvement_stock_id': mouvement.id,
+            'page_id': self.env['livre.police.page']._page_courante(
+                mouvement.company_id).id,
+            'date_inscription': fields.Datetime.now(),
+            'inscrit_par_id': self.env.user.id,
+        }
+
+    @api.model
+    def _inscrire_sorties(self, transferts):
+        """Inscrit le métal qui s'en va, lot par lot.
+
+        Un lot sort en une ou plusieurs fois. Chaque départ prend son propre
+        numéro d'ordre dans la suite de l'agence : la série est continue, et
+        c'est cette continuité que le contrôle d'intégrité vérifie.
+
+        Le lot porte le numéro d'ordre de son entrée — c'est tout ce qu'il
+        faut pour retrouver d'où le métal vient.
+        """
+        departs = transferts.move_line_ids.filtered(
+            lambda ml: ml.state == 'done' and ml.lot_id
+            and ml.move_id.picking_code == 'outgoing')
+        deja = self.sudo().search(
+            [('mouvement_stock_id', 'in', departs.ids)]).mouvement_stock_id
+        departs -= deja
+        if not departs:
+            return self.browse()
+
+        valeurs = []
+        for mouvement in departs.sorted('id'):
+            entree = self.sudo().search([
+                ('sens', '=', 'entree'),
+                ('numero_ordre', '=', mouvement.lot_id.name),
+                ('company_id', '=', mouvement.company_id.id),
+            ], limit=1)
+            if not entree:
+                # Un lot qui ne vient pas du registre — du stock antérieur,
+                # un article hors champ. On ne devine pas une entrée.
+                continue
+            vals = self._valeurs_depuis_sortie(entree, mouvement)
+            vals['numero_ordre'] = self._sequence(
+                mouvement.company_id).next_by_id()
+            valeurs.append(vals)
+        return self.sudo().create(valeurs) if valeurs else self.browse()

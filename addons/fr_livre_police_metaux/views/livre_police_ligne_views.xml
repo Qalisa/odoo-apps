@@ -28,6 +28,8 @@
                 <field name="company_id" optional="show"
                        groups="base.group_multi_company"/>
                 <field name="numero_ordre"/>
+                <field name="sens" optional="show"/>
+                <field name="entree_id" optional="show" string="Sort de"/>
                 <field name="rectifie_id" optional="show"
                        string="Rectifie"/>
                 <field name="date_achat"/>
@@ -51,6 +53,8 @@
                 <field name="regime_quantite" optional="hide"/>
                 <field name="poids" sum="Poids total" optional="show"/>
                 <field name="titre_texte" optional="show"/>
+                <field name="date_mouvement" optional="hide"/>
+                <field name="poids_restant" optional="hide"/>
                 <field name="date_sortie" optional="show"/>
                 <field name="motif_rectification" optional="hide"/>
                 <field name="move_id" optional="hide"/>
@@ -86,7 +90,13 @@
                     </div>
                     <group>
                         <group string="L'opération">
-                            <field name="date_achat" readonly="1"/>
+                            <field name="sens" readonly="1"/>
+                            <field name="entree_id" readonly="1"
+                                   invisible="sens != 'sortie'"/>
+                            <field name="date_mouvement" readonly="1"
+                                   invisible="sens != 'sortie'"/>
+                            <field name="date_achat" readonly="1"
+                                   invisible="sens != 'entree'"/>
                             <field name="prix" readonly="1"/>
                             <field name="currency_id" invisible="1"/>
                             <field name="mode_reglement" readonly="1"
@@ -102,7 +112,11 @@
                             <field name="poids" readonly="1"/>
                             <field name="titre_texte" readonly="1"/>
                             <field name="date_sortie" readonly="1"
-                                   placeholder="sortie non enregistrée"/>
+                                   placeholder="encore en stock"/>
+                            <field name="poids_sorti" readonly="1"
+                                   invisible="sens != 'entree'"/>
+                            <field name="poids_restant" readonly="1"
+                                   invisible="sens != 'entree'"/>
                         </group>
                     </group>
                     <group string="Description et provenance">
@@ -161,8 +175,13 @@
                         domain="[('date_achat', '=', context_today().strftime('%Y-%m-%d'))]"/>
                 <!-- Le métal entré et jamais ressorti : la colonne « date de
                      sortie » du registre des métaux, tant qu'elle est vide. -->
-                <filter name="filtre_sans_sortie" string="Sans date de sortie"
-                        domain="[('date_sortie', '=', False)]"/>
+                <filter name="filtre_sans_sortie" string="Encore en stock"
+                        domain="[('sens', '=', 'entree'), ('sortie_ids', '=', False)]"/>
+                <separator/>
+                <filter name="filtre_entrees" string="Entrées"
+                        domain="[('sens', '=', 'entree')]"/>
+                <filter name="filtre_sorties" string="Sorties"
+                        domain="[('sens', '=', 'sortie')]"/>
                 <separator/>
                 <filter name="filtre_rectifications" string="Rectifications"
                         domain="[('rectifie_id', '!=', False)]"/>
@@ -177,6 +196,8 @@
                             context="{'group_by': 'date_achat:day'}"/>
                     <filter name="groupe_societe" string="Société"
                             context="{'group_by': 'company_id'}"/>
+                    <filter name="groupe_sens" string="Sens"
+                            context="{'group_by': 'sens'}"/>
                     <filter name="groupe_nature" string="Nature du métal"
                             context="{'group_by': 'metal_nature'}"/>
                     <filter name="groupe_provenance" string="Provenance"
