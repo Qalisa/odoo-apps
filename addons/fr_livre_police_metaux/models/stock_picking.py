@@ -92,8 +92,14 @@ class StockMoveLine(models.Model):
         """
         valeurs = super()._prepare_new_lot_vals()
         inscription = self.move_id.police_ligne_id
-        if inscription.description:
-            valeurs['note'] = plaintext2html(inscription.description)
+        if not inscription:
+            return valeurs
+        valeurs['note'] = plaintext2html(inscription.description or '')
+        # Le lot appartient à l'agence qui l'a inscrit. Sans société, Odoo
+        # exige que le nom soit unique pour l'article dans toute la base — et
+        # chaque agence repart de 000001. Le second « 000004 » sur le même
+        # article serait refusé, et la réception avec lui.
+        valeurs['company_id'] = inscription.company_id.id
         return valeurs
 
 
