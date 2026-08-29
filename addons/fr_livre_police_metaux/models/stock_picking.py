@@ -22,6 +22,7 @@ fenêtre pendant laquelle l'étiquette ment.
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.mail import plaintext2html
 
 
 class StockMove(models.Model):
@@ -37,6 +38,17 @@ class StockMove(models.Model):
     police_numero_ordre = fields.Char(
         string="N° d'ordre", related='police_ligne_id.numero_ordre',
         readonly=True,
+    )
+    police_description = fields.Text(
+        # Et non `description_picking`, qui est un champ libre rempli a la
+        # creation du mouvement, depuis l'article : a cet instant la
+        # description du registre n'existe pas encore. Celle-ci se lit, elle
+        # ne s'ecrit pas, et elle apparait des que l'avoir est comptabilise.
+        string="Description au registre",
+        related='police_ligne_id.description', readonly=True,
+        help="Les objets tels que le registre les a decrits. « 1 collier "
+             "maille gourmette, 1 bague sertie, or jaune 18k » dit ce que "
+             "« 18k Or 750 ‰(gr) » ne dira jamais.",
     )
 
     @api.depends('sale_line_id', 'sale_line_id.invoice_lines')
@@ -61,6 +73,28 @@ class StockMove(models.Model):
         return self.filtered(
             lambda mouvement: mouvement.picking_code == 'incoming'
             and mouvement.sale_line_id.police_origin_required)
+
+
+class StockMoveLine(models.Model):
+    _inherit = 'stock.move.line'
+
+    def _prepare_new_lot_vals(self):
+        """Le lot naît décrit.
+
+        Le nom du lot dit lequel ; la description dit lequel c'est. Au moment
+        de choisir ce qui sort du stock, « 000004 — 21,6 g » ne se distingue
+        pas de son voisin, quand « 1 lot de chaînes et pendentifs, titres
+        mêlés » se reconnaît sans hésiter.
+
+        Elle est portée à la naissance du lot, et pas après : c'est le seul
+        instant où l'inscription d'origine est certaine — le livrable qui
+        nomme le lot a déjà refusé toute réception sans elle.
+        """
+        valeurs = super()._prepare_new_lot_vals()
+        inscription = self.move_id.police_ligne_id
+        if inscription.description:
+            valeurs['note'] = plaintext2html(inscription.description)
+        return valeurs
 
 
 class StockPicking(models.Model):
