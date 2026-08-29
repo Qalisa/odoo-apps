@@ -49,7 +49,10 @@
     <record id="regle_societe_consultation" model="ir.rule">
         <field name="name">Livre de police : les consultations de la societe</field>
         <field name="model_id" ref="model_livre_police_consultation"/>
-        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+        <!-- Une consultation porte sur plusieurs registres a la fois. Elle se
+             montre a qui tient l'un d'eux : sa lecture a bien eu lieu chez
+             lui. -->
+        <field name="domain_force">['|', ('company_ids', '=', False), ('company_ids', 'in', company_ids)]</field>
     </record>
 
 </odoo>

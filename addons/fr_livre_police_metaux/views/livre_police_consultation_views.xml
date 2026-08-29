@@ -46,7 +46,8 @@
         <field name="arch" type="xml">
             <list string="Consultations" create="false" edit="false"
                   delete="false" default_order="date desc">
-                <field name="company_id" optional="show"
+                <field name="company_ids" optional="show"
+                       widget="many2many_tags"
                        groups="base.group_multi_company"/>
                 <field name="date"/>
                 <field name="user_id"/>
