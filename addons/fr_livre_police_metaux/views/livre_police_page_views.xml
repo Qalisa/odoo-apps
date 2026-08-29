@@ -115,6 +115,11 @@
         <field name="name">Pages du registre</field>
         <field name="res_model">livre.police.page</field>
         <field name="view_mode">list,form</field>
+        <!-- Regroupe par societe d'entree : les numeros de page repartent a
+             00001 dans chaque agence, et une liste ou ils s'entremelent ne se
+             lit pas. Le regroupement se pose par le filtre de recherche, pour
+             que la facette apparaisse et se retire. -->
+        <field name="context">{'search_default_groupe_societe': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucune page</p>
             <p>
