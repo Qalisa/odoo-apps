@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.13.0',
+    'version': '18.0.1.14.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -260,8 +260,11 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
     # `fr_numismatics_metals` porte « Soumis au livre de police », qui dit
     # quels articles entrent au registre : la provenance suit cette case et
     # n'en reclame pas une seconde.
-    'depends': ['sale', 'account', 'contacts_citizenship_id',
-                'fr_numismatics_metals'],
+    # `sale_stock` fait naitre la reception d'un rachat et porte le lien du
+    # mouvement vers la ligne de devis ; `stock` porte le lot qui prend le
+    # numero d'ordre (c. penal, art. R321-4).
+    'depends': ['sale', 'account', 'stock', 'sale_stock',
+                'contacts_citizenship_id', 'fr_numismatics_metals'],
     'data': [
         'security/livre_police_security.xml',
         'security/ir.model.access.csv',
@@ -273,6 +276,7 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
         'views/product_views.xml',
         'views/sale_order_views.xml',
         'views/account_move_views.xml',
+        'views/stock_picking_views.xml',
         'views/livre_police_ligne_views.xml',
         'views/livre_police_rectification_views.xml',
         'views/livre_police_page_views.xml',
