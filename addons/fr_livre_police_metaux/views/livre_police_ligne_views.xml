@@ -17,6 +17,15 @@
                   delete="false" default_order="company_id, numero_ordre"
                   decoration-muted="rectifiee">
                 <field name="rectifiee" column_invisible="1"/>
+                <!-- La societe precede le numero d'ordre parce qu'elle le
+                     qualifie : un registre est tenu pour chaque etablissement
+                     (c. pen., art. R321-6), et chaque agence repart donc de
+                     000001. « Metz 000004 » et « Nancy 000004 » sont deux
+                     inscriptions differentes. Ce n'est pas une colonne de
+                     l'annexe I — celle-ci commence au numero d'ordre — mais
+                     l'identite du registre dans lequel on lit. -->
+                <field name="company_id" optional="show"
+                       groups="base.group_multi_company"/>
                 <field name="numero_ordre"/>
                 <field name="rectifie_id" optional="show"
                        string="Rectifie"/>
@@ -42,8 +51,6 @@
                 <field name="poids" sum="Poids total" optional="show"/>
                 <field name="titre_texte" optional="show"/>
                 <field name="date_sortie" optional="show"/>
-                <field name="company_id" optional="hide"
-                       groups="base.group_multi_company"/>
                 <field name="motif_rectification" optional="hide"/>
                 <field name="move_id" optional="hide"/>
             </list>
