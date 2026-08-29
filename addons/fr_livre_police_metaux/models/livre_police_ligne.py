@@ -215,6 +215,17 @@ class LivrePoliceLigne(models.Model):
              "d'ordre doit demeurer apparent sur le métal en stock (c. pén., "
              "art. R321-4).",
     )
+    etat_sortie = fields.Selection(
+        [('en_stock', "En stock"),
+         ('partiel', "Sorti en partie"),
+         ('sorti', "Sorti")],
+        string="État", readonly=True, compute='_compute_sorties',
+        search='_search_etat_sortie',
+        help="Où en est ce numéro d'ordre. « Sorti en partie » est le cas "
+             "qu'aucune date ne sait dire : du métal est parti, il en reste, "
+             "et le numéro doit demeurer apparent sur ce qui reste (c. pén., "
+             "art. R321-4).",
+    )
     date_sortie = fields.Date(
         string="Date de sortie", readonly=True, compute='_compute_sorties',
         help="La date à laquelle l'inscription s'est vidée. Elle reste vide "
@@ -315,7 +326,8 @@ class LivrePoliceLigne(models.Model):
             else:
                 ligne.titre_texte = False
 
-    @api.depends('sortie_ids.poids', 'sortie_ids.date_mouvement', 'poids')
+    @api.depends('sortie_ids.poids', 'sortie_ids.date_mouvement', 'poids',
+                 'sens')
     def _compute_sorties(self):
         """Ce qui est reparti, ce qui reste, et le jour où il n'en reste plus.
 
@@ -328,9 +340,33 @@ class LivrePoliceLigne(models.Model):
             ligne.poids_sorti = sum(sorties.mapped('poids'))
             ligne.poids_restant = ligne.poids - ligne.poids_sorti
             dates = [s.date_mouvement for s in sorties if s.date_mouvement]
-            ligne.date_sortie = (
-                max(dates) if dates and ligne.poids_restant <= 0.00005
-                else False)
+            solde = ligne.poids_restant <= 0.00005
+            ligne.date_sortie = max(dates) if dates and solde else False
+            if ligne.sens != 'entree':
+                ligne.etat_sortie = False
+            elif not sorties:
+                ligne.etat_sortie = 'en_stock'
+            else:
+                ligne.etat_sortie = 'sorti' if solde else 'partiel'
+
+    @api.model
+    def _search_etat_sortie(self, operateur, valeur):
+        """L'état se recalcule ; il se cherche donc en le recalculant.
+
+        Un solde ne s'exprime pas en domaine SQL — « il en reste » compare une
+        somme de sorties au poids d'entrée. On trie donc les entrées en
+        mémoire. C'est tenable tant que le registre se compte en milliers de
+        lignes ; au-delà, il faudra stocker l'état, et se souvenir qu'il ne
+        doit pas entrer dans l'empreinte.
+        """
+        if operateur not in ('=', '!=', 'in', 'not in'):
+            raise UserError(_("L'état de sortie ne se cherche que par égalité."))
+        cherches = valeur if isinstance(valeur, (list, tuple)) else [valeur]
+        entrees = self.search([('sens', '=', 'entree')])
+        retenues = entrees.filtered(lambda l: l.etat_sortie in cherches)
+        if operateur in ('!=', 'not in'):
+            retenues = entrees - retenues
+        return [('id', 'in', retenues.ids)]
 
     @api.depends('rectifiee_par_ids')
     def _compute_rectifiee(self):

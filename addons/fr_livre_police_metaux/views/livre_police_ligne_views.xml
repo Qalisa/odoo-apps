@@ -29,6 +29,9 @@
                        groups="base.group_multi_company"/>
                 <field name="numero_ordre"/>
                 <field name="sens" optional="show"/>
+                <field name="etat_sortie" optional="show"
+                       decoration-success="etat_sortie == 'sorti'"
+                       decoration-warning="etat_sortie == 'partiel'"/>
                 <field name="entree_id" optional="show" string="Sort de"/>
                 <field name="rectifie_id" optional="show"
                        string="Rectifie"/>
@@ -93,6 +96,8 @@
                             <field name="sens" readonly="1"/>
                             <field name="entree_id" readonly="1"
                                    invisible="sens != 'sortie'"/>
+                            <field name="mouvement_stock_id" readonly="1"
+                                   invisible="sens != 'sortie'"/>
                             <field name="date_mouvement" readonly="1"
                                    invisible="sens != 'sortie'"/>
                             <field name="date_achat" readonly="1"
@@ -111,14 +116,37 @@
                             <field name="regime_quantite" readonly="1"/>
                             <field name="poids" readonly="1"/>
                             <field name="titre_texte" readonly="1"/>
+                            <field name="etat_sortie" readonly="1"
+                                   invisible="sens != 'entree'"/>
                             <field name="date_sortie" readonly="1"
                                    placeholder="encore en stock"/>
-                            <field name="poids_sorti" readonly="1"
-                                   invisible="sens != 'entree'"/>
-                            <field name="poids_restant" readonly="1"
-                                   invisible="sens != 'entree'"/>
                         </group>
                     </group>
+                    <!--
+                        Le recapitulatif des sorties. Une entree ne dit pas
+                        d'elle-meme ce qu'elle est devenue : les departs sont
+                        des inscriptions separees, ailleurs dans la suite. Les
+                        rassembler ici evite de les chercher, et repond a la
+                        seule question qu'on se pose devant un numero d'ordre —
+                        en reste-t-il, et combien.
+                    -->
+                    <group string="Ce qui est sorti" invisible="sens != 'entree'">
+                        <group>
+                            <field name="poids_sorti" readonly="1"/>
+                            <field name="poids_restant" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="sortie_ids" readonly="1" nolabel="1"
+                           invisible="sens != 'entree' or not sortie_ids">
+                        <list create="false" edit="false" delete="false"
+                              default_order="numero_ordre">
+                            <field name="numero_ordre" string="N° d'ordre"/>
+                            <field name="date_mouvement" string="Sortie le"/>
+                            <field name="quantite"/>
+                            <field name="regime_quantite" string="Régime"/>
+                            <field name="poids" sum="Poids sorti"/>
+                        </list>
+                    </field>
                     <group string="Description et provenance">
                         <field name="description" readonly="1" nolabel="1"
                                colspan="2"/>
@@ -183,6 +211,11 @@
                 <filter name="filtre_sorties" string="Sorties"
                         domain="[('sens', '=', 'sortie')]"/>
                 <separator/>
+                <filter name="filtre_partiels" string="Sortis en partie"
+                        domain="[('etat_sortie', '=', 'partiel')]"/>
+                <filter name="filtre_soldes" string="Entièrement sortis"
+                        domain="[('etat_sortie', '=', 'sorti')]"/>
+                <separator/>
                 <filter name="filtre_rectifications" string="Rectifications"
                         domain="[('rectifie_id', '!=', False)]"/>
                 <filter name="filtre_rectifiees" string="Inscriptions rectifiées"
@@ -198,6 +231,8 @@
                             context="{'group_by': 'company_id'}"/>
                     <filter name="groupe_sens" string="Sens"
                             context="{'group_by': 'sens'}"/>
+                    <filter name="groupe_etat" string="État de sortie"
+                            context="{'group_by': 'etat_sortie'}"/>
                     <filter name="groupe_nature" string="Nature du métal"
                             context="{'group_by': 'metal_nature'}"/>
                     <filter name="groupe_provenance" string="Provenance"
