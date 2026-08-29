@@ -70,20 +70,32 @@ class LivrePoliceConsultation(models.Model):
         help="Ce qui a été ouvert : le registre, une édition du jour, un "
              "contrôle d'intégrité.",
     )
-    company_id = fields.Many2one(
-        'res.company', string="Société", readonly=True, index=True,
+    company_ids = fields.Many2many(
+        'res.company', string="Sociétés consultées", readonly=True,
+        help="Les registres qui étaient ouverts pendant la consultation. "
+             "Quand plusieurs agences sont retenues dans le sélecteur, elles "
+             "sont toutes lues d'un même regard : la trace doit les nommer "
+             "toutes, et non la seule société principale.",
     )
 
     @api.model
-    def _tracer(self, objet, portee, precision=None, societe=None):
-        """Enregistre une consultation. Jamais rien de plus que le texte."""
+    def _tracer(self, objet, portee, precision=None, societes=None):
+        """Enregistre une consultation. Jamais rien de plus que le texte.
+
+        La portée n'est pas la société active, c'est l'ensemble des sociétés
+        dont le registre était accessible — `env.companies`, celles que le
+        sélecteur d'agences avait retenues. Consulter avec Metz et Nancy
+        cochées, c'est lire deux registres ; n'en inscrire qu'un dirait moins
+        que ce qui s'est passé, et l'arrêté demande justement l'objet de la
+        consultation, pas son étiquette la plus courte.
+        """
         return self.sudo().create({
             'user_id': self.env.user.id,
             'date': fields.Datetime.now(),
             'objet': objet,
             'precision': precision or False,
             'portee': portee,
-            'company_id': (societe or self.env.company).id,
+            'company_ids': [(6, 0, (societes or self.env.companies).ids)],
         })
 
     @api.model
@@ -158,5 +170,13 @@ class IrActionsReport(models.Model):
         trace = self._LIVRE_POLICE_RAPPORTS.get(report_ref)
         if trace:
             objet, portee = trace
-            self.env['livre.police.consultation']._tracer(objet, portee)
+            # Une edition ne porte que sur ce qu'elle imprime : ses societes
+            # se lisent sur les enregistrements, et non sur le selecteur.
+            societes = None
+            if res_ids:
+                modele = self.env['ir.actions.report']._get_report(
+                    report_ref).model
+                societes = self.env[modele].browse(res_ids).mapped('company_id')
+            self.env['livre.police.consultation']._tracer(
+                objet, portee, societes=societes or None)
         return super()._render_qweb_pdf(report_ref, res_ids=res_ids, data=data)
