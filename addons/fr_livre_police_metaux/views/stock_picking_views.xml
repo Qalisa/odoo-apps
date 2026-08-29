@@ -19,6 +19,9 @@
                 <field name="police_numero_ordre" string="N° d'ordre"
                        optional="show"
                        column_invisible="parent.picking_type_code != 'incoming'"/>
+                <field name="police_description" string="Description"
+                       optional="show"
+                       column_invisible="parent.picking_type_code != 'incoming'"/>
             </xpath>
         </field>
     </record>
