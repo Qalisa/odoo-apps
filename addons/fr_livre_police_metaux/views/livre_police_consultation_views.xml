@@ -46,13 +46,13 @@
         <field name="arch" type="xml">
             <list string="Consultations" create="false" edit="false"
                   delete="false" default_order="date desc">
+                <field name="company_id" optional="show"
+                       groups="base.group_multi_company"/>
                 <field name="date"/>
                 <field name="user_id"/>
                 <field name="objet"/>
                 <field name="precision"/>
                 <field name="portee"/>
-                <field name="company_id" optional="hide"
-                       groups="base.group_multi_company"/>
             </list>
         </field>
     </record>

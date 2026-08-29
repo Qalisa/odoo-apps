@@ -7,6 +7,8 @@
             <list string="Pages du registre" create="false" edit="false"
                   delete="false" default_order="company_id, numero desc"
                   decoration-muted="not scellee">
+                <field name="company_id" optional="show"
+                       groups="base.group_multi_company"/>
                 <field name="numero"/>
                 <field name="date"/>
                 <field name="nombre_inscriptions"/>
@@ -17,8 +19,6 @@
                 <field name="scellee_le" optional="show"/>
                 <field name="scellee_par_id" optional="hide"/>
                 <field name="controle" optional="hide"/>
-                <field name="company_id" optional="hide"
-                       groups="base.group_multi_company"/>
             </list>
         </field>
     </record>
