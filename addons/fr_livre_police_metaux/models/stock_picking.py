@@ -111,6 +111,17 @@ class StockPicking(models.Model):
         self._police_nommer_les_lots()
         return super().button_validate()
 
+    def _action_done(self):
+        """Le métal qui part s'inscrit, une fois le transfert réellement fait.
+
+        Et non dans `button_validate`, qui peut rendre un assistant — reliquat,
+        transfert immédiat — et rendre la main sans que rien ne soit sorti.
+        `_action_done` est le moment où le stock a bougé.
+        """
+        resultat = super()._action_done()
+        self.env['livre.police.ligne']._inscrire_sorties(self)
+        return resultat
+
     def _police_check_inscription(self):
         """Refuse de réceptionner un métal dont l'achat n'est pas inscrit."""
         sans_inscription = self.move_ids._police_entrees_de_rachat().filtered(
