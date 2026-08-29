@@ -20,6 +20,11 @@ passe par la déclaration ; l'édition quotidienne ; le contrôle d'intégrité.
 Reste qu'une URL saisie à la main atteint la liste sans déclaration — c'est
 pourquoi l'accès est réservé à un groupe nommé plutôt qu'ouvert au comptoir.
 
+La déclaration est une page de l'application, et non une fenêtre modale : on
+entre dans le livre de police, puis un bouton l'ouvre. Une modale s'ouvrait
+par-dessus le module d'où l'on venait, et le registre héritait de son fil
+d'Ariane — on le lisait depuis l'inventaire.
+
 La conservation est d'un an. Au-delà, la trace est effacée : le texte fixe une
 durée, et garder des données nominatives de lecture plus longtemps que ce
 qu'il demande ne se justifierait devant personne.
@@ -119,12 +124,20 @@ class LivrePoliceAcces(models.TransientModel):
     )
 
     def action_ouvrir(self):
-        """Enregistre la consultation, puis ouvre le registre."""
+        """Enregistre la consultation, puis ouvre le registre.
+
+        Le registre s'ouvre en « main » : il remplace la déclaration au
+        lieu de s'empiler dessus. Le fil d'Ariane commence donc au registre,
+        et le retour arrière n'y ramène pas une page de formalité déjà
+        remplie — pour reconsulter, on repasse par le menu, ce qui est
+        précisément ce que l'arrêté veut voir tracé.
+        """
         self.ensure_one()
         self.env['livre.police.consultation']._tracer(
             self.objet, "Registre", self.precision)
         action = self.env.ref(
             'fr_livre_police_metaux.livre_police_ligne_action').sudo().read()[0]
+        action['target'] = 'main'
         return action
 
 
