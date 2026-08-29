@@ -61,6 +61,8 @@
                 <field name="date_sortie" optional="show"/>
                 <field name="motif_rectification" optional="hide"/>
                 <field name="move_id" optional="hide"/>
+                <field name="facture_vente_ids" optional="hide"
+                       widget="many2many_tags" string="Facture de vente"/>
             </list>
         </field>
     </record>
@@ -98,6 +100,10 @@
                                    invisible="sens != 'sortie'"/>
                             <field name="mouvement_stock_id" readonly="1"
                                    invisible="sens != 'sortie'"/>
+                            <field name="facture_vente_ids" readonly="1"
+                                   widget="many2many_tags"
+                                   invisible="sens != 'sortie'"
+                                   placeholder="pas encore facturée"/>
                             <field name="date_mouvement" readonly="1"
                                    invisible="sens != 'sortie'"/>
                             <field name="date_achat" readonly="1"
