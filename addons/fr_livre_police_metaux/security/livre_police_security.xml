@@ -19,4 +19,37 @@
             modifier une ligne.</field>
     </record>
 
+    <!-- Un registre par agence, et non un registre pour le groupe.
+
+         « Lorsque les personnes mentionnées à l'article R. 321-1 possèdent
+         plusieurs établissements ouverts au public, un registre est tenu pour
+         chaque établissement » (c. pén., art. R321-6, en vigueur depuis le
+         1er mars 1994). L'article R321-6-1 dispense du registre physique coté
+         et paraphé quand la tenue est informatisee — il ne dispense pas de ce
+         decoupage-la.
+
+         La numerotation, les pages et leur chainage sont deja propres a
+         chaque societe. Manquait la lecture : sans regle d'enregistrement,
+         un comptoir ouvrait la liste et y trouvait les vendeurs des deux
+         autres — leurs noms, leurs adresses, leurs pieces d'identite. Le
+         registre d'un etablissement n'a pas a montrer les clients d'un
+         autre. -->
+    <record id="regle_societe_ligne" model="ir.rule">
+        <field name="name">Livre de police : les inscriptions de la societe</field>
+        <field name="model_id" ref="model_livre_police_ligne"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="regle_societe_page" model="ir.rule">
+        <field name="name">Livre de police : les pages de la societe</field>
+        <field name="model_id" ref="model_livre_police_page"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="regle_societe_consultation" model="ir.rule">
+        <field name="name">Livre de police : les consultations de la societe</field>
+        <field name="model_id" ref="model_livre_police_consultation"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+
 </odoo>
