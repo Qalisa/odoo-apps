@@ -1,13 +1,23 @@
 <odoo>
 
-    <!-- Dans la catégorie « Autres droits » : une simple case à cocher sur la
-         fiche utilisateur, et non un niveau dans une hiérarchie. Ce droit ne
-         se déduit d'aucun autre — un administrateur des ventes n'a pas à
-         lire les chiffres de l'établissement du seul fait qu'il paramètre
-         des tarifs. -->
+    <!-- Une catégorie à lui seul, et non un niveau dans une hiérarchie : ce
+         droit ne se déduit d'aucun autre — un administrateur des ventes n'a
+         pas à lire les chiffres de l'établissement du seul fait qu'il
+         paramètre des tarifs.
+
+         Et surtout, pas « Droits supplémentaires » : cette catégorie figure
+         dans `res.users._get_hidden_extra_categories()`, et Odoo masque tous
+         ses groupes derrière `base.group_no_one`. Le droit n'était visible
+         qu'en mode développeur, donc impossible à accorder pour un
+         administrateur ordinaire. -->
+    <record id="module_category_stats" model="ir.module.category">
+        <field name="name">Statistiques</field>
+        <field name="sequence">50</field>
+    </record>
+
     <record id="group_global_stats" model="res.groups">
         <field name="name">Statistiques et chiffres consolidés</field>
-        <field name="category_id" ref="base.module_category_usability"/>
+        <field name="category_id" ref="module_category_stats"/>
         <field name="comment">Donne accès aux écrans d'analyse : ventes par
             vendeur, par client et par article, analyse des factures, rapport
             analytique et tableau de bord de facturation. Les états comptables

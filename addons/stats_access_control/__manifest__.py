@@ -50,7 +50,7 @@ modules reecrirait leurs groupes et rendrait les ecrans a tout le monde. Il
 faut alors remettre a jour ce module. L'initContainer `upgrade-addons`, qui
 met a jour nos modules a chaque demarrage du pod, le ferait de lui-meme.
     """,
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "category": "Sales/Sales",
     "author": "Qalisa",
     "website": "https://odoo-docs.qalisa.fr/",
