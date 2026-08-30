@@ -230,6 +230,12 @@
                 <filter name="filtre_annee" string="Cette année"
                         domain="[('date_achat', '&gt;=',
                                   (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d'))]"/>
+                <!-- Pas de regroupement par etat de sortie : `etat_sortie`
+                     se calcule a la lecture et n'existe pas en base, quand un
+                     group_by demande du SQL. Odoo levait « Cannot convert
+                     livre.police.ligne.etat_sortie to SQL because it is not
+                     stored » et l'ecran repondait « Oups ! ». Les deux filtres
+                     ci-dessus passent, eux, par `_search_etat_sortie`. -->
                 <group expand="0" string="Regrouper par">
                     <filter name="groupe_jour" string="Jour de l'achat"
                             context="{'group_by': 'date_achat:day'}"/>
@@ -237,8 +243,6 @@
                             context="{'group_by': 'company_id'}"/>
                     <filter name="groupe_sens" string="Sens"
                             context="{'group_by': 'sens'}"/>
-                    <filter name="groupe_etat" string="État de sortie"
-                            context="{'group_by': 'etat_sortie'}"/>
                     <filter name="groupe_nature" string="Nature du métal"
                             context="{'group_by': 'metal_nature'}"/>
                     <filter name="groupe_provenance" string="Provenance"
