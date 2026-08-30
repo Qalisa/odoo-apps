@@ -8,11 +8,30 @@
          registre.
 
          Le droit ne se déduit d'aucun autre — comptabiliser un avoir n'est
-         pas consulter le registre — d'où une simple case dans « Autres
-         droits », et non un niveau de plus dans une hiérarchie. -->
+         pas consulter le registre — d'où un droit isolé, et non un niveau de
+         plus dans une hiérarchie existante. -->
+
+    <!-- Une catégorie à lui seul, et non « Droits supplémentaires ».
+
+         Odoo masque derrière le mode développeur toute catégorie listée par
+         `res.users._get_hidden_extra_categories()` — « Hidden », « Extra » et
+         « Usability », c'est-à-dire « Droits supplémentaires ». Le droit y
+         était invisible d'un administrateur ordinaire, qui ne pouvait donc
+         pas l'accorder : un droit qui commande l'accès à un registre légal ne
+         se donne pas depuis un écran caché.
+
+         Il s'affiche désormais dans l'onglet « Droits d'accès » sous son
+         propre intitulé. Odoo le rend en liste déroulante plutôt qu'en case à
+         cocher — une catégorie qui ne porte qu'un groupe est traitée comme une
+         hiérarchie à un seul niveau ; cela se lit de la même façon. -->
+    <record id="module_category_livre_police" model="ir.module.category">
+        <field name="name">Livre de police</field>
+        <field name="sequence">50</field>
+    </record>
+
     <record id="group_livre_police" model="res.groups">
         <field name="name">Livre de police - consultation</field>
-        <field name="category_id" ref="base.module_category_usability"/>
+        <field name="category_id" ref="module_category_livre_police"/>
         <field name="comment">Donne accès au registre des objets mobiliers et
             des métaux précieux. Le registre est en lecture seule : il s'écrit
             à la comptabilisation des avoirs, et aucun utilisateur ne peut en
