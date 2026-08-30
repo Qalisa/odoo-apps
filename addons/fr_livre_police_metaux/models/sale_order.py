@@ -61,8 +61,9 @@ est retraité ; il ne peut pas consigner qu'une société a vendu sans dire qui
 l'engageait.
 """
 
-from odoo import models, fields, api, _
+from odoo import models, fields, api, Command, _
 from odoo.exceptions import UserError
+from odoo.tools import float_compare
 
 from ..tools.description import description_ajoutee
 from ..tools.reglement import MODES_REGLEMENT
@@ -487,3 +488,68 @@ class SaleOrder(models.Model):
         self._police_check_registre()
         self._police_check_reglement()
         return super().action_confirm()
+
+    def action_police_reprendre_stock(self):
+        """Remplace les lignes du devis par tout le stock disponible.
+
+        Vendre le stock d'une agence à un fondeur, c'est reprendre au devis
+        ce que le coffre contient — article par article, et fautif au premier
+        oubli. Le devis se remplit donc d'un coup, depuis les quantités
+        réellement présentes dans son entrepôt.
+
+        **Disponible**, et non « en stock » : ce qui est déjà réservé par une
+        autre livraison partira ailleurs, et le proposer deux fois ferait
+        sortir deux fois le même numéro d'ordre.
+
+        **Une ligne par article**, et non par lot : une ligne de devis ne
+        porte pas de lot, et lui en faire nommer un mentirait — c'est la
+        livraison qui choisit, lot par lot, et c'est là que le choix se lit.
+
+        Les lignes existantes sont remplacées, jamais complétées : un cumul
+        doublerait les quantités au second clic.
+        """
+        self.ensure_one()
+        if self.state not in ('draft', 'sent'):
+            raise UserError(_(
+                "Le stock ne se reprend que sur un devis : celui-ci est déjà "
+                "confirmé, et ses lignes ont produit des mouvements."))
+        entrepot = self.warehouse_id
+        if not entrepot:
+            raise UserError(_("Ce devis n'est rattaché à aucun entrepôt."))
+
+        disponible = {}
+        quants = self.env['stock.quant'].search([
+            ('company_id', '=', self.company_id.id),
+            ('location_id', 'child_of', entrepot.view_location_id.id),
+            ('location_id.usage', '=', 'internal'),
+        ])
+        for quant in quants:
+            libre = quant.available_quantity
+            if float_compare(libre, 0.0,
+                             precision_rounding=quant.product_uom_id.rounding) > 0:
+                disponible[quant.product_id] = (
+                    disponible.get(quant.product_id, 0.0) + libre)
+        if not disponible:
+            raise UserError(_(
+                "Aucun stock disponible à %(entrepot)s. Le métal déjà "
+                "réservé par une autre livraison n'est pas repris.",
+                entrepot=entrepot.code))
+
+        self.order_line = [Command.clear()] + [
+            Command.create({'product_id': produit.id, 'product_uom_qty': quantite})
+            for produit, quantite in sorted(disponible.items(),
+                                            key=lambda couple: couple[0].display_name)
+        ]
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'type': 'success',
+                'message': _(
+                    "Stock de %(entrepot)s repris : %(articles)s article(s). "
+                    "Le métal déjà réservé par une autre livraison en est "
+                    "exclu.",
+                    entrepot=entrepot.code, articles=len(disponible)),
+                'next': {'type': 'ir.actions.act_window_close'},
+            },
+        }

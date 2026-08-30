@@ -130,4 +130,31 @@
         </field>
     </record>
 
+    <!--
+        Vendre le stock d'une agence, c'est le reprendre en entier : le
+        fondeur prend le coffre, pas trois lignes choisies. Le bouton se
+        range sous les lignes, là où Odoo met déjà ce qui agit sur elles, et
+        prévient avant de les remplacer — il efface ce qui est saisi.
+
+        Il disparaît d'un rachat : `police_registre_concerne` dit qu'une
+        ligne fait entrer du métal, et remplir un rachat du stock qu'on
+        détient n'a aucun sens.
+    -->
+    <record id="sale_order_view_form_reprendre_stock" model="ir.ui.view">
+        <field name="name">sale.order.form.reprendre.stock</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='so_button_below_order_lines']" position="inside">
+                <button string="Reprendre tout le stock"
+                        name="action_police_reprendre_stock"
+                        type="object"
+                        class="btn btn-secondary"
+                        icon="fa-cubes"
+                        invisible="state not in ('draft', 'sent') or police_registre_concerne"
+                        confirm="Les lignes de ce devis vont être remplacées par tout le stock disponible de l'agence. Ce qui est saisi sera perdu."/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
