@@ -26,4 +26,47 @@
         </field>
     </record>
 
+    <!--
+        Le poids a cote de la quantite, sur la liste des mouvements et dans
+        la boite « Mouvement de stock ».
+
+        « 40,00 Unite(s) » designe quarante grammes sans le dire, et quatre
+        « 100 FRANCS OR » n'en designent pas quatre. C'est le poids que le
+        registre des metaux precieux reclame (CGI, ann. IV, art. 56 J
+        quindecies) : il se lit avant de valider, pas apres.
+
+        Le poids demande reste masque par defaut : il ne differe du poids
+        sorti que tant que le transfert n'est pas fait.
+    -->
+    <record id="stock_picking_view_form_poids" model="ir.ui.view">
+        <field name="name">stock.picking.form.poids.metal</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='move_ids_without_package']/list/field[@name='product_uom_qty']"
+                   position="after">
+                <field name="police_poids_demande" string="Poids demande (g)"
+                       optional="hide" readonly="1" sum="Poids demande"/>
+            </xpath>
+            <xpath expr="//field[@name='move_ids_without_package']/list/field[@name='quantity']"
+                   position="after">
+                <field name="police_poids" string="Poids (g)"
+                       optional="show" readonly="1" sum="Poids"
+                       column_invisible="parent.state == 'draft'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="stock_move_operations_view_form_poids" model="ir.ui.view">
+        <field name="name">stock.move.operations.form.poids.metal</field>
+        <field name="model">stock.move</field>
+        <field name="inherit_id" ref="stock.view_stock_move_operations"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_uom_qty']/ancestor::div[hasclass('o_row')]"
+                   position="after">
+                <field name="police_poids_demande" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

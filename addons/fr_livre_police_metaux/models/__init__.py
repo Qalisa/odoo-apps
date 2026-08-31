@@ -7,6 +7,7 @@ from . import sale_order
 from . import account_move
 from . import stock_picking
 from . import stock_lot
+from . import stock_poids
 from . import livre_police_page
 from . import livre_police_ligne
 from . import livre_police_rectification
