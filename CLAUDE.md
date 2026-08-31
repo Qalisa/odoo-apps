@@ -80,7 +80,7 @@ docker compose -f .dev/docker-compose.yml run --rm --no-deps -T \
   --entrypoint /usr/bin/odoo odoo -d <base> \
   --db_host db --db_user odoo --db_password odoo --no-http --stop-after-init \
   -u <modules> \
-  --addons-path "/mnt/extra-addons,/more-addons/odooapps,/more-addons/eqp_odoo_addons,/more-addons/partner-contact,/more-addons/l10n-france,/more-addons/server-tools"
+  --addons-path "/mnt/extra-addons,/more-addons/odooapps,/more-addons/eqp_odoo_addons,/more-addons/partner-contact,/more-addons/l10n-france,/more-addons/server-tools,/more-addons/server-auth"
 ```
 
 Le service `db` doit tourner (`docker compose -f .dev/docker-compose.yml up -d db`) :

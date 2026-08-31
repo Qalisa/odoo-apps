@@ -18,3 +18,7 @@
 	path = .dev/more-addons/server-tools
 	url = https://github.com/OCA/server-tools
 	branch = 18.0
+[submodule ".dev/more-addons/server-auth"]
+	path = .dev/more-addons/server-auth
+	url = https://github.com/OCA/server-auth
+	branch = 18.0
