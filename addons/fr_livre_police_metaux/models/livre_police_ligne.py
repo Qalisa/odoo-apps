@@ -275,6 +275,57 @@ class LivrePoliceLigne(models.Model):
         for ligne in self:
             vente = ligne.mouvement_stock_id.move_id.sale_line_id
             ligne.facture_vente_ids = vente.invoice_lines.move_id
+
+    contrepartie_nom = fields.Char(
+        string="Vendeur ou acheteur", compute='_compute_contrepartie',
+        help="Qui est en face. Le registre n'inscrit que le vendeur ; sur "
+             "une sortie, cette colonne lit le client de la facture de "
+             "vente. C'est un confort d'écran, pas une mention du registre.",
+    )
+    contrepartie_qualite = fields.Char(
+        string="Qualité de la contrepartie", compute='_compute_contrepartie',
+    )
+    contrepartie_domicile = fields.Text(
+        string="Domicile ou siège de la contrepartie",
+        compute='_compute_contrepartie',
+    )
+
+    @api.depends('sens', 'vendeur_nom', 'vendeur_qualite', 'vendeur_domicile',
+                 'facture_vente_ids')
+    def _compute_contrepartie(self):
+        """Qui est en face, dans un sens comme dans l'autre.
+
+        L'acheteur n'est une mention d'aucun des deux registres — ni le
+        modèle officiel (c. pén., art. R321-3), ni les colonnes propres aux
+        métaux (CGI, ann. IV, art. 56 J quindecies) ne demandent à qui l'on
+        revend. Une sortie laisse donc ses colonnes de vendeur vides, et
+        l'écran ne dit plus où le métal est parti, alors que la facture le
+        sait.
+
+        Ces trois lectures comblent l'écran sans rien inscrire : calculées,
+        hors du chiffre de contrôle, et l'édition quotidienne continue de ne
+        porter que le vendeur.
+        """
+        for ligne in self:
+            if ligne.sens == 'entree':
+                ligne.contrepartie_nom = ligne.vendeur_nom
+                ligne.contrepartie_qualite = ligne.vendeur_qualite
+                ligne.contrepartie_domicile = ligne.vendeur_domicile
+                continue
+            client = ligne.facture_vente_ids[:1].partner_id
+            if not client:
+                ligne.contrepartie_nom = False
+                ligne.contrepartie_qualite = False
+                ligne.contrepartie_domicile = False
+                continue
+            ligne.contrepartie_nom = client.display_name
+            ligne.contrepartie_qualite = (
+                client.police_qualite_id.display_name or client.function
+                or False)
+            ligne.contrepartie_domicile = "\n".join(
+                l.strip() for l in
+                client._display_address(without_company=True).splitlines()
+                if l.strip()) or False
     rectifie_id = fields.Many2one(
         'livre.police.ligne', string="Rectifie l'inscription",
         readonly=True, index='btree_not_null', ondelete='restrict',

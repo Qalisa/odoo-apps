@@ -38,16 +38,24 @@
                 <field name="date_achat"/>
                 <field name="description" class="o_lp_description"/>
                 <field name="provenance"/>
-                <field name="vendeur_nom"/>
-                <field name="vendeur_qualite" optional="show"/>
-                <field name="vendeur_domicile" optional="hide"/>
+                <field name="contrepartie_nom"/>
+                <field name="contrepartie_qualite" optional="show"/>
+                <field name="contrepartie_domicile" optional="hide"/>
+                <!--
+                    La colonne du registre lui-meme, telle qu'elle est
+                    inscrite et telle que l'edition quotidienne l'imprime.
+                    Masquee par defaut : elle est vide sur une sortie, ce que
+                    la colonne ci-dessus corrige a l'ecran.
+                -->
+                <field name="vendeur_nom" optional="hide"/>
                 <field name="representant_nom" optional="show"/>
                 <field name="representant_qualite" optional="hide"/>
                 <field name="piece_nature" optional="show"/>
                 <field name="piece_numero" optional="show"/>
                 <field name="piece_autorite" optional="hide"/>
                 <field name="piece_delivrance" optional="hide"/>
-                <field name="prix" sum="Total"/>
+                <field name="prix" sum="Total"
+                       invisible="sens != 'entree'"/>
                 <field name="currency_id" column_invisible="1"/>
                 <field name="mode_reglement" optional="show"/>
                 <field name="protection_patrimoine" optional="hide"/>
@@ -100,21 +108,20 @@
                                    invisible="sens != 'sortie'"/>
                             <field name="mouvement_stock_id" readonly="1"
                                    invisible="sens != 'sortie'"/>
-                            <field name="facture_vente_ids" readonly="1"
-                                   widget="many2many_tags"
-                                   invisible="sens != 'sortie'"
-                                   placeholder="pas encore facturée"/>
                             <field name="date_mouvement" readonly="1"
                                    invisible="sens != 'sortie'"/>
                             <field name="date_achat" readonly="1"
                                    invisible="sens != 'entree'"/>
-                            <field name="prix" readonly="1"/>
+                            <field name="prix" readonly="1"
+                                   invisible="sens != 'entree'"/>
                             <field name="currency_id" invisible="1"/>
                             <field name="mode_reglement" readonly="1"
+                                   invisible="sens != 'entree'"
                                    placeholder="renseigné au règlement"/>
                             <field name="company_id" readonly="1"
                                    groups="base.group_multi_company"/>
-                            <field name="move_id" readonly="1"/>
+                            <field name="move_id" readonly="1"
+                                   invisible="sens != 'entree'"/>
                         </group>
                         <group string="Les objets">
                             <field name="metal_nature" readonly="1"/>
@@ -125,6 +132,7 @@
                             <field name="etat_sortie" readonly="1"
                                    invisible="sens != 'entree'"/>
                             <field name="date_sortie" readonly="1"
+                                   invisible="sens != 'entree'"
                                    placeholder="encore en stock"/>
                         </group>
                     </group>
@@ -153,14 +161,47 @@
                             <field name="poids" sum="Poids sorti"/>
                         </list>
                     </field>
-                    <group string="Description et provenance">
+                    <group string="Description et provenance"
+                           invisible="sens != 'entree'">
                         <field name="description" readonly="1" nolabel="1"
                                colspan="2"/>
                         <field name="provenance" readonly="1"/>
                         <field name="protection_patrimoine" readonly="1"
                                invisible="not protection_patrimoine"/>
                     </group>
-                    <group>
+                    <!--
+                        La facture de vente n'est une mention d'aucun des deux
+                        registres — ni le prix de revente ni l'acheteur n'y
+                        figurent. Elle dit ou retrouver la piece justificative,
+                        que le I de l'art. L102 B du LPF fait conserver : elle
+                        doit donc se cliquer, ce qu'une etiquette ne fait pas.
+                    -->
+                    <group string="La facture de vente"
+                           invisible="sens != 'sortie'">
+                        <field name="facture_vente_ids" readonly="1" nolabel="1"
+                               colspan="2">
+                            <list create="false" edit="false" delete="false">
+                                <field name="name"/>
+                                <field name="invoice_date"/>
+                                <field name="partner_id"/>
+                                <field name="currency_id" column_invisible="1"/>
+                                <field name="amount_total"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group string="Description" invisible="sens != 'sortie'">
+                        <field name="description" readonly="1" nolabel="1"
+                               colspan="2"/>
+                    </group>
+                    <!--
+                        Une sortie n'a ni vendeur ni piece d'identite, et ce
+                        n'est pas un oubli : `_valeurs_depuis_sortie` ne
+                        recopie de l'entree que ce qui decrit la marchandise.
+                        Les repeter laisserait croire qu'une seconde
+                        operation a eu lieu avec la meme personne. Le champ
+                        « Sort de » mene a l'entree qui les porte.
+                    -->
+                    <group invisible="sens != 'entree'">
                         <group string="Le vendeur">
                             <field name="vendeur_nom" readonly="1"/>
                             <field name="vendeur_qualite" readonly="1"/>
@@ -185,7 +226,8 @@
                     <group string="Inscription">
                         <field name="date_inscription" readonly="1"/>
                         <field name="inscrit_par_id" readonly="1"/>
-                        <field name="move_line_id" readonly="1"/>
+                        <field name="move_line_id" readonly="1"
+                               invisible="sens != 'entree'"/>
                     </group>
                 </sheet>
             </form>
