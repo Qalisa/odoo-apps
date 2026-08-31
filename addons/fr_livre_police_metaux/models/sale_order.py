@@ -194,6 +194,17 @@ class SaleOrderLine(models.Model):
             values['police_origin_id'] = self.police_origin_id.id
         return values
 
+    def action_police_reprendre_stock(self):
+        """Relais depuis la barre sous les lignes, qui appartient à la liste.
+
+        La barre « Ajouter un produit / Catalogue » est le `<control>` de la
+        liste des lignes : ses boutons appellent donc `sale.order.line`, et
+        le devis se retrouve par le contexte. C'est le chemin que prend déjà
+        `action_add_from_catalog`.
+        """
+        devis = self.env['sale.order'].browse(self.env.context.get('order_id'))
+        return devis.action_police_reprendre_stock()
+
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
@@ -513,6 +524,10 @@ class SaleOrder(models.Model):
             raise UserError(_(
                 "Le stock ne se reprend que sur un devis : celui-ci est déjà "
                 "confirmé, et ses lignes ont produit des mouvements."))
+        if self.police_registre_concerne:
+            raise UserError(_(
+                "Ce devis est un rachat : il fait entrer du métal. Le remplir "
+                "du stock déjà détenu n'aurait pas de sens."))
         entrepot = self.warehouse_id
         if not entrepot:
             raise UserError(_("Ce devis n'est rattaché à aucun entrepôt."))
