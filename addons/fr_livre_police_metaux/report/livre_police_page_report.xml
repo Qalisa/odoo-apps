@@ -116,6 +116,18 @@
                                             rectifie le
                                             <span t-field="ligne.rectifie_id.numero_ordre"/>
                                         </div>
+                                        <!-- Le metal recu d'un autre
+                                             etablissement porte le numero du
+                                             comptoir de rachat sur son
+                                             sachet, et celui-ci au registre
+                                             local. La page doit dire les deux,
+                                             faute de quoi l'etiquette et
+                                             l'imprime ne se rejoindraient
+                                             pas. -->
+                                        <div t-if="ligne.numero_lot and ligne.numero_lot != ligne.numero_ordre"
+                                             style="font-size: 7px;">
+                                            lot <span t-field="ligne.numero_lot"/>
+                                        </div>
                                     </td>
                                     <td class="text-nowrap"><span t-field="ligne.date_achat"/></td>
                                     <td>
@@ -123,6 +135,16 @@
                                         <div t-if="ligne.provenance">
                                             <i>Provenance :</i>
                                             <span t-field="ligne.provenance"/>
+                                        </div>
+                                        <!-- Une justification qui ne
+                                             s'imprime pas n'est pas une
+                                             justification : c'est l'imprime
+                                             qu'un controle a sous les yeux. -->
+                                        <div t-if="ligne.transfert_motif"
+                                             style="font-size: 7px;">
+                                            <i>Motif du transfert
+                                                (<span t-field="ligne.transfert_etablissement"/>) :</i>
+                                            <span t-field="ligne.transfert_motif"/>
                                         </div>
                                         <div t-if="ligne.motif_rectification"
                                              style="font-size: 7px;">

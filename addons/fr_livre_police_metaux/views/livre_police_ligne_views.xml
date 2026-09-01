@@ -33,6 +33,15 @@
                        decoration-success="etat_sortie == 'sorti'"
                        decoration-warning="etat_sortie == 'partiel'"/>
                 <field name="entree_id" optional="show" string="Sort de"/>
+                <!-- Le comptoir qui a rachete, quel que soit celui qui
+                     detient le metal aujourd'hui. Sur un rachat local, elle
+                     redit la societe ; apres un transfert, elle est la seule
+                     colonne qui remonte a l'achat. -->
+                <field name="origine_etablissement" optional="hide"/>
+                <field name="origine_numero_ordre" optional="show"/>
+                <field name="numero_lot" optional="hide"/>
+                <field name="transfert_id" optional="hide"/>
+                <field name="transfert_etablissement" optional="show"/>
                 <field name="rectifie_id" optional="show"
                        string="Rectifie"/>
                 <field name="date_achat"/>
@@ -67,6 +76,7 @@
                 <field name="date_mouvement" optional="hide"/>
                 <field name="poids_restant" optional="hide"/>
                 <field name="date_sortie" optional="show"/>
+                <field name="transfert_motif" optional="hide"/>
                 <field name="motif_rectification" optional="hide"/>
                 <field name="move_id" optional="hide"/>
                 <field name="facture_vente_ids" optional="hide"
@@ -106,10 +116,14 @@
                             <field name="sens" readonly="1"/>
                             <field name="entree_id" readonly="1"
                                    invisible="sens != 'sortie'"/>
+                            <!-- Une entree recue d'un autre etablissement
+                                 a, elle aussi, un mouvement de stock et une
+                                 date d'arrivee : c'est une entree qui vient
+                                 du stock et non d'un avoir. -->
                             <field name="mouvement_stock_id" readonly="1"
-                                   invisible="sens != 'sortie'"/>
+                                   invisible="sens != 'sortie' and not transfert_id"/>
                             <field name="date_mouvement" readonly="1"
-                                   invisible="sens != 'sortie'"/>
+                                   invisible="sens != 'sortie' and not transfert_id"/>
                             <field name="date_achat" readonly="1"
                                    invisible="sens != 'entree'"/>
                             <field name="prix" readonly="1"
@@ -218,6 +232,39 @@
                             <field name="piece_delivrance" readonly="1"/>
                         </group>
                     </group>
+                    <!--
+                        Le metal recu d'un autre etablissement. La colonne du
+                        vendeur reste vide : personne n'a vendu. Ce qui tient
+                        sa place, c'est l'origine, et le motif qui dit
+                        pourquoi le metal a bouge.
+                    -->
+                    <group string="Transfert entre établissements"
+                           invisible="not transfert_id">
+                        <group>
+                            <field name="transfert_id" readonly="1"/>
+                            <field name="transfert_etablissement" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="transfert_motif" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="L'origine du métal"
+                           invisible="not origine_numero_ordre">
+                        <group>
+                            <field name="origine_etablissement" readonly="1"/>
+                            <field name="origine_numero_ordre" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="origine_date_achat" readonly="1"/>
+                            <field name="numero_lot" readonly="1"/>
+                            <!-- Le lien ne s'ouvre que depuis l'etablissement
+                                 qui tient ce registre-la : les trois colonnes
+                                 ci-dessus en portent la copie, lisible
+                                 partout. -->
+                            <field name="origine_id" readonly="1"
+                                   invisible="not origine_id"/>
+                        </group>
+                    </group>
                     <group string="Rectification"
                            invisible="not rectifie_id">
                         <field name="rectifie_id" readonly="1"/>
@@ -239,7 +286,12 @@
         <field name="model">livre.police.ligne</field>
         <field name="arch" type="xml">
             <search string="Livre de police">
-                <field name="numero_ordre"/>
+                <field name="numero_ordre"
+                       filter_domain="['|', '|',
+                                       ('numero_ordre', 'ilike', self),
+                                       ('numero_lot', 'ilike', self),
+                                       ('origine_numero_ordre', 'ilike', self)]"
+                       string="N° d'ordre ou lot"/>
                 <field name="vendeur_nom"
                        filter_domain="['|', ('vendeur_nom', 'ilike', self),
                                             ('representant_nom', 'ilike', self)]"
@@ -263,6 +315,10 @@
                         domain="[('etat_sortie', '=', 'partiel')]"/>
                 <filter name="filtre_soldes" string="Entièrement sortis"
                         domain="[('etat_sortie', '=', 'sorti')]"/>
+                <separator/>
+                <filter name="filtre_transferts"
+                        string="Transferts entre établissements"
+                        domain="[('transfert_id', '!=', False)]"/>
                 <separator/>
                 <filter name="filtre_rectifications" string="Rectifications"
                         domain="[('rectifie_id', '!=', False)]"/>

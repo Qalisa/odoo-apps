@@ -59,6 +59,18 @@
         <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
     </record>
 
+    <!-- Un transfert appartient aux deux etablissements a la fois : celui
+         qui expedie doit le suivre jusqu'a la reception, celui qui recoit
+         doit le voir arriver. La regle nomme donc les deux, la ou celle du
+         registre n'en nomme qu'un — chaque comptoir ne voit que la moitie
+         d'inscription qui est la sienne, et c'est bien ce qu'on veut. -->
+    <record id="regle_societe_transfert" model="ir.rule">
+        <field name="name">Livre de police : les transferts de la societe</field>
+        <field name="model_id" ref="model_livre_police_transfert"/>
+        <field name="domain_force">['|', ('company_id', 'in', company_ids),
+                                         ('company_destination_id', 'in', company_ids)]</field>
+    </record>
+
     <record id="regle_societe_page" model="ir.rule">
         <field name="name">Livre de police : les pages de la societe</field>
         <field name="model_id" ref="model_livre_police_page"/>

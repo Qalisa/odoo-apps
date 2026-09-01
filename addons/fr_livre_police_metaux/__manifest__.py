@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.26.3',
+    'version': '18.0.1.27.1',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -231,6 +231,59 @@ verifie trois choses qui se cassent differemment : le contenu de chaque page,
 son chainage a la precedente, et la continuite des numeros — une suppression
 faite hors d'Odoo ne casse aucune empreinte, mais laisse un trou.
 
+Le metal qui change d'etablissement
+-----------------------------------
+
+« Lorsque les personnes mentionnees a l'article R. 321-1 possedent plusieurs
+etablissements ouverts au public, un registre est tenu pour chaque
+etablissement » (c. pen., art. R321-6). Trois comptoirs, trois registres,
+trois suites de numeros d'ordre.
+
+Restait le mouvement entre eux. Un sachet part de Metz pour etre vendu depuis
+Nancy : cote stock, deux bons ; cote registre, rien. La sortie de Metz
+s'inscrivait comme une sortie ordinaire, muette sur sa destination, et Nancy
+n'inscrivait aucune entree — le metal quittait un registre sans entrer dans
+l'autre, et sa revente ulterieure ne s'inscrivait nulle part, faute d'entree a
+laquelle la rattacher.
+
+Un document **Transfert entre etablissements** tient desormais les deux bouts.
+Il nomme l'agence d'arrivee, porte le **motif** du deplacement, et c'est lui
+qui cree les deux bons de stock, les enchaine et les valide. Le passage se
+fait par l'emplacement de transit inter-societes d'Odoo, seul chemin possible
+— un emplacement de stock appartient a un etablissement, et rien ne relie
+directement deux entrepots. Un bon qui emprunterait ce transit sans document
+est refuse.
+
+Le transfert ne se fait que par quelqu'un qui a acces aux deux etablissements :
+sortir du registre de l'un pour entrer dans celui de l'autre, c'est en
+repondre aux deux.
+
+**Le sachet n'est pas reetiquete.** Il porte le numero d'ordre du comptoir de
+rachat et le portera jusqu'a la fonte. Odoo, lui, exige que le nom d'un lot
+soit unique par article dans une societe, et chaque agence repart de 000001 :
+le lot transfere est donc qualifie — « METZ/000123 » — et cesse d'appartenir a
+une societe. Le numero du comptoir est intact, une recherche sur « 000123 » le
+retrouve, et c'est le **meme** enregistrement de lot qui traverse : rien n'est
+recree a l'arrivee, la quantite sort d'un cote exactement comme elle entre de
+l'autre.
+
+L'entree a Nancy prend son propre numero d'ordre, dans la suite de Nancy. Elle
+recopie ce qui decrit la marchandise et **rien de la personne** qui a vendu a
+Metz : son nom, son domicile et sa piece d'identite restent au registre ou ils
+ont ete recueillis. Ce qui tient leur place, c'est l'**origine** —
+l'etablissement, le numero d'ordre et la date du rachat, figes a l'inscription
+et redits en toutes lettres a la colonne « provenance ». La chaine remonte
+donc au comptoir qui a achete, transfert apres transfert, et la vente finale a
+un fondeur s'inscrit a Nancy en designant toujours Metz.
+
+Le prix de l'entree est nul, et ce n'est pas un oubli : un transfert entre
+etablissements d'un meme titulaire ne paie personne. Le prix d'achat vit a
+l'inscription d'origine, que ces colonnes designent nommement.
+
+Entre les deux validations, le metal est **en transit** : sorti d'un registre,
+pas encore inscrit a l'autre. Ce n'est pas un trou, c'est l'etat reel de la
+marchandise, et les deux inscriptions le disent.
+
 Le journal des consultations
 ----------------------------
 
@@ -281,6 +334,7 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
         'views/livre_police_ligne_views.xml',
         'views/livre_police_rectification_views.xml',
         'views/livre_police_page_views.xml',
+        'views/livre_police_transfert_views.xml',
         'views/livre_police_controle_views.xml',
         'views/livre_police_consultation_views.xml',
         'report/livre_police_page_report.xml',

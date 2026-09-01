@@ -1,0 +1,198 @@
+<odoo>
+
+    <record id="livre_police_transfert_view_form" model="ir.ui.view">
+        <field name="name">livre.police.transfert.form</field>
+        <field name="model">livre.police.transfert</field>
+        <field name="arch" type="xml">
+            <form string="Transfert entre établissements">
+                <header>
+                    <button name="action_expedier" type="object"
+                            string="Expédier" class="btn-primary"
+                            invisible="state != 'brouillon'"
+                            confirm="Le métal va sortir du registre de
+                                     l'établissement de départ, sous un
+                                     nouveau numéro d'ordre. Une inscription
+                                     ne se retire pas : si le transfert ne
+                                     doit pas avoir lieu, c'est maintenant
+                                     qu'il faut le dire."/>
+                    <button name="action_receptionner" type="object"
+                            string="Réceptionner" class="btn-primary"
+                            invisible="state != 'expedie'"/>
+                    <button name="action_annuler" type="object"
+                            string="Annuler"
+                            invisible="state != 'brouillon'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="brouillon,expedie,recu"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_voir_inscriptions" type="object"
+                                class="oe_stat_button" icon="fa-book"
+                                invisible="state == 'brouillon'">
+                            <span class="o_stat_text">Inscriptions</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <!--
+                        Le métal en transit n'est plus nulle part. Il est
+                        sorti d'un registre et n'est pas encore entré dans
+                        l'autre : ce n'est pas un trou, c'est l'état réel de
+                        la marchandise, et il vaut mieux qu'il se lise à
+                        l'écran que d'être découvert à un contrôle.
+                    -->
+                    <div class="alert alert-info mb-3" role="alert"
+                         invisible="state != 'expedie'">
+                        Ce métal est en route. Il est sorti du registre de
+                        l'établissement de départ et n'entrera à celui
+                        d'arrivée qu'à la réception.
+                    </div>
+                    <group>
+                        <group string="D'où, vers où">
+                            <field name="company_id"
+                                   readonly="state != 'brouillon'"
+                                   options="{'no_create': True}"/>
+                            <field name="company_destination_id"
+                                   readonly="state != 'brouillon'"
+                                   options="{'no_create': True}"
+                                   domain="[('id', '!=', company_id)]"/>
+                            <field name="poids_total"/>
+                        </group>
+                        <group string="Le mouvement">
+                            <field name="picking_sortie_id" readonly="1"
+                                   invisible="not picking_sortie_id"/>
+                            <field name="picking_entree_id" readonly="1"
+                                   invisible="not picking_entree_id"/>
+                            <field name="date_expedition" readonly="1"
+                                   invisible="not date_expedition"/>
+                            <field name="expedie_par_id" readonly="1"
+                                   invisible="not expedie_par_id"/>
+                            <field name="date_reception" readonly="1"
+                                   invisible="not date_reception"/>
+                            <field name="recu_par_id" readonly="1"
+                                   invisible="not recu_par_id"/>
+                        </group>
+                    </group>
+                    <group string="Motif du transfert">
+                        <field name="motif" nolabel="1" colspan="2"
+                               readonly="state != 'brouillon'"
+                               placeholder="Regroupement avant fonte, réassort du comptoir, commande d'un client d'une autre agence…"/>
+                    </group>
+                    <!--
+                        Le bouton vide le coffre d'un coup. Un regroupement
+                        avant fonte les prend tous : les designer un a un
+                        serait long, et en oublier un ne se verrait pas.
+                    -->
+                    <div class="mb-2" invisible="state != 'brouillon'">
+                        <button name="action_ajouter_tout_le_stock"
+                                type="object" class="btn btn-secondary btn-sm"
+                                icon="fa-plus"
+                                string="Ajouter tout le stock de l'agence"
+                                invisible="not company_id"/>
+                    </div>
+                    <field name="ligne_ids" readonly="state != 'brouillon'">
+                        <list editable="bottom">
+                            <field name="company_id" column_invisible="1"/>
+                            <field name="inscription_domaine" column_invisible="1"/>
+                            <!--
+                                Le domaine se calcule sur le stock, et non sur
+                                l'etat de sortie du registre : celui-ci dit
+                                qu'aucune sortie n'a eu lieu, ce qui reste vrai
+                                d'un rachat dont la reception n'est pas encore
+                                validee et dont aucun lot n'existe.
+                            -->
+                            <field name="inscription_id"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   domain="inscription_domaine"
+                                   column_invisible="parent.state != 'brouillon'"/>
+                            <field name="numero_ordre" readonly="1"
+                                   column_invisible="parent.state == 'brouillon'"/>
+                            <field name="vendeur_nom" readonly="1"/>
+                            <field name="avoir_id" readonly="1"
+                                   options="{'no_open': True}"/>
+                            <field name="origine" readonly="1" optional="show"/>
+                            <field name="lot_id" readonly="1" optional="hide"/>
+                            <field name="product_id" readonly="1"/>
+                            <field name="description" readonly="1"/>
+                            <field name="quantite_disponible" readonly="1"/>
+                            <field name="quantite"/>
+                            <field name="poids" readonly="1" sum="Poids total"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="livre_police_transfert_view_list" model="ir.ui.view">
+        <field name="name">livre.police.transfert.list</field>
+        <field name="model">livre.police.transfert</field>
+        <field name="arch" type="xml">
+            <list string="Transferts entre établissements"
+                  decoration-muted="state == 'annule'"
+                  decoration-info="state == 'expedie'">
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="company_destination_id"/>
+                <field name="poids_total" sum="Poids total"/>
+                <field name="date_expedition" optional="show"/>
+                <field name="date_reception" optional="show"/>
+                <field name="motif" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'recu'"
+                       decoration-info="state == 'expedie'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="livre_police_transfert_view_search" model="ir.ui.view">
+        <field name="name">livre.police.transfert.search</field>
+        <field name="model">livre.police.transfert</field>
+        <field name="arch" type="xml">
+            <search string="Transferts entre établissements">
+                <field name="name"/>
+                <field name="motif"/>
+                <field name="company_destination_id"/>
+                <filter name="filtre_en_route" string="En route"
+                        domain="[('state', '=', 'expedie')]"/>
+                <filter name="filtre_brouillon" string="Brouillons"
+                        domain="[('state', '=', 'brouillon')]"/>
+                <separator/>
+                <filter name="filtre_recus" string="Reçus"
+                        domain="[('state', '=', 'recu')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="groupe_depart" string="Établissement de départ"
+                            context="{'group_by': 'company_id'}"/>
+                    <filter name="groupe_arrivee" string="Établissement d'arrivée"
+                            context="{'group_by': 'company_destination_id'}"/>
+                    <filter name="groupe_etat" string="État"
+                            context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="livre_police_transfert_action" model="ir.actions.act_window">
+        <field name="name">Transferts entre établissements</field>
+        <field name="res_model">livre.police.transfert</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun transfert</p>
+            <p>
+                Un registre est tenu pour chaque établissement. Le métal qui
+                passe de l'un à l'autre sort du premier et entre dans le
+                second, sous le numéro d'ordre de chacun, avec le motif du
+                déplacement — et l'inscription d'arrivée continue de désigner
+                le comptoir qui a racheté.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="livre_police_transfert_menu"
+              name="Transferts entre établissements"
+              parent="livre_police_menu_racine"
+              action="livre_police_transfert_action"
+              sequence="15"/>
+
+</odoo>

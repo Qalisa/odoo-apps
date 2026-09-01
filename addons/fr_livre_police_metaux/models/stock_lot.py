@@ -67,7 +67,15 @@ class StockLot(models.Model):
                 ('move_id.picking_type_id.code', '=', 'incoming'),
             ], limit=1)
             pieces = entree.move_id.sale_line_id.invoice_lines.move_id
-            lot.police_avoir_id = pieces[:1]
+            # Un lot transféré n'appartient plus à aucune société : il se lit
+            # des trois comptoirs. L'avoir, lui, n'a pas à se lire d'ailleurs
+            # que de l'établissement qui l'a passé — c'est le vendeur qu'il
+            # nomme, et « le registre d'un établissement n'a pas à montrer les
+            # clients d'un autre ». La recherche reste en `sudo` parce que
+            # choisir un lot n'est pas consulter le registre ; ce filtre-ci
+            # rend au cloisonnement ce que ce `sudo` lui aurait pris.
+            lot.police_avoir_id = pieces.filtered(
+                lambda piece: piece.company_id in self.env.companies)[:1]
 
 
 class StockQuant(models.Model):

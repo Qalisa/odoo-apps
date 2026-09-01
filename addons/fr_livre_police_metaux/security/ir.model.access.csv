@@ -11,3 +11,5 @@ access_livre_police_page,livre.police.page,model_livre_police_page,fr_livre_poli
 access_livre_police_controle,livre.police.controle,model_livre_police_controle,fr_livre_police_metaux.group_livre_police,1,1,1,1
 access_livre_police_consultation,livre.police.consultation,model_livre_police_consultation,fr_livre_police_metaux.group_livre_police,1,0,0,0
 access_livre_police_acces,livre.police.acces,model_livre_police_acces,fr_livre_police_metaux.group_livre_police,1,1,1,1
+access_livre_police_transfert,livre.police.transfert,model_livre_police_transfert,fr_livre_police_metaux.group_livre_police,1,1,1,0
+access_livre_police_transfert_ligne,livre.police.transfert.ligne,model_livre_police_transfert_ligne,fr_livre_police_metaux.group_livre_police,1,1,1,1

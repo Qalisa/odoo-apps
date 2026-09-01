@@ -18,6 +18,12 @@ la commodité du logiciel : on ne fait pas entrer en stock un métal dont
 l'achat n'est pas encore arrêté. Le refus est explicite parce que
 l'alternative — nommer le lot provisoirement puis le renommer — laisse une
 fenêtre pendant laquelle l'étiquette ment.
+
+Le même fichier tient l'autre bout : le métal qui change d'établissement.
+Il ne passe que par un document de transfert (`livre_police_transfert.py`),
+et le bon de stock refuse de partir ou d'arriver sans lui — sans quoi le
+métal quitterait un registre sans entrer dans l'autre, et sa revente
+ultérieure ne s'inscrirait nulle part.
 """
 
 from odoo import _, api, fields, models
@@ -106,8 +112,17 @@ class StockMoveLine(models.Model):
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
+    police_transfert_id = fields.Many2one(
+        'livre.police.transfert', string="Transfert entre établissements",
+        readonly=True, index='btree_not_null', ondelete='restrict',
+        copy=False,
+        help="Le document qui justifie ce déplacement d'un établissement à "
+             "l'autre et porte son motif. C'est lui qui a créé ce bon.",
+    )
+
     def button_validate(self):
         self._police_check_inscription()
+        self._police_check_transfert()
         self._police_nommer_les_lots()
         return super().button_validate()
 
@@ -119,7 +134,10 @@ class StockPicking(models.Model):
         `_action_done` est le moment où le stock a bougé.
         """
         resultat = super()._action_done()
-        self.env['livre.police.ligne']._inscrire_sorties(self)
+        Registre = self.env['livre.police.ligne']
+        Registre._inscrire_sorties(self)
+        Registre._inscrire_entrees_transfert(self)
+        self.police_transfert_id._marquer_recu(self)
         return resultat
 
     def _police_check_inscription(self):
@@ -139,6 +157,38 @@ class StockPicking(models.Model):
             "désignerait plus rien (c. pén., art. R321-4).\n\n"
             "Articles concernés : %(articles)s",
             articles=", ".join(sans_inscription.mapped('product_id.name'))))
+
+    def _police_check_transfert(self):
+        """Refuse un passage par le transit qui ne serait pas justifié.
+
+        L'emplacement de transit est le seul chemin entre deux établissements,
+        et il n'appartient à aucun d'eux. Un métal qui y entre a donc quitté
+        un registre ; un métal qui en sort entre dans un autre. Laisser faire
+        cela sans document, ce serait rendre au registre le trou qu'on vient
+        de boucher : une sortie muette d'un côté, aucune entrée de l'autre, et
+        une revente que plus rien ne rattache à un rachat.
+
+        La vérification porte sur les seuls articles soumis au livre de police
+        — un emballage, un consommable peuvent circuler librement.
+        """
+        sans_document = self.filtered(lambda bon: not bon.police_transfert_id)
+        concernes = sans_document.move_ids.filtered(
+            lambda mouvement: mouvement.product_id.product_tmpl_id.metal_regulated
+            and 'transit' in (mouvement.location_id.usage,
+                              mouvement.location_dest_id.usage))
+        if not concernes:
+            return
+        raise UserError(_(
+            "Ce bon fait passer du métal par le transit sans transfert "
+            "déclaré.\n\n"
+            "Un registre est tenu pour chaque établissement (c. pén., "
+            "art. R321-6) : le métal qui passe de l'un à l'autre doit sortir "
+            "du premier et entrer dans le second, avec le motif du "
+            "déplacement. Établissez un « Transfert entre établissements » "
+            "depuis le livre de police — il crée lui-même les deux bons et "
+            "les inscrit.\n\n"
+            "Articles concernés : %(articles)s",
+            articles=", ".join(concernes.mapped('product_id.name'))))
 
     def _police_nommer_les_lots(self):
         """Pose le numéro d'ordre comme nom de lot, avant la validation.
