@@ -41,6 +41,7 @@
                     </group>
                 </group>
                 <group string="Description et provenance">
+                    <field name="designation"/>
                     <field name="description" nolabel="1" colspan="2"/>
                     <field name="provenance"/>
                     <field name="protection_patrimoine"/>

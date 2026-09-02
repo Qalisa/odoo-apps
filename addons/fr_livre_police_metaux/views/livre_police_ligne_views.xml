@@ -45,6 +45,7 @@
                 <field name="rectifie_id" optional="show"
                        string="Rectifie"/>
                 <field name="date_achat"/>
+                <field name="designation"/>
                 <field name="description" class="o_lp_description"/>
                 <field name="provenance"/>
                 <field name="contrepartie_nom"/>
@@ -179,6 +180,7 @@
                     </field>
                     <group string="Description et provenance"
                            invisible="sens != 'entree'">
+                        <field name="designation" readonly="1"/>
                         <field name="description" readonly="1" nolabel="1"
                                colspan="2"/>
                         <field name="provenance" readonly="1"/>
@@ -307,6 +309,7 @@
                        filter_domain="['|', ('vendeur_nom', 'ilike', self),
                                             ('representant_nom', 'ilike', self)]"
                        string="Vendeur ou représentant"/>
+                <field name="designation"/>
                 <field name="description"/>
                 <field name="metal_nature"/>
                 <field name="move_id"/>

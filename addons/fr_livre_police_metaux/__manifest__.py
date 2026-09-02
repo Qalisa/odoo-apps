@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.28.0',
+    'version': '18.0.1.29.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -80,6 +80,20 @@ Une ligne renommée sans être décrite ne passe pas : « 20 FRANCS OR
 Les deux mentions sont exigées deux fois : à la confirmation du devis et à
 la comptabilisation de la pièce. La ligne incomplète passe en rouge pendant
 la saisie, pour que le manque se voie avant le refus.
+
+Ce que la désignation dit, et que le registre doit porter
+--------------------------------------------------------
+
+La description n'est exigée que là où l'article ne dit rien de l'objet, parce
+que « 20 FRANCS OR » le décrit déjà mieux qu'une phrase saisie au comptoir.
+L'argument ne tient que si cette désignation figure **au registre** — or elle
+vivait sur l'avoir, et le registre, qui doit se lire seul, n'en gardait rien.
+Une ligne de pièces s'y lisait « Or, 49 unités, 900 ‰ », ce qui ne désigne
+aucun objet.
+
+Chaque inscription porte donc la **désignation** de l'article, figée comme le
+reste, couverte par le chiffre de contrôle et imprimée en tête de la colonne 3.
+La description continue de ne recueillir que ce que la désignation n'a pas dit.
 
 La qualité du vendeur
 ---------------------

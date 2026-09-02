@@ -113,9 +113,22 @@ class LivrePoliceLigne(models.Model):
 
     # -- colonne 3 : description et provenance ----------------------------
     # Le texte tient les deux dans la même phrase (art. R321-3 3°) et le
-    # modèle officiel dans la même colonne. Elles restent deux champs : elles
+    # modèle officiel dans la même colonne. Elles restent trois champs : elles
     # ne se saisissent pas au même endroit et ne manquent pas de la même
     # façon (voir le manifeste).
+    designation = fields.Char(
+        string="Désignation", readonly=True,
+        help="Le type tel que l'article le nomme — « 20 FRANCS OR », "
+             "« LINGOT 50 GR 999/000 », « Argent (gr) ».\n\n"
+             "Sur un type catalogué, c'est elle qui décrit l'objet : le "
+             "diamètre, le millésime et l'effigie tiennent dans le nom, et la "
+             "colonne « description » ne recueille alors que ce que le "
+             "comptoir a eu à ajouter. Sans elle au registre, une ligne de "
+             "pièces se lirait « Or, 49 unités, 900 ‰ » — ce qui ne désigne "
+             "aucun objet.\n\n"
+             "Figée à l'inscription : renommer l'article ne réécrit pas le "
+             "registre.",
+    )
     description = fields.Text(
         string="Description de l'objet", readonly=True,
         help="Description précise des objets, telle qu'elle a été recueillie "
@@ -548,6 +561,7 @@ class LivrePoliceLigne(models.Model):
         return {
             'numero_ordre': self.numero_ordre,
             'date_achat': fields.Date.to_string(self.date_achat),
+            'designation': self.designation or '',
             'description': self.description or '',
             'provenance': self.provenance or '',
             'vendeur_nom': self.vendeur_nom or '',
@@ -724,6 +738,10 @@ class LivrePoliceLigne(models.Model):
 
         return {
             'date_achat': piece.invoice_date or piece.date,
+            # Sans le code interne : il désigne l'article dans le catalogue,
+            # pas l'objet au registre.
+            'designation': ligne.product_id.with_context(
+                display_default_code=False).display_name or False,
             'description': ligne._police_description(),
             'provenance': ligne.police_origin_id.display_name or False,
             'vendeur_nom': vendeur.display_name,
@@ -817,6 +835,8 @@ class LivrePoliceLigne(models.Model):
         return {
             'sens': 'entree',
             'date_achat': reprise.date_arrete,
+            'designation': ligne.product_id.with_context(
+                display_default_code=False).display_name or False,
             'description': ligne.description or False,
             'provenance': reprise.libelle,
             'reprise_id': reprise.id,
@@ -888,6 +908,7 @@ class LivrePoliceLigne(models.Model):
             'date_achat': entree.date_achat,
             'date_mouvement': fields.Datetime.context_timestamp(
                 mouvement, mouvement.date).date(),
+            'designation': entree.designation,
             'description': entree.description,
             'metal_nature': entree.metal_nature,
             'quantite': quantite,
@@ -1008,6 +1029,7 @@ class LivrePoliceLigne(models.Model):
             'date_achat': origine.date_achat,
             'date_mouvement': fields.Datetime.context_timestamp(
                 mouvement, mouvement.date).date(),
+            'designation': sortie.designation,
             'description': sortie.description,
             'provenance': _(
                 "Transfert de l'établissement %(etablissement)s "

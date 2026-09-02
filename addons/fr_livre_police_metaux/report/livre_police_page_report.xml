@@ -131,6 +131,16 @@
                                     </td>
                                     <td class="text-nowrap"><span t-field="ligne.date_achat"/></td>
                                     <td>
+                                        <!-- Sur un type catalogue, c'est la
+                                             designation qui decrit l'objet :
+                                             sans elle, une ligne de pieces se
+                                             lirait « Or, 49 unites, 900 ‰ »,
+                                             ce qui ne designe rien. Elle vient
+                                             donc en tete, et la description
+                                             ajoute ce qu'elle n'a pas dit. -->
+                                        <div t-if="ligne.designation">
+                                            <b t-field="ligne.designation"/>
+                                        </div>
                                         <span t-field="ligne.description"/>
                                         <div t-if="ligne.provenance">
                                             <i>Provenance :</i>
