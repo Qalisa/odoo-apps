@@ -298,6 +298,24 @@ class LivrePoliceLigne(models.Model):
              "que soit l'établissement où il se trouve depuis.",
     )
 
+    # -- le stock d'ouverture, reporté du registre manuscrit ---------------
+    # Ces inscriptions n'ont pas de vendeur, et c'est voulu : personne n'a
+    # vendu ce jour-là. L'acquisition est consignée au registre manuscrit,
+    # que la colonne « provenance » désigne en toutes lettres.
+    reprise_id = fields.Many2one(
+        'livre.police.reprise', string="Reprise de stock", readonly=True,
+        index='btree_not_null', ondelete='restrict',
+        help="Le document qui a reporté le coffre au registre informatisé, "
+             "le jour où celui-ci a pris la suite du registre manuscrit.",
+    )
+    reprise_registre_papier = fields.Char(
+        string="Renvoi au registre manuscrit", readonly=True,
+        help="Où l'acquisition de ce métal est consignée : le registre "
+             "manuscrit, sa page, sa cote. C'est ce renvoi qui tient lieu "
+             "des colonnes du vendeur, restées vides parce qu'aucune vente "
+             "n'a eu lieu ce jour-là.",
+    )
+
     # -- rattachements et traçabilité --------------------------------------
     company_id = fields.Many2one(
         'res.company', string="Société", required=True, index=True,
@@ -565,6 +583,9 @@ class LivrePoliceLigne(models.Model):
             'origine_etablissement': self.origine_etablissement or '',
             'origine_numero_ordre': self.origine_numero_ordre or '',
             'origine_date_achat': fields.Date.to_string(self.origine_date_achat),
+            # Sur une reprise de stock, ce renvoi est ce qui tient lieu des
+            # colonnes du vendeur : il doit etre couvert comme elles.
+            'reprise_registre_papier': self.reprise_registre_papier or '',
         }
 
     # ------------------------------------------------------------------
@@ -772,6 +793,50 @@ class LivrePoliceLigne(models.Model):
             vals['numero_lot'] = vals['numero_ordre']
             valeurs.append(vals)
         return self.sudo().create(valeurs)
+
+    @api.model
+    def _valeurs_depuis_reprise(self, ligne, mouvement):
+        """Fige ce qu'un lot d'ouverture inscrit.
+
+        Les colonnes du vendeur restent vides, et le prix est nul. Ce n'est
+        pas un manque : personne n'a vendu ce métal à l'établissement le jour
+        de la reprise, et le registre ne doit pas laisser croire le contraire.
+        L'acquisition est consignée au registre manuscrit, que la colonne
+        « provenance » désigne en toutes lettres — c'est la colonne que le
+        modèle officiel réserve à « l'indication de sa provenance » (arrêté du
+        15 mai 2020, annexe I, colonne 3), et un imprimé doit se lire seul.
+
+        La date de l'achat est celle de l'arrêté du coffre, non celle des
+        rachats d'origine : elles sont perdues, éparpillées sur des années de
+        registre manuscrit, et en inventer une serait pire que de dire depuis
+        quand ce métal est ici sous ce numéro-là.
+        """
+        produit = ligne.product_id.product_tmpl_id
+        regimes = dict(produit._fields['metal_quantity_mode'].selection)
+        reprise = ligne.reprise_id
+        return {
+            'sens': 'entree',
+            'date_achat': reprise.date_arrete,
+            'description': ligne.description or False,
+            'provenance': reprise.libelle,
+            'reprise_id': reprise.id,
+            'reprise_registre_papier': (ligne.registre_papier
+                                        or reprise.registre_papier or False),
+            'prix': 0.0,
+            'currency_id': reprise.company_id.currency_id.id,
+            'metal_nature': produit.metal_nature.display_name or False,
+            'quantite': ligne.quantite,
+            'regime_quantite': regimes.get(produit.metal_quantity_mode) or False,
+            'poids': ligne.poids,
+            'titre': produit.metal_fineness,
+            'titre_lot': produit.metal_mixed_fineness,
+            'company_id': reprise.company_id.id,
+            'mouvement_stock_id': mouvement.id if mouvement else False,
+            'page_id': self.env['livre.police.page']._page_courante(
+                reprise.company_id).id,
+            'date_inscription': fields.Datetime.now(),
+            'inscrit_par_id': self.env.user.id,
+        }
 
     @api.model
     def _valeurs_depuis_sortie(self, entree, mouvement, transfert=None):

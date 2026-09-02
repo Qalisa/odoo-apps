@@ -10,6 +10,7 @@ from . import stock_lot
 from . import stock_poids
 from . import livre_police_page
 from . import livre_police_transfert
+from . import livre_police_reprise
 from . import livre_police_ligne
 from . import livre_police_rectification
 from . import livre_police_controle

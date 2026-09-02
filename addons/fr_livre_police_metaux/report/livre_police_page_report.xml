@@ -146,6 +146,11 @@
                                                 (<span t-field="ligne.transfert_etablissement"/>) :</i>
                                             <span t-field="ligne.transfert_motif"/>
                                         </div>
+                                        <div t-if="ligne.reprise_registre_papier"
+                                             style="font-size: 7px;">
+                                            <i>Registre manuscrit :</i>
+                                            <span t-field="ligne.reprise_registre_papier"/>
+                                        </div>
                                         <div t-if="ligne.motif_rectification"
                                              style="font-size: 7px;">
                                             <i>Motif de la rectification :</i>

@@ -86,4 +86,12 @@
         <field name="domain_force">['|', ('company_ids', '=', False), ('company_ids', 'in', company_ids)]</field>
     </record>
 
+    <record id="regle_societe_reprise" model="ir.rule">
+        <field name="name">Livre de police : les reprises de la societe</field>
+        <field name="model_id" ref="model_livre_police_reprise"/>
+        <!-- Une reprise ne concerne qu'un coffre : celui de l'etablissement
+             dont elle reporte le stock (c. pen., art. R321-6). -->
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
 </odoo>

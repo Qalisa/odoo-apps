@@ -77,6 +77,8 @@
                 <field name="poids_restant" optional="hide"/>
                 <field name="date_sortie" optional="show"/>
                 <field name="transfert_motif" optional="hide"/>
+                <field name="reprise_id" optional="hide"/>
+                <field name="reprise_registre_papier" optional="hide"/>
                 <field name="motif_rectification" optional="hide"/>
                 <field name="move_id" optional="hide"/>
                 <field name="facture_vente_ids" optional="hide"
@@ -265,6 +267,15 @@
                                    invisible="not origine_id"/>
                         </group>
                     </group>
+                    <group string="Reprise de stock d'ouverture"
+                           invisible="not reprise_id">
+                        <group>
+                            <field name="reprise_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="reprise_registre_papier" readonly="1"/>
+                        </group>
+                    </group>
                     <group string="Rectification"
                            invisible="not rectifie_id">
                         <field name="rectifie_id" readonly="1"/>
@@ -316,6 +327,9 @@
                 <filter name="filtre_soldes" string="Entièrement sortis"
                         domain="[('etat_sortie', '=', 'sorti')]"/>
                 <separator/>
+                <filter name="filtre_reprises"
+                        string="Reprises de stock d'ouverture"
+                        domain="[('reprise_id', '!=', False)]"/>
                 <filter name="filtre_transferts"
                         string="Transferts entre établissements"
                         domain="[('transfert_id', '!=', False)]"/>

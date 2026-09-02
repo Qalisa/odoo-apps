@@ -1,0 +1,158 @@
+<odoo>
+
+    <record id="livre_police_reprise_view_form" model="ir.ui.view">
+        <field name="name">livre.police.reprise.form</field>
+        <field name="model">livre.police.reprise</field>
+        <field name="arch" type="xml">
+            <form string="Reprise de stock d'ouverture">
+                <header>
+                    <button name="action_inscrire" type="object"
+                            string="Inscrire au registre" class="btn-primary"
+                            invisible="state != 'brouillon'"
+                            confirm="Chaque ligne va prendre un numéro d'ordre
+                                     dans la suite de l'établissement, créer
+                                     son lot à ce numéro et entrer en stock.
+                                     Une inscription ne se retire pas : si le
+                                     coffre n'est pas juste, c'est maintenant
+                                     qu'il faut le dire."/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="brouillon,inscrit"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_voir_inscriptions" type="object"
+                                class="oe_stat_button" icon="fa-book"
+                                invisible="state == 'brouillon'">
+                            <span class="o_stat_text">Inscriptions</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <!--
+                        Le renvoi vaut dans les deux sens, et le second bout
+                        s'ecrit a la main : sans lui, un controleur a sous les
+                        yeux des inscriptions sans vendeur et rien qui dise ou
+                        l'acquisition est consignee.
+                    -->
+                    <div class="alert alert-warning mb-3" role="alert"
+                         invisible="state != 'brouillon'">
+                        Une fois la reprise inscrite, deux gestes restent à
+                        faire, et ce module ne peut en faire aucun : porter le
+                        numéro d'ordre sur chaque contenant du coffre
+                        (c. pén., art. R321-4), et clore le registre manuscrit
+                        par la mention du stock reporté, avec la date et les
+                        numéros d'ordre sous lesquels il l'a été.
+                    </div>
+                    <div class="alert alert-info mb-3" role="alert"
+                         invisible="state != 'inscrit'">
+                        Ce coffre est inscrit au registre. Les inscriptions
+                        n'ont pas de vendeur, et c'est voulu : personne n'a
+                        vendu ce métal ce jour-là. Leur provenance renvoie au
+                        registre où l'acquisition est consignée.
+                    </div>
+                    <group>
+                        <group string="Le coffre repris">
+                            <field name="company_id"
+                                   readonly="state != 'brouillon'"
+                                   options="{'no_create': True}"/>
+                            <field name="date_arrete"
+                                   readonly="state != 'brouillon'"/>
+                            <field name="poids_total"/>
+                        </group>
+                        <group string="Le registre manuscrit">
+                            <field name="registre_papier"
+                                   readonly="state != 'brouillon'"
+                                   placeholder="Registre ouvert le…, clos page…"/>
+                            <field name="date_inscription" readonly="1"
+                                   invisible="not date_inscription"/>
+                            <field name="inscrit_par_id" readonly="1"
+                                   invisible="not inscrit_par_id"/>
+                        </group>
+                    </group>
+                    <group string="Ce que la colonne « provenance » portera">
+                        <field name="libelle" nolabel="1" colspan="2"
+                               readonly="state != 'brouillon'"/>
+                    </group>
+                    <field name="ligne_ids" readonly="state != 'brouillon'">
+                        <list editable="bottom">
+                            <field name="numero_ordre" readonly="1"
+                                   column_invisible="parent.state == 'brouillon'"/>
+                            <field name="product_id"
+                                   options="{'no_create': True}"/>
+                            <field name="metal_nature" readonly="1"/>
+                            <field name="titre_texte" readonly="1"/>
+                            <field name="description"/>
+                            <field name="registre_papier" optional="show"/>
+                            <field name="quantite"/>
+                            <field name="poids" readonly="1" sum="Poids total"/>
+                            <field name="lot_id" readonly="1" optional="hide"
+                                   column_invisible="parent.state == 'brouillon'"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="livre_police_reprise_view_list" model="ir.ui.view">
+        <field name="name">livre.police.reprise.list</field>
+        <field name="model">livre.police.reprise</field>
+        <field name="arch" type="xml">
+            <list string="Reprises de stock d'ouverture">
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="date_arrete"/>
+                <field name="poids_total" sum="Poids total"/>
+                <field name="registre_papier" optional="show"/>
+                <field name="date_inscription" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'inscrit'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="livre_police_reprise_view_search" model="ir.ui.view">
+        <field name="name">livre.police.reprise.search</field>
+        <field name="model">livre.police.reprise</field>
+        <field name="arch" type="xml">
+            <search string="Reprises de stock d'ouverture">
+                <field name="name"/>
+                <field name="registre_papier"/>
+                <filter name="filtre_brouillon" string="Brouillons"
+                        domain="[('state', '=', 'brouillon')]"/>
+                <filter name="filtre_inscrites" string="Inscrites"
+                        domain="[('state', '=', 'inscrit')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="groupe_societe" string="Établissement"
+                            context="{'group_by': 'company_id'}"/>
+                    <filter name="groupe_etat" string="État"
+                            context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="livre_police_reprise_action" model="ir.actions.act_window">
+        <field name="name">Reprises de stock d'ouverture</field>
+        <field name="res_model">livre.police.reprise</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune reprise</p>
+            <p>
+                Le jour où le registre informatisé prend la suite du registre
+                manuscrit, le coffre n'est pas vide. Ce document y fait entrer
+                le stock d'ouverture : un numéro d'ordre par lot, le lot créé
+                à ce numéro, et la quantité posée en stock — d'un seul geste,
+                pour que les trois ne puissent pas diverger.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="livre_police_reprise_menu"
+              name="Reprises de stock d'ouverture"
+              parent="livre_police_menu_racine"
+              action="livre_police_reprise_action"
+              sequence="18"/>
+
+</odoo>

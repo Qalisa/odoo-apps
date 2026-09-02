@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.27.1',
+    'version': '18.0.1.28.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -284,6 +284,40 @@ Entre les deux validations, le metal est **en transit** : sorti d'un registre,
 pas encore inscrit a l'autre. Ce n'est pas un trou, c'est l'etat reel de la
 marchandise, et les deux inscriptions le disent.
 
+Le stock d'ouverture
+--------------------
+
+Les comptoirs ont tenu leur registre a la main jusqu'ici. Le jour ou le
+registre informatise prend la suite, le coffre n'est pas vide : il contient du
+metal rachete sous l'ancien registre, dont les acquisitions sont consignees
+la-bas, page apres page. Si ce metal n'entre pas, il n'existe pas — et sa
+revente ne s'inscrira nulle part, faute d'entree a laquelle la rattacher.
+
+Un document **Reprise de stock d'ouverture**, un par etablissement, le fait
+entrer. Il inscrit au registre, cree le lot au numero d'ordre inscrit et pose
+la quantite en stock, d'un seul geste : un ajustement d'inventaire fait a part
+remplirait le stock sans rien inscrire, et le registre ne saurait plus rien de
+ce metal.
+
+**Ce n'est pas un achat.** Personne n'a vendu quoi que ce soit a
+l'etablissement ce jour-la. Les colonnes du vendeur restent donc vides et le
+prix est nul ; les remplir d'un vendeur fictif ferait dire au registre qu'une
+operation a eu lieu, et masquerait ce qui doit se voir — que ces objets
+viennent d'ailleurs. Ce que la colonne « provenance » porte, c'est le renvoi au
+registre ou l'acquisition est consignee.
+
+Le renvoi vaut dans les deux sens. Le registre manuscrit doit porter a sa
+cloture la mention inverse — le stock reporte, la date, les numeros d'ordre
+sous lesquels il l'a ete. Elle s'ecrit a la main, et ce module ne peut pas la
+produire ; l'ecran la rappelle.
+
+La maille est le **lot**, que l'art. R321-4 admet expressement : un stock
+d'ouverture n'est pas detaille objet par objet, il est pese par nature et par
+titre. Chaque ligne recoit un numero d'ordre, et ce numero doit figurer sur le
+contenant des la reprise faite. Le lot se vide ensuite par ventes successives,
+et le registre le suit — l'entree reste « sortie en partie » tant qu'il reste
+du metal.
+
 Le journal des consultations
 ----------------------------
 
@@ -335,6 +369,7 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
         'views/livre_police_rectification_views.xml',
         'views/livre_police_page_views.xml',
         'views/livre_police_transfert_views.xml',
+        'views/livre_police_reprise_views.xml',
         'views/livre_police_controle_views.xml',
         'views/livre_police_consultation_views.xml',
         'report/livre_police_page_report.xml',
