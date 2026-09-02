@@ -56,7 +56,7 @@ l'annexe.
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools.misc import format_date
+from odoo.tools.misc import format_date, formatLang
 
 
 class LivrePoliceLigne(models.Model):
@@ -107,8 +107,17 @@ class LivrePoliceLigne(models.Model):
 
     # -- colonne 2 : la date ----------------------------------------------
     date_achat = fields.Date(
-        string="Date de l'achat", required=True, index=True, readonly=True,
-        help="Date de l'opération, telle que la porte l'avoir.",
+        string="Date d'entrée", required=True, index=True, readonly=True,
+        help="Le jour où ce métal est entré dans les murs du titulaire — "
+             "« la date d'entrée et de sortie » que réclame le registre des "
+             "métaux précieux (CGI, ann. IV, art. 56 J quindecies).\n\n"
+             "Sur un rachat, c'est la date de l'avoir. Sur une sortie ou sur "
+             "un métal reçu d'un autre établissement, c'est celle du rachat "
+             "d'origine, que ces inscriptions recopient. Sur une reprise de "
+             "stock d'ouverture, c'est celle de l'arrêté du coffre : les "
+             "dates d'achat, elles, sont au registre manuscrit.\n\n"
+             "Le nom du champ dit encore « achat » : le renommer imposerait "
+             "une migration de colonne pour un gain de lecture.",
     )
 
     # -- colonne 3 : description et provenance ----------------------------
@@ -174,6 +183,11 @@ class LivrePoliceLigne(models.Model):
              "précieux déduite lorsqu'elle s'applique.",
     )
     currency_id = fields.Many2one('res.currency', readonly=True)
+    prix_texte = fields.Char(
+        string="Prix", compute='_compute_prix_texte',
+        help="Le prix tel qu'il se lit au registre : le montant versé quand "
+             "il y en a un, et rien du tout sinon.",
+    )
     mode_reglement = fields.Char(
         string="Mode de règlement", readonly=True,
         help="Chèque barré ou virement, convenu au comptoir et porté sur le "
@@ -492,6 +506,28 @@ class LivrePoliceLigne(models.Model):
                 ligne.titre_texte = "lot de titres"
             else:
                 ligne.titre_texte = False
+
+    @api.depends('prix', 'currency_id', 'move_id')
+    def _compute_prix_texte(self):
+        """Un prix absent se lit vide, jamais « 0,00 € ».
+
+        La colonne porte le prix d'achat — ce que le vendeur a reçu. Seule une
+        inscription née d'une pièce comptable en a un. Une sortie n'en a pas,
+        le registre ne consignant pas les reventes ; un transfert entre
+        établissements d'un même titulaire ne paie personne ; et une reprise
+        de stock d'ouverture ne consigne aucune opération, les prix d'achat
+        étant au registre manuscrit.
+
+        « 0,00 € » affirmerait qu'un prix nul a été convenu. C'est une
+        affirmation, et elle serait fausse — même raison que `titre_texte`,
+        où zéro millième désignerait un métal sans or.
+        """
+        for ligne in self:
+            if not ligne.move_id:
+                ligne.prix_texte = False
+                continue
+            ligne.prix_texte = formatLang(
+                self.env, ligne.prix, currency_obj=ligne.currency_id)
 
     @api.depends('sortie_ids.poids', 'sortie_ids.date_mouvement', 'poids',
                  'sens')

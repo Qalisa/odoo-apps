@@ -64,7 +64,8 @@
                 <field name="piece_numero" optional="show"/>
                 <field name="piece_autorite" optional="hide"/>
                 <field name="piece_delivrance" optional="hide"/>
-                <field name="prix" sum="Total"
+                <field name="prix_texte"/>
+                <field name="prix" sum="Total" optional="hide"
                        invisible="sens != 'entree'"/>
                 <field name="currency_id" column_invisible="1"/>
                 <field name="mode_reglement" optional="show"/>
@@ -129,8 +130,9 @@
                                    invisible="sens != 'sortie' and not transfert_id"/>
                             <field name="date_achat" readonly="1"
                                    invisible="sens != 'entree'"/>
-                            <field name="prix" readonly="1"
-                                   invisible="sens != 'entree'"/>
+                            <field name="prix_texte" readonly="1"
+                                   invisible="sens != 'entree'"
+                                   placeholder="sans objet"/>
                             <field name="currency_id" invisible="1"/>
                             <field name="mode_reglement" readonly="1"
                                    invisible="sens != 'entree'"

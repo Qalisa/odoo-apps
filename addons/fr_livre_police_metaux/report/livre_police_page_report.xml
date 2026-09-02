@@ -90,7 +90,7 @@
                                 -->
                                 <tr>
                                     <th>N° d'ordre</th>
-                                    <th>Date de l'achat</th>
+                                    <th>Date d'entrée</th>
                                     <th>Description de l'objet et provenance</th>
                                     <th>Nom, prénom ou dénomination — qualité — domicile</th>
                                     <th>Pièce d'identité présentée</th>
@@ -195,8 +195,12 @@
                                         </div>
                                     </td>
                                     <td class="text-end text-nowrap">
-                                        <span t-field="ligne.prix"
-                                              t-options="{'widget': 'monetary', 'display_currency': ligne.currency_id}"/>
+                                        <!-- Vide, et non « 0,00 € » : une
+                                             sortie, un transfert ou une
+                                             reprise ne paient personne, et
+                                             zero affirmerait un prix convenu.
+                                             Voir _compute_prix_texte. -->
+                                        <span t-field="ligne.prix_texte"/>
                                         <div t-if="ligne.mode_reglement">
                                             <span t-field="ligne.mode_reglement"/>
                                         </div>
@@ -222,8 +226,14 @@
                                         <span t-field="page.nombre_inscriptions"/>
                                         inscription(s)
                                     </th>
+                                    <!-- Rien, et non « 0,00 € », sur une page
+                                         qui ne porte aucun achat : un total
+                                         nul se lirait comme une journee sans
+                                         rachat, quand c'est une journee sans
+                                         colonne de prix. -->
                                     <th class="text-end">
-                                        <span t-field="page.montant_total"
+                                        <span t-if="page.montant_total"
+                                              t-field="page.montant_total"
                                               t-options="{'widget': 'monetary', 'display_currency': page.currency_id}"/>
                                     </th>
                                     <th/>

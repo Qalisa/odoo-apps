@@ -41,7 +41,7 @@ class LivrePoliceRectification(models.TransientModel):
     )
 
     # Les mentions du registre, préremplies depuis l'inscription d'origine.
-    date_achat = fields.Date(string="Date de l'achat", required=True)
+    date_achat = fields.Date(string="Date d'entrée", required=True)
     designation = fields.Char(string="Désignation")
     description = fields.Text(string="Description de l'objet")
     provenance = fields.Char(string="Provenance")
