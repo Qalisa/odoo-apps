@@ -306,10 +306,16 @@ class LivrePoliceRepriseLigne(models.Model):
     )
     description = fields.Text(
         string="Description des objets",
-        help="Ce que le coffre contient, décrit comme le registre le "
-             "demande : « lot de chaînes, bagues et débris, titres mêlés ». "
-             "Exigée là où la désignation de l'article ne décrit aucun objet "
-             "(arrêté du 15 mai 2020, annexe I, colonne 3).",
+        help="Ce que le contenant renferme, décrit comme le registre le "
+             "demande (arrêté du 15 mai 2020, annexe I, colonne 3). Exigée là "
+             "où la désignation de l'article ne décrit aucun objet — l'or au "
+             "gramme, l'argent en vrac — et là où l'objet porte une "
+             "identification propre, comme le numéro unique d'un lingot.\n\n"
+             "Une reprise d'ouverture est l'exception : ce détail est "
+             "précisément ce que l'agrégation du stock a perdu, et il reste "
+             "consigné au registre manuscrit. « Voir livre de police "
+             "manuscrit » y est donc une description recevable — elle dit où "
+             "le détail se trouve, ce qu'une phrase inventée ne ferait pas.",
     )
     registre_papier = fields.Char(
         string="Renvoi au registre manuscrit",

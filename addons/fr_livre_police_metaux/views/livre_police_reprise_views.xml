@@ -82,7 +82,8 @@
                                    options="{'no_create': True}"/>
                             <field name="metal_nature" readonly="1"/>
                             <field name="titre_texte" readonly="1"/>
-                            <field name="description"/>
+                            <field name="description"
+                                   placeholder="Voir livre de police manuscrit"/>
                             <field name="registre_papier" optional="show"/>
                             <field name="quantite"/>
                             <field name="poids" readonly="1" sum="Poids total"/>
