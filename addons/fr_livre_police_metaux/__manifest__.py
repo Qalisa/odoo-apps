@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.30.0',
+    'version': '18.0.1.31.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -315,6 +315,13 @@ un fondeur s'inscrit a Nancy en designant toujours Metz.
 Le prix de l'entree est nul, et ce n'est pas un oubli : un transfert entre
 etablissements d'un meme titulaire ne paie personne. Le prix d'achat vit a
 l'inscription d'origine, que ces colonnes designent nommement.
+
+Sa **date d'entree est celle de l'arrivee**, non celle du rachat a Metz : le
+registre de Nancy dit quand ce metal est entre chez Nancy. Le raisonnement
+inverse — un seul titulaire, donc une seule date — se contredirait lui-meme,
+puisque si les trois etablissements n'en faisaient qu'un, ce transfert
+n'aurait rien a inscrire nulle part. La date du rachat ne se perd pas : elle
+demeure a la colonne « date du rachat » et dans la provenance.
 
 Entre les deux validations, le metal est **en transit** : sorti d'un registre,
 pas encore inscrit a l'autre. Ce n'est pas un trou, c'est l'etat reel de la

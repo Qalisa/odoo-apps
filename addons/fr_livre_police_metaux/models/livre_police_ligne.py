@@ -108,14 +108,19 @@ class LivrePoliceLigne(models.Model):
     # -- colonne 2 : la date ----------------------------------------------
     date_achat = fields.Date(
         string="Date d'entrée", required=True, index=True, readonly=True,
-        help="Le jour où ce métal est entré dans les murs du titulaire — "
+        help="Le jour où ce métal est entré dans cet établissement-ci — "
              "« la date d'entrée et de sortie » que réclame le registre des "
-             "métaux précieux (CGI, ann. IV, art. 56 J quindecies).\n\n"
-             "Sur un rachat, c'est la date de l'avoir. Sur une sortie ou sur "
-             "un métal reçu d'un autre établissement, c'est celle du rachat "
-             "d'origine, que ces inscriptions recopient. Sur une reprise de "
-             "stock d'ouverture, c'est celle de l'arrêté du coffre : les "
-             "dates d'achat, elles, sont au registre manuscrit.\n\n"
+             "métaux précieux (CGI, ann. IV, art. 56 J quindecies), pour le "
+             "registre que tient chaque établissement (c. pén., "
+             "art. R321-6).\n\n"
+             "Sur un rachat, c'est la date de l'avoir. Sur un métal reçu d'un "
+             "autre établissement, c'est le jour de l'arrivée : la date du "
+             "rachat d'origine se lit à « date du rachat » et dans la "
+             "provenance. Sur une sortie, c'est la date à laquelle le lot "
+             "était entré ici, la sortie elle-même étant datée à sa propre "
+             "colonne. Sur une reprise de stock d'ouverture, c'est celle de "
+             "l'arrêté du coffre : les dates d'achat, elles, sont au registre "
+             "manuscrit.\n\n"
              "Le nom du champ dit encore « achat » : le renommer imposerait "
              "une migration de colonne pour un gain de lecture.",
     )
@@ -1058,11 +1063,24 @@ class LivrePoliceLigne(models.Model):
                  if sortie.quantite else 0.0)
         return {
             'sens': 'entree',
-            # La date de l'achat est celle du rachat, pas celle de l'arrivée :
-            # le métal est entré dans les murs du titulaire ce jour-là, et
-            # les trois établissements sont ceux d'un seul titulaire. La date
-            # de l'arrivée se lit à la colonne du mouvement.
-            'date_achat': origine.date_achat,
+            # La date d'entrée est celle de l'arrivée ici, non celle du
+            # rachat ailleurs. « Un registre est tenu pour chaque
+            # établissement » (c. pén., art. R321-6), et celui-ci réclame
+            # « la date d'entrée et de sortie » des objets qu'il détient
+            # (CGI, ann. IV, art. 56 J quindecies) : ce métal est entré dans
+            # ces murs-ci le jour où il y est arrivé.
+            #
+            # Le raisonnement inverse — un seul titulaire, donc une seule
+            # date — se contredirait lui-même : si les trois établissements
+            # n'en faisaient qu'un, ce transfert n'aurait rien à inscrire
+            # nulle part. C'est parce que les registres sont distincts que
+            # l'entrée existe, et elle porte donc la date de cette entrée-là.
+            #
+            # La date du rachat ne se perd pas : elle vit à
+            # `origine_date_achat`, et la provenance la redit en toutes
+            # lettres pour que l'imprimé se lise seul.
+            'date_achat': fields.Datetime.context_timestamp(
+                mouvement, mouvement.date).date(),
             'date_mouvement': fields.Datetime.context_timestamp(
                 mouvement, mouvement.date).date(),
             'designation': sortie.designation,
