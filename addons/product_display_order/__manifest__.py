@@ -30,7 +30,12 @@ Ce module lui rend son office :
 - la séquence passe en tête du tri des articles et des variantes, les favoris
   et le nom demeurant derrière comme départage ;
 - une poignée de glisser-déposer est posée sur deux listes — Inventaire /
-  Analyse / Stock, et Ventes / Articles.
+  Analyse / Stock, et Ventes / Articles ;
+- sur l'écran de stock, la colonne « Article » cesse d'afficher ``display_name``
+  au profit de ``name``. La valeur est la même tant qu'aucun article ne porte
+  de référence interne, mais ``display_name`` se calcule à la volée : Odoo ne
+  rend un en-tête cliquable que pour un champ qu'il sait traduire en SQL, et
+  cette colonne-là ne se triait donc pas.
 
 L'ordre ainsi rangé vaut partout : listes, sélecteurs d'une ligne de devis,
 rapports qui n'imposent pas leur propre tri.
@@ -49,13 +54,19 @@ Ce qu'il faut savoir
 variante range ses sœurs. Un catalogue sans variantes multiples ne voit jamais
 la différence.
 
+**Tout ne se trie pas.** ``qty_available`` — la quantité en stock — se
+calcule à partir du contexte : établissements cochés, entrepôt, date. Aucune
+colonne de base ne peut l'exprimer, donc aucun tri ne peut s'y appliquer, et
+il en va de même de tout ce qui en découle. Se trient en revanche l'article,
+la catégorie, la référence interne, le poids unitaire et la séquence.
+
 **Le champ est emprunté à Odoo.** Il est déclaré mais inutilisé dans la
 version 18 ; rien ne garantit qu'une version suivante le conserve. S'il
 disparaissait, la poignée disparaîtrait avec lui et l'ordre retomberait sur le
 nom — aucune donnée perdue, mais l'ordre choisi ne s'appliquerait plus. Le
 remplacer alors par un champ à nous serait le même travail.
     """,
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "category": "Sales/Sales",
     "author": "Qalisa",
     "website": "https://odoo-docs.qalisa.fr/",

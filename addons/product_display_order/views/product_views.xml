@@ -18,6 +18,16 @@
             <xpath expr="//field[@name='display_name']" position="before">
                 <field name="sequence" widget="handle"/>
             </xpath>
+            <!-- Et la colonne « Article » elle-même, qu'un clic ne triait
+                 pas : `display_name` est calculé à la volée, donc invisible
+                 au tri de la base — Odoo ne rend l'en-tête cliquable que
+                 pour un champ qu'il sait traduire en SQL. `name` est la même
+                 valeur, stockée : tant qu'aucun article ne porte de
+                 référence interne, la colonne est identique à l'oeil, et
+                 elle se trie. -->
+            <xpath expr="//field[@name='display_name']" position="replace">
+                <field name="name" string="Article"/>
+            </xpath>
         </field>
     </record>
 
