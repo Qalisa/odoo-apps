@@ -376,7 +376,76 @@ class AccountMove(models.Model):
         # `soft=True` peut ne poster qu'une partie de `self` — on n'inscrit
         # que ce qui est réellement posté.
         self.env['livre.police.ligne']._inscrire(pieces)
+        pieces._police_receptionner()
         return pieces
+
+    def _police_receptionner(self):
+        """Valide la réception du métal que l'avoir vient d'inscrire.
+
+        Le registre dit que le métal est entré ; tant que la réception reste
+        « prête », le stock dit qu'il n'est pas là. Les deux se contredisent,
+        et c'est le stock qui a tort : au comptoir, le métal a changé de mains
+        au moment même où le rachat s'est arrêté. Rien ne reste à constater.
+
+        Le désaccord n'est pas seulement inesthétique. Un lot absent du stock
+        ne se revend pas, ne se transfère pas, et n'apparaît pas au poids
+        détenu — le comptoir croit avoir moins qu'il n'a, alors que le
+        registre, lui, l'a déjà consigné.
+
+        C'est l'ordre inverse qui est impossible : le lot prend le numéro
+        d'ordre de l'inscription, et l'inscription naît ici. Réceptionner
+        avant de comptabiliser reste refusé, et le reste.
+
+        Deux cas laissent le bon en l'état, et c'est voulu.
+
+        **Un reliquat.** Une quantité reçue inférieure à la quantité achetée
+        ouvre un assistant : ce que le comptoir a réellement pris en main ne
+        se devine pas, et personne ne doit le décider à sa place.
+
+        **Une entrée non inscrite sur le même bon.** Un bon peut porter des
+        lignes que cet avoir ne couvre pas — facturation partielle. Les
+        valider ferait entrer en stock un métal dont l'achat n'est pas arrêté,
+        ce que la réception refuse à juste titre. On n'y touche pas.
+
+        Aucun de ces cas n'empêche la comptabilisation : l'avoir est posté,
+        le registre est inscrit, et l'échec se dit dans le fil de discussion
+        de la pièce plutôt que d'annuler l'écriture. Le bon reste « prêt »,
+        exactement comme avant ce module.
+        """
+        for piece in self:
+            lignes = piece.invoice_line_ids.filtered('police_origin_required')
+            bons = lignes.sale_line_ids.move_ids.picking_id.filtered(
+                lambda bon: bon.picking_type_code == 'incoming'
+                and bon.state == 'assigned')
+            for bon in bons:
+                # Un bon dont toutes les entrées de rachat ne sont pas encore
+                # inscrites serait refusé par `_police_check_inscription`, et
+                # ce refus annulerait la comptabilisation. On s'arrête avant.
+                if bon.move_ids._police_entrees_de_rachat().filtered(
+                        lambda mouvement: not mouvement.police_ligne_id):
+                    continue
+                piece._police_valider_le_bon(bon)
+
+    def _police_valider_le_bon(self, bon):
+        """Valide un bon, et dit dans la pièce ce qui a empêché de le faire.
+
+        ``button_validate`` ne lève pas toujours : il peut rendre un assistant
+        — reliquat, rapport de réception — et rendre la main sans que rien ne
+        soit entré. C'est l'état du bon qui fait foi, pas la valeur rendue.
+        """
+        self.ensure_one()
+        try:
+            bon.button_validate()
+            motif = None if bon.state == 'done' else _(
+                "la réception demande une confirmation manuelle (reliquat ou "
+                "quantité partielle)")
+        except UserError as refus:
+            motif = str(refus)
+        if motif:
+            self.message_post(body=_(
+                "La réception %(bon)s n'a pas pu être validée automatiquement "
+                "et reste à faire : %(motif)s",
+                bon=bon.name, motif=motif))
 
     def button_draft(self):
         """Une pièce inscrite au registre ne retourne pas au brouillon.

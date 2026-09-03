@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.29.2',
+    'version': '18.0.1.30.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -219,6 +219,28 @@ qu'elle a ete ecrite.
 Par ricochet, une piece inscrite ne revient plus au brouillon et ses lignes ne
 se suppriment plus : le registre a consigne ce qu'elle disait le jour du
 rachat, et le laisser diverger sans trace serait pire que le refus.
+
+L'entree en stock suit la comptabilisation
+------------------------------------------
+
+Comptabiliser l'avoir inscrit le metal au registre, et **valide dans la
+foulee la reception**. Sans cela le registre dit que le metal est entre
+pendant que le stock dit qu'il n'est pas la — et c'est le stock qui a tort :
+au comptoir, le metal a change de mains au moment meme ou le rachat s'est
+arrete. Un lot absent du stock ne se revend pas, ne se transfere pas, et
+n'apparait pas au poids detenu.
+
+L'ordre inverse reste impossible : le lot prend le numero d'ordre de
+l'inscription, et l'inscription nait a la comptabilisation. Receptionner
+avant de comptabiliser est refuse, et le reste.
+
+Deux cas laissent le bon en l'etat. Une **quantite partielle** ouvre un
+assistant de reliquat : ce que le comptoir a reellement pris en main ne se
+devine pas. Une **entree non inscrite sur le meme bon** — facturation
+partielle — ferait entrer un metal dont l'achat n'est pas arrete. Ni l'un ni
+l'autre n'empeche la comptabilisation : l'avoir est poste, le registre
+inscrit, et la raison s'ecrit dans le fil de discussion de la piece. Le bon
+reste « pret », comme avant.
 
 La page du jour et son chiffre de controle
 -----------------------------------------
