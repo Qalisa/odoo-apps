@@ -2,7 +2,7 @@
 
 {
     'name': "Numismatique - Caractéristiques métal des articles",
-    'version': '18.0.1.1.1',
+    'version': '18.0.1.2.0',
     'summary': """
 Nature, titre et poids unitaire sur les articles ; poids en grammes sur les lignes
 d'achat. Socle de données du livre de police (C. com. art. L834-6, CGI ann. IV
@@ -78,7 +78,7 @@ dépendance Odoo, et se testent en isolation ::
     'author': 'Qalisa',
     'license': "AGPL-3",
     'website': 'https://odoo-docs.qalisa.fr/',
-    'depends': ['account'],
+    'depends': ['account', 'stock'],
     'data': [
         'security/ir.model.access.csv',
         'data/metal_nature.xml',

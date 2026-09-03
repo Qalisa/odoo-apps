@@ -155,4 +155,22 @@
         </field>
     </record>
 
+    <!-- Inventaire ▸ Analyse ▸ Stock. Le comptoir y lit ce qu'il détient en
+         nombre ; il lui manquait de le lire en grammes, qui est l'unité dans
+         laquelle le métal se pense, s'achète et se porte au registre.
+
+         La colonne est totalisée : le pied de liste donne le poids détenu,
+         tous articles confondus et pour les établissements cochés. -->
+    <record id="product_product_stock_tree_metal" model="ir.ui.view">
+        <field name="name">product.product.stock.list.metal</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="stock.product_product_stock_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='qty_available']" position="after">
+                <field name="metal_unit_weight" optional="hide"/>
+                <field name="metal_stock_weight" sum="Poids total en stock"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

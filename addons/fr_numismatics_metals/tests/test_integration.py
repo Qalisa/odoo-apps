@@ -410,3 +410,53 @@ class TestMentionsObligatoiresCatalogue(TransactionCase):
         article = self._article()
         with self.assertRaises(ValidationError):
             article.metal_nature = False
+
+
+@tagged('post_install', '-at_install')
+class TestMetalStockWeight(TransactionCase):
+    """Le poids en stock suit les établissements cochés.
+
+    Constaté depuis la 18.0.1.2.0. Le calcul redéclare lui-même ses clefs de
+    contexte : Odoo ne les hérite pas du champ dont il dépend — il ne les
+    collecte que sur la fonction de calcul. Sans elles, le poids était mis en
+    cache à la première lecture puis resservi tel quel d'un établissement à
+    l'autre, et le poids de Metz s'affichait pour Nancy.
+
+    Le test lit donc les trois valeurs à la suite, sans invalider entre deux :
+    c'est exactement ce que le cache doit savoir distinguer.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        Societe = cls.env['res.company']
+        cls.metz = Societe.create({'name': "Comptoir A"})
+        cls.nancy = Societe.create({'name': "Comptoir B"})
+        cls.piece = cls.env['product.product'].create({
+            'name': "Pièce d'essai 10 g", 'type': 'consu', 'is_storable': True,
+            'metal_nature': cls.env.ref('fr_numismatics_metals.metal_nature_or').id,
+            'metal_quantity_mode': 'unit', 'metal_unit_weight': 10.0,
+            'metal_fineness': 900.0,
+        })
+        cls._poser(cls.metz, 3.0)
+        cls._poser(cls.nancy, 5.0)
+
+    @classmethod
+    def _poser(cls, societe, quantite):
+        entrepot = cls.env['stock.warehouse'].search(
+            [('company_id', '=', societe.id)], limit=1)
+        quant = cls.env['stock.quant'].with_context(inventory_mode=True).create({
+            'product_id': cls.piece.id,
+            'location_id': entrepot.lot_stock_id.id,
+            'inventory_quantity': quantite,
+        })
+        quant.action_apply_inventory()
+
+    def _poids(self, societes):
+        piece = self.piece.with_context(allowed_company_ids=societes.ids)
+        return piece.metal_stock_weight
+
+    def test_le_poids_suit_l_etablissement_coche(self):
+        self.assertEqual(self._poids(self.metz), 30.0)
+        self.assertEqual(self._poids(self.nancy), 50.0)
+        self.assertEqual(self._poids(self.metz | self.nancy), 80.0)
