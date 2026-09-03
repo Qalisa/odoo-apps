@@ -555,6 +555,32 @@ class LivrePoliceTransfert(models.Model):
         self.state = 'annule'
         return True
 
+    def unlink(self):
+        """Un transfert se jette tant qu'il n'a rien inscrit.
+
+        En brouillon ou annulé, il ne désigne que des intentions : aucun
+        numéro d'ordre n'a été pris, aucun bon de stock n'existe, et le
+        registre l'ignore. Le jeter ne perd donc rien — pas plus que de
+        déchirer un bon de commande qu'on n'a pas passé.
+
+        Expédié, c'est l'inverse : il porte le motif recopié sur deux
+        inscriptions, celle de la sortie et celle de l'entrée, et ces
+        inscriptions le désignent. La base elle-même refuserait de le retirer
+        — autant le dire en clair, et dire quoi faire à la place.
+        """
+        engages = self.filtered(lambda t: t.state not in ('brouillon', 'annule'))
+        if engages:
+            raise UserError(_(
+                "Le transfert %(references)s a déjà inscrit au registre : il "
+                "ne se supprime pas.\n\n"
+                "Une inscription ne se retire pas (c. pén., art. R321-6-1), "
+                "et celles-ci portent son motif. Si le métal ne devait pas "
+                "partir, réceptionnez-le puis établissez un transfert en sens "
+                "inverse : le registre dira l'aller et le retour, ce qui s'est "
+                "réellement passé.",
+                references=", ".join(engages.mapped('name'))))
+        return super().unlink()
+
     def action_voir_inscriptions(self):
         self.ensure_one()
         return {
