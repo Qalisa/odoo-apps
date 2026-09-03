@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.31.0',
+    'version': '18.0.1.32.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -220,6 +220,36 @@ Par ricochet, une piece inscrite ne revient plus au brouillon et ses lignes ne
 se suppriment plus : le registre a consigne ce qu'elle disait le jour du
 rachat, et le laisser diverger sans trace serait pire que le refus.
 
+Corriger une quantite
+---------------------
+
+Une quantite fausse se corrige comme le reste — par une rectification, jamais
+par une sortie. Une sortie affirmerait que le metal est parti, sans acheteur
+ni facture ; du metal qui n'a jamais ete detenu n'est parti nulle part, et
+l'inscrire ainsi mettrait au registre une mention fausse pour en corriger une
+autre.
+
+Deux consequences en decoulent, et elles ne vont pas de soi.
+
+**Le stock suit du meme geste.** Le registre et le stock disent la meme chose
+de deux facons ; n'en corriger qu'une les fait diverger durablement.
+L'ajustement d'inventaire est le chemin d'Odoo pour du metal absent — le meme
+que la reprise emprunte en sens inverse.
+
+**L'arithmetique du registre suit aussi.** Une rectification ne detient rien :
+c'est l'inscription d'origine qui porte le numero d'ordre appose sur le lot
+(art. R321-4), et c'est donc elle qui tient le stock, mais pour ce que dit sa
+derniere rectification. Sans cette double regle, le meme metal existerait deux
+fois et un lot corrige ne se solderait jamais. Une inscription ramenee a zero
+n'est alors ni en stock ni sortie : son etat reste vide.
+
+Quand c'est une reprise entiere qu'il faut reprendre, l'ecran **Rectifier les
+quantites** le fait d'un seul geste : plusieurs inscriptions selectionnees
+dans la liste du registre, un seul motif — elles procedent du meme constat —
+et une nouvelle quantite par ligne. Le poids ne s'y saisit pas : il se deduit
+a la proportion de l'inscrit, faute de quoi une inscription pourrait se
+contredire elle-meme.
+
 L'entree en stock suit la comptabilisation
 ------------------------------------------
 
@@ -410,6 +440,7 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
         'views/stock_lot_views.xml',
         'views/livre_police_ligne_views.xml',
         'views/livre_police_rectification_views.xml',
+        'views/livre_police_rectification_quantite_views.xml',
         'views/livre_police_page_views.xml',
         'views/livre_police_transfert_views.xml',
         'views/livre_police_reprise_views.xml',

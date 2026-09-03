@@ -269,7 +269,10 @@ class LivrePoliceLigne(models.Model):
         help="Où en est ce numéro d'ordre. « Sorti en partie » est le cas "
              "qu'aucune date ne sait dire : du métal est parti, il en reste, "
              "et le numéro doit demeurer apparent sur ce qui reste (c. pén., "
-             "art. R321-4).",
+             "art. R321-4).\n\n"
+             "L'état reste vide sur une inscription qu'une rectification a "
+             "ramenée à zéro : ce métal n'est ni en stock, ni sorti — il n'a "
+             "jamais été détenu.",
     )
     date_sortie = fields.Date(
         string="Date de sortie", readonly=True, compute='_compute_sorties',
@@ -534,26 +537,171 @@ class LivrePoliceLigne(models.Model):
             ligne.prix_texte = formatLang(
                 self.env, ligne.prix, currency_obj=ligne.currency_id)
 
+    def _rectification_finale(self):
+        """La dernière inscription de la chaîne de rectifications, ou soi.
+
+        Une inscription ne se réécrit pas : une correction s'inscrit à la
+        suite et renvoie à celle qu'elle reprend (CGI, ann. IV,
+        art. 56 J sexdecies, 2° c). Ce que le registre affirme aujourd'hui de
+        ce lot, c'est donc la dernière de la chaîne — l'originale demeurant
+        lisible telle qu'elle a été écrite.
+
+        La garde contre les boucles n'est pas de la superstition : rien
+        n'empêche en base qu'une rectification en désigne une autre en amont,
+        et un registre ne doit pas pouvoir se figer sur une lecture.
+        """
+        self.ensure_one()
+        ligne, vues = self, set()
+        while ligne.rectifiee_par_ids and ligne.id not in vues:
+            vues.add(ligne.id)
+            ligne = ligne.rectifiee_par_ids.sorted('id')[-1]
+        return ligne
+
+    def _lot_du_registre(self):
+        """Le lot de stock que cette inscription désigne, s'il existe encore.
+
+        Le mouvement qui l'a fait naître le porte directement ; à défaut on
+        le retrouve par son nom, qui est le numéro d'ordre — c'est tout le
+        lien que le registre entretient avec le stock.
+        """
+        self.ensure_one()
+        if self.mouvement_stock_id.lot_id:
+            return self.mouvement_stock_id.lot_id
+        if not self.numero_lot:
+            return self.env['stock.lot']
+        return self.env['stock.lot'].sudo().search([
+            ('name', '=', self.numero_lot),
+            ('company_id', 'in', (self.company_id.id, False)),
+        ], limit=1)
+
+    def _ajuster_le_stock(self, ecart):
+        """Porte au stock l'écart qu'une rectification de quantité constate.
+
+        Le registre et le stock disent la même chose de deux façons ; corriger
+        l'un sans l'autre les fait diverger, et c'est cette divergence qui
+        rend une erreur durable. L'ajustement d'inventaire est le chemin
+        d'Odoo pour du métal qui n'est pas là — le même que la reprise
+        emprunte en sens inverse.
+
+        Ce n'est pas une sortie : rien n'est parti. C'est le constat que ce
+        métal n'a jamais été détenu, et il ne s'inscrit donc pas au registre
+        comme un départ — la rectification dit tout ce qu'il y a à dire.
+        """
+        self.ensure_one()
+        if not ecart:
+            return False
+        lot = self._lot_du_registre()
+        if not lot:
+            raise UserError(_(
+                "L'inscription %(numero)s ne désigne aucun lot de stock : la "
+                "quantité se rectifie au registre, mais rien ne peut être "
+                "retiré du stock automatiquement.",
+                numero=self.numero_ordre))
+        quants = self.env['stock.quant'].sudo().search([
+            ('lot_id', '=', lot.id),
+            ('company_id', '=', self.company_id.id),
+            ('location_id.usage', '=', 'internal'),
+        ])
+        if len(quants) != 1:
+            raise UserError(_(
+                "Le lot %(lot)s est réparti sur %(nombre)s emplacements de "
+                "stock : l'ajustement ne saurait pas lequel corriger. "
+                "Regroupez-le, ou faites l'ajustement à la main puis "
+                "rectifiez le registre.",
+                lot=lot.name, nombre=len(quants) or 0))
+        quant = quants
+        visee = quant.quantity + ecart
+        if visee < -0.00005:
+            raise UserError(_(
+                "Le stock du lot %(lot)s ne porte que %(reste)s : on ne peut "
+                "pas en retirer %(retrait)s. Une partie a déjà été vendue ou "
+                "transférée, et ces mouvements-là sont inscrits au registre.",
+                lot=lot.name, reste=quant.quantity, retrait=abs(ecart)))
+        quant.with_company(self.company_id).with_context(
+            inventory_mode=True).write({'inventory_quantity': visee})
+        quant.action_apply_inventory()
+        return True
+
+    def _inscrire_rectification(self, mentions, motif):
+        """Inscrit une correction à la suite, et laisse l'originale en place.
+
+        Partagé par les deux écrans qui rectifient — l'un une inscription et
+        toutes ses mentions, l'autre les quantités de plusieurs inscriptions
+        d'un même geste. Le numéro d'ordre, la page et le motif s'attribuent
+        ici, une seule fois.
+        """
+        self.ensure_one()
+        motif = (motif or '').strip()
+        if not motif:
+            raise UserError(_(
+                "Une rectification s'inscrit avec son motif : « par création "
+                "d'un nouvel enregistrement avec indication de son motif » "
+                "(CGI, ann. IV, art. 56 J sexdecies, 2° c)."))
+        valeurs = dict(mentions)
+        valeurs.update({
+            'numero_ordre': self._sequence(self.company_id).next_by_id(),
+            'company_id': self.company_id.id,
+            # La pièce reste rattachée pour qu'on remonte à l'opération ; la
+            # ligne d'avoir, non : elle est déjà inscrite, et l'unicité doit
+            # continuer d'empêcher une double inscription.
+            'move_id': self.move_id.id,
+            'rectifie_id': self.id,
+            'motif_rectification': motif,
+            'page_id': self.env['livre.police.page']._page_courante(
+                self.company_id).id,
+            'date_inscription': fields.Datetime.now(),
+            'inscrit_par_id': self.env.user.id,
+        })
+        return self.sudo().create(valeurs)
+
     @api.depends('sortie_ids.poids', 'sortie_ids.date_mouvement', 'poids',
-                 'sens')
+                 'sens', 'rectifie_id', 'rectifiee_par_ids.poids')
     def _compute_sorties(self):
         """Ce qui est reparti, ce qui reste, et le jour où il n'en reste plus.
 
         Trois lectures d'une même chose, qu'aucune inscription ne porte : le
         registre dit les mouvements, pas leur solde. Le solde se recalcule, et
         c'est pour cela qu'il n'entre pas dans le chiffre de contrôle.
+
+        Deux règles gouvernent les rectifications, et elles sont l'envers
+        l'une de l'autre.
+
+        **Une rectification ne détient rien.** Elle amende une inscription ;
+        c'est l'originale qui porte le numéro d'ordre apposé sur le lot
+        (c. pén., art. R321-4), et c'est donc elle qui tient le stock. Compter
+        les deux ferait exister deux fois le même métal — le registre a
+        réellement annoncé 520 g de lingots là où 60 g restaient, et c'est ce
+        constat qui a produit ce calcul-ci.
+
+        **Une inscription rectifiée compte pour ce que dit sa rectification.**
+        Son propre poids reste écrit, et se lit ; mais ce qui demeure en stock
+        se mesure sur la dernière correction, sans quoi un lot corrigé ne se
+        solderait jamais.
         """
         for ligne in self:
+            if ligne.rectifie_id:
+                ligne.poids_sorti = 0.0
+                ligne.poids_restant = 0.0
+                ligne.date_sortie = False
+                ligne.etat_sortie = False
+                continue
             sorties = ligne.sortie_ids
             ligne.poids_sorti = sum(sorties.mapped('poids'))
-            ligne.poids_restant = ligne.poids - ligne.poids_sorti
+            ligne.poids_restant = (
+                ligne._rectification_finale().poids - ligne.poids_sorti)
             dates = [s.date_mouvement for s in sorties if s.date_mouvement]
             solde = ligne.poids_restant <= 0.00005
             ligne.date_sortie = max(dates) if dates and solde else False
             if ligne.sens != 'entree':
                 ligne.etat_sortie = False
             elif not sorties:
-                ligne.etat_sortie = 'en_stock'
+                # Rien n'est parti — mais une rectification a pu ramener
+                # l'inscription à zéro. « En stock » désignerait alors du
+                # métal qui n'a jamais existé, et le ferait ressortir dans la
+                # liste de ce que le comptoir détient. Aucun des trois états
+                # ne convient : il n'est ni en stock, ni sorti, ni sorti en
+                # partie. L'état reste donc vide.
+                ligne.etat_sortie = False if solde else 'en_stock'
             else:
                 ligne.etat_sortie = 'sorti' if solde else 'partiel'
 

@@ -17,8 +17,7 @@ rectification ne corrige presque jamais tout : la recopie manuelle des
 mentions justes serait une occasion d'en fausser une seconde.
 """
 
-from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo import api, fields, models
 
 
 class LivrePoliceRectification(models.TransientModel):
@@ -90,34 +89,20 @@ class LivrePoliceRectification(models.TransientModel):
         return valeurs
 
     def action_rectifier(self):
-        """Inscrit la correction à la suite, et laisse l'originale en place."""
+        """Inscrit la correction à la suite, et laisse l'originale en place.
+
+        Si la quantité change, le stock suit du même geste : le registre et
+        le stock disent la même chose de deux façons, et n'en corriger qu'une
+        les fait diverger durablement.
+        """
         self.ensure_one()
         origine = self.ligne_id
-        if not self.motif.strip():
-            raise UserError(_(
-                "Une rectification s'inscrit avec son motif : « par création "
-                "d'un nouvel enregistrement avec indication de son motif » "
-                "(CGI, ann. IV, art. 56 J sexdecies, 2° c)."))
-
-        Registre = self.env['livre.police.ligne']
         valeurs = {nom: (self[nom].id if self._fields[nom].type == 'many2one'
                          else self[nom])
                    for nom in self._MENTIONS}
-        valeurs.update({
-            'numero_ordre': Registre._sequence(origine.company_id).next_by_id(),
-            'company_id': origine.company_id.id,
-            # La pièce reste rattachée pour qu'on remonte à l'opération ; la
-            # ligne d'avoir, non : elle est déjà inscrite, et l'unicité doit
-            # continuer d'empêcher une double inscription.
-            'move_id': origine.move_id.id,
-            'rectifie_id': origine.id,
-            'motif_rectification': self.motif.strip(),
-            'page_id': self.env['livre.police.page']._page_courante(
-                origine.company_id).id,
-            'date_inscription': fields.Datetime.now(),
-            'inscrit_par_id': self.env.user.id,
-        })
-        rectification = Registre.sudo().create(valeurs)
+        ecart = self.quantite - origine._rectification_finale().quantite
+        rectification = origine._inscrire_rectification(valeurs, self.motif)
+        origine._ajuster_le_stock(ecart)
         return {
             'type': 'ir.actions.act_window',
             'name': "Inscription %s" % rectification.numero_ordre,

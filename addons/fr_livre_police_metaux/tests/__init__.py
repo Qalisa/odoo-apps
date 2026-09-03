@@ -16,3 +16,4 @@ if importlib.util.find_spec('odoo') is not None:
     from . import test_registre_concerne
     from . import test_prix_inscrit
     from . import test_date_entree_transfert
+    from . import test_rectification_quantite

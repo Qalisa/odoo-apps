@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="livre_police_rectification_quantite_view_form" model="ir.ui.view">
+        <field name="name">livre.police.rectification.quantite.form</field>
+        <field name="model">livre.police.rectification.quantite</field>
+        <field name="arch" type="xml">
+            <form string="Rectifier des quantités">
+                <div class="alert alert-info" role="status">
+                    Chaque quantité changée s'inscrit au registre comme une
+                    rectification, sous son propre numéro d'ordre, et le stock
+                    du lot est ajusté d'autant. Les lignes laissées telles
+                    quelles n'inscrivent rien.
+                    <br/>
+                    Ce n'est pas une sortie : rien ne part. Le sachet garde son
+                    numéro d'ordre — la rectification y renvoie.
+                </div>
+                <group>
+                    <field name="motif" nolabel="1" colspan="2"
+                           placeholder="Ce qui a été constaté, et pourquoi ces inscriptions devaient être corrigées."/>
+                </group>
+                <field name="ligne_ids" nolabel="1">
+                    <list editable="bottom" create="0" delete="0">
+                        <field name="numero_ordre" readonly="1"/>
+                        <field name="designation" readonly="1"/>
+                        <field name="quantite_inscrite" readonly="1"/>
+                        <field name="quantite_en_stock" readonly="1"
+                               optional="show"/>
+                        <field name="quantite"/>
+                        <field name="poids_inscrit" readonly="1"
+                               optional="hide"/>
+                        <field name="poids" readonly="1"/>
+                        <field name="changee" column_invisible="True"/>
+                    </list>
+                </field>
+                <footer>
+                    <button string="Inscrire les rectifications" type="object"
+                            name="action_rectifier" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- L'écran s'ouvre depuis la liste du registre, sur une sélection : le
+         cas qui l'a fait naître est celui d'une reprise entière à corriger,
+         et ces inscriptions se sélectionnent ensemble. Le `binding` le place
+         dans le menu « Actions » de la liste, là où l'on est déjà. -->
+    <record id="action_rectifier_les_quantites" model="ir.actions.act_window">
+        <field name="name">Rectifier les quantités</field>
+        <field name="res_model">livre.police.rectification.quantite</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_livre_police_ligne"/>
+        <field name="binding_view_types">list</field>
+        <field name="groups_id" eval="[(4, ref('fr_livre_police_metaux.group_livre_police'))]"/>
+    </record>
+
+</odoo>
