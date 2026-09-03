@@ -89,4 +89,33 @@
          travail se fait donc dans `hooks.py`, appele a l'installation et par
          la migration 18.0.1.2.0. -->
 
+    <!-- ================================================================
+         L'autre sens : ouvrir l'analyse du stock a tout le comptoir.
+
+         Inventaire / Analyse porte « Stock » — la liste des articles
+         stockables et de leurs quantites, ecran de travail quotidien d'un
+         comptoir qui veut savoir ce qu'il a en vitrine. Odoo le reserve a
+         « Inventaire / Administrateur », droit qu'un vendeur n'a pas et n'a
+         pas a recevoir : il ouvrirait aussi la configuration des entrepots,
+         les regles de reassort et les emplacements.
+
+         Le menu parent est donc etendu au simple utilisateur du stock. Ses
+         enfants ne portent aucun groupe propre — ils suivent le parent, et
+         c'est pour cela qu'il faut regarder ce qu'ils montrent, un par un. -->
+    <record id="stock.menu_warehouse_report" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('stock.group_stock_user'),
+                                               ref('stock.group_stock_manager')])]"/>
+    </record>
+
+    <!-- Sauf Valorisation, qui n'est pas un etat de stock mais un chiffre :
+         la valeur en euros de ce que detient l'etablissement. Elle releve du
+         meme partage que le chiffre d'affaires.
+
+         Et l'y laisser ne l'aurait meme pas ouverte : `stock.valuation.layer`
+         n'est lisible que par « Inventaire / Administrateur ». Le vendeur
+         aurait vu un menu qui refuse de s'ouvrir — pire qu'un menu absent. -->
+    <record id="stock_account.menu_valuation" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('stock.group_stock_manager')])]"/>
+    </record>
+
 </odoo>
