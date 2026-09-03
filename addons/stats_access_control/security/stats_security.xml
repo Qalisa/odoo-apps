@@ -67,4 +67,26 @@
         <field name="groups_id" eval="[(6, 0, [ref('group_global_stats')])]"/>
     </record>
 
+    <!-- Masquer un menu ne ferme pas l'ecran. `/web/action/load` lit l'action
+         en `sudo()`, sans consulter aucun groupe, et le `groups_id` d'une
+         fenetre d'action n'est regarde que pour les actions contextuelles
+         (`ir.actions.actions.get_bindings`) — jamais au chargement par son
+         identifiant. Une URL suffit donc a ouvrir « Analyse des ventes ».
+
+         Ce qui borne ce qu'on y lit, ce sont les regles d'enregistrement. Or
+         Odoo les clef sur les groupes de vente : « Documents des autres »
+         (`group_sale_salesman_all_leads`) ouvre a lui seul les chiffres
+         consolides des trois etablissements. Voir les devis d'un collegue et
+         lire le chiffre d'affaires de la maison sont pourtant deux droits
+         differents, et c'est tout l'objet de ce module.
+
+         Les deux regles « tout voir » sont donc reattachees a ce droit-ci.
+         Sans lui, la regle « les miens » demeure et l'analyse ne montre que
+         ses propres lignes — y compris par URL.
+
+         Cela ne peut pas s'ecrire ici : `sale` declare ces deux regles
+         `noupdate`, et un `<record>` qui les vise est ignore en silence. Le
+         travail se fait donc dans `hooks.py`, appele a l'installation et par
+         la migration 18.0.1.2.0. -->
+
 </odoo>
