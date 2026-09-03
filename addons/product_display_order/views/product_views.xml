@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inventaire ▸ Analyse ▸ Stock. C'est l'écran depuis lequel on range :
+         il montre les articles stockables et leurs quantités, donc ce qu'on
+         a réellement en vitrine.
+
+         La poignée ne s'active que si la liste est bien triée sur elle. Rien
+         à forcer ici : la vue ne fixe aucun `default_order`, elle suit donc
+         le tri du modèle, que ce module fait commencer par la séquence. Un
+         clic sur un en-tête de colonne trie autrement et désactive le
+         glisser-déposer le temps du tri — l'ordre enregistré, lui, reste. -->
+    <record id="product_product_stock_tree_ordre" model="ir.ui.view">
+        <field name="name">product.product.stock.list.ordre</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="stock.product_product_stock_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='display_name']" position="before">
+                <field name="sequence" widget="handle"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Et Ventes ▸ Articles, la liste du catalogue. Le rangement s'y fait
+         aussi bien, sur le même champ : les deux écrans écrivent la même
+         valeur, il n'y a qu'un seul ordre. Le mettre aux deux endroits évite
+         d'avoir à quitter le catalogue pour ranger le catalogue. -->
+    <record id="product_template_tree_view_ordre" model="ir.ui.view">
+        <field name="name">product.template.product.list.ordre</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='is_favorite']" position="before">
+                <field name="sequence" widget="handle"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
