@@ -20,25 +20,28 @@
                 « Produit » est deplace pour cela : Odoo le pose en tete, ou
                 il precede la provenance.
             -->
+            <xpath expr="//field[@name='quant_id']" position="attributes">
+                <attribute name="options">{'no_open': True, 'allow_order': True}</attribute>
+            </xpath>
             <xpath expr="//field[@name='quant_id']" position="after">
                 <field name="police_avoir_id" string="Avoir d'achat"
                        optional="show" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'"/>
+                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
                 <field name="police_avoir_date" string="Date de l'avoir"
                        optional="show" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'"/>
+                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
                 <field name="police_vendeur_id" string="Vendeur"
                        optional="show" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'"/>
+                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
                 <xpath expr="//field[@name='product_id']" position="move"/>
                 <field name="police_description" string="Objets"
                        optional="show" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'"/>
+                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
             </xpath>
             <xpath expr="//field[@name='quantity']" position="before">
                 <field name="police_quant_detenu" string="Détenu"
                        optional="show" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'"/>
+                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
             </xpath>
             <!--
                 Rouge des que la saisie depasse le detenu, comme le formulaire
@@ -51,7 +54,7 @@
             </xpath>
             <xpath expr="//field[@name='quantity']" position="after">
                 <field name="police_poids" string="Poids (g)"
-                       optional="show" readonly="1" sum="Poids"/>
+                       optional="show" readonly="1" sum="Poids" options="{'allow_order': True}"/>
             </xpath>
         </field>
     </record>
@@ -178,6 +181,7 @@
             -->
             <xpath expr="//field[@name='quant_id']" position="attributes">
                 <attribute name="width">210px</attribute>
+                <attribute name="options">{'no_create': True, 'no_open': True, 'allow_order': True}</attribute>
             </xpath>
             <!--
                 Meme ordre qu'au detail des operations. « Produit » n'y est
@@ -187,16 +191,16 @@
             <xpath expr="//field[@name='quant_id']" position="after">
                 <field name="police_avoir_id" string="Avoir d'achat"
                        optional="show" readonly="1" width="140px"
-                       column_invisible="not parent.show_quant"/>
+                       column_invisible="not parent.show_quant" options="{'allow_order': True}"/>
                 <field name="police_avoir_date" string="Date de l'avoir"
                        optional="show" readonly="1" width="110px"
-                       column_invisible="not parent.show_quant"/>
+                       column_invisible="not parent.show_quant" options="{'allow_order': True}"/>
                 <field name="police_vendeur_id" string="Vendeur"
                        optional="show" readonly="1" width="130px"
-                       column_invisible="not parent.show_quant"/>
+                       column_invisible="not parent.show_quant" options="{'allow_order': True}"/>
                 <field name="police_description" string="Objets"
                        optional="show" readonly="1" width="200px"
-                       column_invisible="not parent.show_quant"/>
+                       column_invisible="not parent.show_quant" options="{'allow_order': True}"/>
             </xpath>
             <!--
                 Et ce que le lot contient, juste avant la quantite qu'on
@@ -205,7 +209,7 @@
             <xpath expr="//field[@name='quantity']" position="before">
                 <field name="police_quant_detenu" string="Détenu"
                        optional="show" readonly="1" width="90px"
-                       column_invisible="not parent.show_quant"/>
+                       column_invisible="not parent.show_quant" options="{'allow_order': True}"/>
             </xpath>
             <xpath expr="//field[@name='quantity']" position="attributes">
                 <attribute name="decoration-danger">police_quant_detenu and quantity &gt; police_quant_detenu</attribute>
@@ -218,7 +222,7 @@
             -->
             <xpath expr="//field[@name='quantity']" position="after">
                 <field name="police_poids" string="Poids (g)"
-                       optional="show" readonly="1" sum="Poids"/>
+                       optional="show" readonly="1" sum="Poids" options="{'allow_order': True}"/>
             </xpath>
         </field>
     </record>
