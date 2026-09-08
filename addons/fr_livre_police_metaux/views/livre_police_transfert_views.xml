@@ -64,6 +64,8 @@
                                    invisible="not picking_sortie_id"/>
                             <field name="picking_entree_id" readonly="1"
                                    invisible="not picking_entree_id"/>
+                            <field name="create_uid" string="Établi par"
+                                   readonly="1"/>
                             <field name="date_expedition" readonly="1"
                                    invisible="not date_expedition"/>
                             <field name="expedie_par_id" readonly="1"
@@ -136,6 +138,11 @@
                 <field name="company_id"/>
                 <field name="company_destination_id"/>
                 <field name="poids_total" sum="Poids total"/>
+                <!-- Qui a etabli le transfert. Distinct de « Expedie par » et
+                     de « Recu par » : ces deux-la disent qui a engage le
+                     registre, celui-ci dit qui l'a demande. Un transfert reste
+                     en brouillon sans les deux autres, jamais sans celui-ci. -->
+                <field name="create_uid" string="Établi par"/>
                 <field name="date_expedition" optional="show"/>
                 <field name="date_reception" optional="show"/>
                 <field name="motif" optional="hide"/>
