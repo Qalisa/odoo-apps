@@ -51,6 +51,22 @@ class StockMove(models.Model):
                 mouvement.product_id, mouvement.quantity)
 
 
+class StockQuant(models.Model):
+    _inherit = 'stock.quant'
+
+    police_poids = fields.Float(
+        string="Poids (g)", digits=(12, 4), compute='_compute_police_poids',
+        help="Le poids de ce que le lot détient — la colonne « En stock », "
+             "et non ce qui en reste libre. C'est ce poids-là que le registre "
+             "porte, et le plafond qu'une sortie ne peut pas dépasser.",
+    )
+
+    @api.depends('product_id', 'quantity')
+    def _compute_police_poids(self):
+        for quant in self:
+            quant.police_poids = _poids(quant.product_id, quant.quantity)
+
+
 class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
 
