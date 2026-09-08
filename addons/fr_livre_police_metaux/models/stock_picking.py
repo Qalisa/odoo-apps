@@ -82,6 +82,54 @@ class StockMove(models.Model):
             lambda mouvement: mouvement.picking_code == 'incoming'
             and mouvement.sale_line_id.police_origin_required)
 
+    @api.constrains('quantity', 'product_uom_qty', 'state')
+    def _police_check_demande_respectee(self):
+        """On ne sort pas plus de métal que le mouvement n'en demande.
+
+        Odoo l'autorise, et c'est défendable ailleurs : un client emporte un
+        carton de plus, on l'ajoute au bon. Ici la sortie s'inscrit au
+        registre, et le registre est confronté à la vente : si le bon fait
+        partir 184,30 g quand la vente en porte 177,50, les deux ne se
+        répondent plus, et rien dans le dossier ne dit lequel a raison.
+
+        Ce dépassement n'est pas qu'une divergence de papier. Il ouvre la
+        boucle qui a fait naître ce contrôle : une fois la demande dépassée,
+        Odoo crée chaque ligne suivante à quantité nulle — `selectRecord`,
+        dans le composant du détail des opérations. Une ligne nulle ne
+        consomme rien, le lot reste offert au choix, et on peut l'ajouter
+        indéfiniment. Trois lignes fantômes sur un même lot en sont sorties.
+
+        Le remède est du côté de la vente : c'est elle qui dit ce qui part.
+        """
+        if self.env.context.get('police_validation'):
+            return
+        ecarts = []
+        for mouvement in self:
+            if mouvement.state in ('done', 'cancel'):
+                continue
+            if not mouvement.product_id.product_tmpl_id.metal_regulated:
+                continue
+            if mouvement.location_id.usage != 'internal':
+                continue
+            if mouvement.quantity <= mouvement.product_uom_qty + 0.00005:
+                continue
+            ecarts.append(_(
+                "%(article)s : %(saisi)s saisis, %(demande)s demandés",
+                article=mouvement.product_id.display_name,
+                saisi=mouvement.quantity, demande=mouvement.product_uom_qty))
+        if ecarts:
+            raise UserError(_(
+                "Ce bon ferait sortir plus de métal que la vente n'en "
+                "porte.\n\n"
+                "La sortie s'inscrit au registre : elle dirait qu'un métal "
+                "est parti que rien ne justifie, et une inscription ne se "
+                "retire pas.\n\n"
+                "%(ecarts)s\n\n"
+                "Si le client emporte davantage, c'est la vente qu'il faut "
+                "reprendre — la quantité sur la ligne de devis — puis "
+                "revenir au bon.",
+                ecarts="\n".join(ecarts)))
+
 
 class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
@@ -110,6 +158,75 @@ class StockMoveLine(models.Model):
         valeurs['company_id'] = inscription.company_id.id
         return valeurs
 
+    def _police_manques_par_lot(self):
+        """Ce qui manquerait au stock si ces lignes sortaient telles quelles.
+
+        Le total se fait **par lot**, pas par ligne : deux lignes de 5 sur un
+        lot qui en porte 6 sont chacune innocente et le couple ne l'est pas.
+        Odoo permet le même lot sur deux lignes — c'est ainsi qu'on répartit
+        un lot entre deux colis — et rien ici ne l'interdit ; seul le total
+        est plafonné.
+        """
+        Quant = self.env['stock.quant'].sudo()
+        preleve = defaultdict(float)
+        for ligne in self:
+            if not ligne.lot_id or ligne.state in ('done', 'cancel'):
+                continue
+            if not ligne.product_id.product_tmpl_id.metal_regulated:
+                continue
+            if ligne.location_id.usage != 'internal':
+                continue
+            preleve[(ligne.lot_id, ligne.location_id,
+                     ligne.company_id)] += ligne.quantity
+
+        manques = []
+        for (lot, emplacement, societe), quantite in preleve.items():
+            detenu = sum(Quant.search([
+                ('lot_id', '=', lot.id),
+                ('location_id', 'child_of', emplacement.id),
+                ('company_id', '=', societe.id),
+            ]).mapped('quantity'))
+            if quantite > detenu + 0.00005:
+                manques.append(_(
+                    "%(lot)s : %(demande)s demandés, %(detenu)s détenus",
+                    lot=lot.name, demande=quantite, detenu=detenu))
+        return manques
+
+    def _police_refus_stock(self, manques):
+        """Le refus, dit d'une seule façon où qu'il tombe."""
+        return _(
+            "Ce bon ferait sortir plus de métal qu'il n'y en a.\n\n"
+            "La sortie s'inscrit au registre à la validation : elle "
+            "affirmerait qu'un métal est parti alors qu'il n'a jamais "
+            "été là, et une inscription ne se retire pas.\n\n"
+            "%(manques)s\n\n"
+            "Corrigez la quantité. Si c'est le stock qui est faux, "
+            "c'est lui qu'il faut reprendre — « Rectifier les "
+            "quantités » ou « Régulariser une arrivée » — avant de "
+            "faire sortir quoi que ce soit.",
+            manques="\n".join(manques))
+
+    @api.constrains('quantity', 'lot_id', 'location_id')
+    def _police_check_stock_a_la_saisie(self):
+        """Le plafond s'oppose à la saisie, et non à la seule validation.
+
+        Refuser au moment de valider laissait le bon se remplir : la
+        réservation dépassait le détenu — 50 réservés sur 30 — et immobilisait
+        du métal qui n'existe pas, invisible sur l'écran, qui annonçait
+        « Disponible » en vert. Le bon ne cédait qu'au bout, quand tout était
+        saisi et qu'il fallait tout défaire.
+
+        Le contrôle porte sur tout le bon, pas sur la ligne écrite : le même
+        lot peut se retrouver sur deux mouvements distincts du même bon, et
+        c'est leur somme qui compte.
+        """
+        if self.env.context.get('police_validation'):
+            return
+        lignes = self | self.picking_id.move_line_ids | self.move_id.move_line_ids
+        manques = lignes._police_manques_par_lot()
+        if manques:
+            raise UserError(lignes._police_refus_stock(manques))
+
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
@@ -132,6 +249,9 @@ class StockPicking(models.Model):
         self._police_check_reception()
         self._police_check_mouvement_justifie()
         self._police_check_stock_suffisant()
+        # Et non la seule contrainte : un bon deja excedentaire avant ce
+        # correctif n'a plus a etre ecrit pour etre valide, et passerait.
+        self.move_ids._police_check_demande_respectee()
         self._police_nommer_les_lots()
         return super().button_validate()
 
@@ -152,43 +272,15 @@ class StockPicking(models.Model):
         Aucun droit n'en dispense, et c'est voulu : un stock negatif n'est
         jamais juste. S'il manque du metal au registre, c'est une
         regularisation ou une rectification qu'il faut, pas une sortie de plus.
-        """
-        Quant = self.env['stock.quant'].sudo()
-        for bon in self:
-            demande = defaultdict(float)
-            for ligne in bon.move_line_ids:
-                if not ligne.lot_id or ligne.state in ('done', 'cancel'):
-                    continue
-                if not ligne.product_id.product_tmpl_id.metal_regulated:
-                    continue
-                if ligne.location_id.usage != 'internal':
-                    continue
-                demande[(ligne.lot_id, ligne.location_id,
-                         ligne.company_id)] += ligne.quantity
 
-            manques = []
-            for (lot, emplacement, societe), quantite in demande.items():
-                detenu = sum(Quant.search([
-                    ('lot_id', '=', lot.id),
-                    ('location_id', 'child_of', emplacement.id),
-                    ('company_id', '=', societe.id),
-                ]).mapped('quantity'))
-                if quantite > detenu + 0.00005:
-                    manques.append(_(
-                        "%(lot)s : %(demande)s demandés, %(detenu)s détenus",
-                        lot=lot.name, demande=quantite, detenu=detenu))
+        Le meme controle se fait des la saisie, ligne par ligne — voir
+        `StockMoveLine._police_check_stock_a_la_saisie`. Celui-ci reste : le
+        stock a pu bouger ailleurs entre la saisie et la validation.
+        """
+        for bon in self:
+            manques = bon.move_line_ids._police_manques_par_lot()
             if manques:
-                raise UserError(_(
-                    "Ce bon ferait sortir plus de métal qu'il n'y en a.\n\n"
-                    "La sortie s'inscrit au registre à la validation : elle "
-                    "affirmerait qu'un métal est parti alors qu'il n'a jamais "
-                    "été là, et une inscription ne se retire pas.\n\n"
-                    "%(manques)s\n\n"
-                    "Corrigez la quantité. Si c'est le stock qui est faux, "
-                    "c'est lui qu'il faut reprendre — « Rectifier les "
-                    "quantités » ou « Régulariser une arrivée » — avant de "
-                    "faire sortir quoi que ce soit.",
-                    manques="\n".join(manques)))
+                raise UserError(bon.move_line_ids._police_refus_stock(manques))
 
     def _police_check_mouvement_justifie(self):
         """Un metal reglemente ne bouge que par un chemin qui laisse une trace.
@@ -270,7 +362,13 @@ class StockPicking(models.Model):
         transfert immédiat — et rendre la main sans que rien ne soit sorti.
         `_action_done` est le moment où le stock a bougé.
         """
-        resultat = super()._action_done()
+        # Pendant la validation, les quants se debitent : les controles de
+        # saisie compareraient la ligne a un stock deja diminue, et refuseraient
+        # la sortie qu'ils viennent d'autoriser. Ils ont eu lieu avant, dans
+        # `button_validate`.
+        resultat = super(
+            StockPicking, self.with_context(police_validation=True),
+        )._action_done()
         Registre = self.env['livre.police.ligne']
         Registre._inscrire_sorties(self)
         Registre._inscrire_entrees_transfert(self)

@@ -247,6 +247,11 @@ class TestSortieLotQualifie(TransactionCase):
         Odoo laisse le stock passer en négatif, et la sortie s'inscrivait
         sans broncher — l'entrée dont elle se réclamait en annonçait 6,80.
         Une inscription ne se retire pas : le refus vient avant.
+
+        Il vient désormais dès la saisie, et non plus à la validation. Refuser
+        au bout laissait le bon se remplir : la réservation dépassait le
+        détenu et immobilisait du métal qui n'existe pas, sur un écran qui
+        annonçait « Disponible ».
         """
         lot = self.entree._lot_du_registre()
         entrepot = self.env['stock.warehouse'].search(
@@ -264,11 +269,13 @@ class TestSortieLotQualifie(TransactionCase):
         })
         bon.action_confirm()
         bon.action_assign()
-        # 5 000 g saisis sur un lot qui en porte 1 000.
-        bon.move_ids.move_line_ids.write({'lot_id': lot.id, 'quantity': 5000.0})
-
-        with self.assertRaises(UserError):
-            bon.button_validate()
+        # 5 000 g saisis sur un lot qui en porte 1 000 : la ligne elle-même
+        # est refusée. Le savepoint n'est pas de la coquetterie — la contrainte
+        # remonte du flush, et sans lui la transaction reste inutilisable :
+        # la vérification qui suit ne voudrait plus rien dire.
+        with self.assertRaises(UserError), self.cr.savepoint():
+            bon.move_ids.move_line_ids.write(
+                {'lot_id': lot.id, 'quantity': 5000.0})
 
         self.assertFalse(self.env['livre.police.ligne'].search([
             ('mouvement_stock_id', 'in', bon.move_line_ids.ids)]),
