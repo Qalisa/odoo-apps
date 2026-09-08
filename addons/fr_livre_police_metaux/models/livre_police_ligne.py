@@ -1002,6 +1002,120 @@ class LivrePoliceLigne(models.Model):
         return self.sudo().create(valeurs)
 
     @api.model
+    def _valeurs_depuis_regularisation(self, sortie, mouvement, motif):
+        """Fige ce qu'une arrivée régularisée inscrit.
+
+        Le métal est passé d'un établissement à l'autre sans emprunter le
+        document de transfert : la sortie s'est inscrite chez celui qui
+        envoie, l'entrée nulle part. Le comptoir d'arrivée détient alors du
+        métal que son registre ignore, et « un registre est tenu pour chaque
+        établissement » (c. pén., art. R321-6).
+
+        L'entrée manquante s'inscrit donc ici, avec sa date réelle — le jour
+        où le métal a bougé, non celui où l'on s'en aperçoit. Le motif dit
+        pourquoi elle arrive après coup : sans lui, un lecteur verrait une
+        entrée sans cause.
+
+        Rien n'est retranché chez celui qui envoie : sa sortie est déjà
+        inscrite, et elle est vraie. Ce qui lui manquait, c'est de dire où le
+        métal allait — cela se rectifie de son côté, séparément.
+        """
+        origine = sortie.origine_id or sortie.entree_id or sortie
+        return {
+            'sens': 'entree',
+            'date_achat': sortie.date_mouvement,
+            'date_mouvement': sortie.date_mouvement,
+            'designation': sortie.designation,
+            'description': sortie.description,
+            'provenance': _(
+                "Régularisation : reçu de l'établissement %(etablissement)s, "
+                "inscription %(numero)s du %(date)s. %(motif)s",
+                etablissement=sortie.company_id.display_name,
+                numero=sortie.numero_ordre,
+                date=format_date(self.env, sortie.date_mouvement),
+                motif=motif),
+            'metal_nature': sortie.metal_nature,
+            'quantite': mouvement.quantity,
+            'regime_quantite': sortie.regime_quantite,
+            'poids': (sortie.poids * mouvement.quantity / sortie.quantite
+                      if sortie.quantite else 0.0),
+            'titre': sortie.titre,
+            'titre_lot': sortie.titre_lot,
+            'prix': 0.0,
+            'currency_id': sortie.currency_id.id,
+            'company_id': mouvement.company_id.id,
+            'numero_lot': mouvement.lot_id.name,
+            'mouvement_stock_id': mouvement.id,
+            'origine_id': origine.id,
+            'origine_etablissement': origine.company_id.display_name,
+            'origine_numero_ordre': origine.numero_ordre,
+            'origine_date_achat': origine.date_achat,
+            'page_id': self.env['livre.police.page']._page_courante(
+                mouvement.company_id).id,
+            'date_inscription': fields.Datetime.now(),
+            'inscrit_par_id': self.env.user.id,
+        }
+
+    @api.model
+    def _valeurs_depuis_requalification(self, source, mouvement, produit,
+                                        poids, description, motif):
+        """Fige ce qu'une part reclassée inscrit.
+
+        Le tri d'un lot révèle ce qu'il contenait : une part n'est pas de la
+        nature sous laquelle elle avait été inscrite. Rien n'entre et rien ne
+        sort — le métal était déjà là, sous un autre nom.
+
+        Sa **date d'entrée reste celle du rachat d'origine** : ce métal est
+        entré dans ces murs ce jour-là, et le tri n'est pas une entrée. Son
+        prix est nul, et ce n'est pas un oubli : le prix vit à l'inscription
+        d'origine, que la provenance désigne nommément. Personne n'a vendu
+        quoi que ce soit ce jour-là.
+
+        Elle prend en revanche son **propre numéro d'ordre**, et il le faut :
+        c'est un autre lot, il porte une autre étiquette, et « le numéro
+        d'ordre […] figure de manière apparente sur chaque objet ou lot
+        d'objets » (c. pén., art. R321-4).
+
+        La nature, le titre et le régime viennent du nouvel article — c'est
+        tout l'objet de l'opération : dire ce que ce métal est réellement.
+        """
+        origine = source.origine_id or source
+        modele = produit.product_tmpl_id
+        regimes = dict(modele._fields['metal_quantity_mode'].selection)
+        return {
+            'sens': 'entree',
+            'date_achat': source.date_achat,
+            'designation': produit.with_context(
+                display_default_code=False).display_name or False,
+            'description': description or False,
+            'provenance': _(
+                "Requalification de l'inscription %(numero)s du %(date)s. "
+                "%(motif)s",
+                numero=source.numero_ordre,
+                date=format_date(self.env, source.date_achat),
+                motif=motif),
+            'metal_nature': modele.metal_nature.display_name or False,
+            'quantite': mouvement.quantity,
+            'regime_quantite': regimes.get(modele.metal_quantity_mode) or False,
+            'poids': poids,
+            'titre': modele.metal_fineness,
+            'titre_lot': modele.metal_mixed_fineness,
+            'prix': 0.0,
+            'currency_id': source.currency_id.id or source.company_id.currency_id.id,
+            'company_id': mouvement.company_id.id,
+            'numero_lot': mouvement.lot_id.name,
+            'mouvement_stock_id': mouvement.id,
+            'origine_id': origine.id,
+            'origine_etablissement': origine.company_id.display_name,
+            'origine_numero_ordre': origine.numero_ordre,
+            'origine_date_achat': origine.date_achat,
+            'page_id': self.env['livre.police.page']._page_courante(
+                mouvement.company_id).id,
+            'date_inscription': fields.Datetime.now(),
+            'inscrit_par_id': self.env.user.id,
+        }
+
+    @api.model
     def _valeurs_depuis_reprise(self, ligne, mouvement):
         """Fige ce qu'un lot d'ouverture inscrit.
 

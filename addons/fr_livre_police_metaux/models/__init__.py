@@ -15,5 +15,7 @@ from . import livre_police_reprise
 from . import livre_police_ligne
 from . import livre_police_rectification
 from . import livre_police_rectification_quantite
+from . import livre_police_regularisation
+from . import livre_police_requalification
 from . import livre_police_controle
 from . import livre_police_consultation

@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.34.0',
+    'version': '18.0.1.35.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -385,6 +385,47 @@ Le document porte enfin **qui l'a etabli**, a cote de qui l'a expedie et qui
 l'a recu. Les deux derniers disent qui a engage un registre ; le premier dit
 qui l'a demande.
 
+Quand le transfert n'a pas ete employe
+--------------------------------------
+
+Une livraison faite a la main fait partir le metal quand meme : la sortie
+s'inscrit, parce qu'elle nait du mouvement de stock. L'entree, elle, ne
+s'inscrit nulle part, et le comptoir d'arrivee detient du metal que son
+registre ignore.
+
+**Regulariser une arrivee** inscrit l'entree manquante. Elle porte la date
+reelle du mouvement, non celle ou l'on s'en apercoit, et un motif qui dit
+pourquoi elle arrive apres coup — sans lui, un lecteur verrait une entree sans
+cause. Le sachet garde le numero du comptoir de rachat, et c'est le **meme**
+enregistrement de lot qui traverse, comme dans un transfert.
+
+Rien n'est retranche chez celui qui envoie : sa sortie est vraie, le metal est
+bien parti. Ce qui lui manque, c'est de dire ou — cela se rectifie de son
+cote.
+
+Requalifier une part de lot
+---------------------------
+
+Un lot entre sous la nature qu'on lui prete au comptoir. Le tri, plus tard,
+revele qu'une part n'est pas de cette nature — de l'or blanc dans un lot de
+titres. Elle ne part pas au fondeur ; elle reste, et sous son vrai nom.
+
+Rien n'entre et rien ne sort : ce metal etait deja la. **Requalifier une part
+du lot** reduit l'inscription d'origine — par une rectification portant son
+motif — et inscrit la part reclassee sous son **propre numero d'ordre**, donc
+sa propre etiquette (c. pen., art. R321-4). Sa date d'entree reste celle du
+rachat : le tri n'est pas une entree. Son prix est nul, et la nature, le titre
+et le regime viennent du nouvel article — c'est tout l'objet de l'operation.
+
+Le poids reclasse ne peut pas exceder le poids retire : un tri separe, il ne
+cree pas de matiere.
+
+Cet ecran remplace un contournement qui portait au registre trois mentions
+fausses — revendre le lot entier, puis le racheter a 0 euro au fondeur : un
+vendeur qui n'a rien vendu, une personne physique de chez lui qui aurait remis
+les objets (art. R321-3 2°), et une sortie pour du metal qui n'est jamais
+parti.
+
 Le stock d'ouverture
 --------------------
 
@@ -470,6 +511,8 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
         'views/livre_police_ligne_views.xml',
         'views/livre_police_rectification_views.xml',
         'views/livre_police_rectification_quantite_views.xml',
+        'views/livre_police_regularisation_views.xml',
+        'views/livre_police_requalification_views.xml',
         'views/livre_police_page_views.xml',
         'views/livre_police_transfert_views.xml',
         'views/livre_police_reprise_views.xml',

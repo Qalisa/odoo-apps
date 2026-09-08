@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="livre_police_requalification_view_form" model="ir.ui.view">
+        <field name="name">livre.police.requalification.form</field>
+        <field name="model">livre.police.requalification</field>
+        <field name="arch" type="xml">
+            <form string="Requalifier une part du lot">
+                <div class="alert alert-info" role="status">
+                    Le tri révèle qu'une part du lot n'est pas de la nature
+                    sous laquelle elle a été inscrite. Rien n'entre, rien ne
+                    sort : ce métal était déjà là, sous un autre nom.
+                    <br/>
+                    L'inscription d'origine se réduit d'autant, par une
+                    rectification portant son motif ; la part reclassée prend
+                    son propre numéro d'ordre, et donc sa propre étiquette.
+                    Sa date d'entrée reste celle du rachat.
+                </div>
+                <group>
+                    <group string="Le lot d'origine">
+                        <field name="numero_ordre"/>
+                        <field name="designation_origine"/>
+                        <field name="quantite_inscrite"/>
+                        <field name="poids_inscrit"/>
+                        <field name="quantite_retiree"/>
+                        <field name="poids_retire"/>
+                    </group>
+                    <group string="Ce que cette part est réellement">
+                        <field name="product_id"
+                               options="{'no_create': True}"/>
+                        <field name="quantite"/>
+                        <field name="poids"/>
+                        <field name="description"/>
+                    </group>
+                </group>
+                <group string="Ce que le tri a constaté">
+                    <field name="motif" nolabel="1" colspan="2"
+                           placeholder="Ce qui a été trié, et ce qui a été reconnu."/>
+                </group>
+                <footer>
+                    <button string="Inscrire la requalification" type="object"
+                            name="action_requalifier" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_requalifier_une_part" model="ir.actions.act_window">
+        <field name="name">Requalifier une part du lot</field>
+        <field name="res_model">livre.police.requalification</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_livre_police_ligne"/>
+        <field name="binding_view_types">form</field>
+        <field name="context">{'default_inscription_id': active_id}</field>
+        <field name="groups_id" eval="[(4, ref('fr_livre_police_metaux.group_livre_police'))]"/>
+    </record>
+
+</odoo>
