@@ -166,3 +166,110 @@ class TestSortieLotQualifie(TransactionCase):
                 'quantite': 200.0,
                 'motif': "Deuxième fois, qui doit être refusée.",
             }).action_inscrire()
+
+    def test_le_repli_sur_le_numero_nu_ne_prend_pas_une_homonyme(self):
+        """L'autre comptoir tient lui aussi une inscription « 000001 ».
+
+        Le repli sur le numéro d'ordre nu, introduit pour retrouver
+        l'inscription d'un lot qualifié, cherchait les deux noms d'un seul
+        coup. Le comptoir qui reçoit tenant sa propre « 000001 » — un tout
+        autre métal — c'est elle que la recherche ramenait, et la sortie
+        s'inscrivait sous la désignation, le titre et le poids d'un lot
+        étranger.
+        """
+        # Chez celui qui reçoit, une inscription porte le même numéro nu que
+        # celle du comptoir de départ — sur un article qui n'a rien à voir.
+        # Elle s'inscrit avant le transfert pour prendre le numéro 000001,
+        # comme celle du départ.
+        nu = self.entree.numero_ordre
+        piece = self.env['product.template'].create({
+            'name': "Piece d'essai",
+            'type': 'consu', 'is_storable': True, 'tracking': 'lot',
+            'metal_nature': self.env.ref(
+                'fr_numismatics_metals.metal_nature_or').id,
+            'metal_fineness': 900.0, 'metal_quantity_mode': 'unit',
+            'metal_unit_weight': 6.4516,
+        }).product_variant_id
+        leurre = self.env['livre.police.reprise'].with_company(
+            self.arrivee).create({
+                'company_id': self.arrivee.id,
+                'date_arrete': fields.Date.context_today(self.env['res.company']),
+                'libelle': "Reprise du comptoir voisin",
+                'ligne_ids': [(0, 0, {
+                    'product_id': piece.id, 'quantite': 5.0,
+                    'description': "Voir livre de police manuscrit"})],
+            })
+        leurre.action_inscrire()
+        self.assertEqual(leurre.inscription_ids.numero_lot, nu)
+
+        self._transferer(300.0)
+        lot = self.entree._lot_du_registre()
+        self.assertIn('/', lot.name)
+        self.assertEqual(lot.name.rsplit('/', 1)[-1], nu)
+
+        arrivee = self.env['livre.police.ligne'].search([
+            ('company_id', '=', self.arrivee.id),
+            ('sens', '=', 'entree'),
+            ('numero_lot', '=', lot.name)])
+        self.assertTrue(arrivee)
+
+        # Le comptoir qui reçoit renvoie sa part : la sortie doit se
+        # rattacher au lot qualifié, pas à son homonyme.
+        entrepot = self.env['stock.warehouse'].search(
+            [('company_id', '=', self.arrivee.id)], limit=1)
+        clients = self.env.ref('stock.stock_location_customers')
+        bon = self.env['stock.picking'].with_company(self.arrivee).create({
+            'picking_type_id': entrepot.out_type_id.id,
+            'location_id': entrepot.lot_stock_id.id,
+            'location_dest_id': clients.id,
+            'move_ids': [(0, 0, {
+                'name': self.argent.name, 'product_id': self.argent.id,
+                'product_uom_qty': 100.0,
+                'location_id': entrepot.lot_stock_id.id,
+                'location_dest_id': clients.id})],
+        })
+        bon.action_confirm()
+        bon.action_assign()
+        bon.move_ids.move_line_ids.write({'lot_id': lot.id, 'quantity': 100.0})
+        bon.button_validate()
+
+        sortie = self.env['livre.police.ligne'].search([
+            ('company_id', '=', self.arrivee.id), ('sens', '=', 'sortie'),
+            ('mouvement_stock_id', 'in', bon.move_line_ids.ids)])
+        self.assertEqual(
+            sortie.entree_id, arrivee,
+            "La sortie s'est rattachée à l'homonyme du comptoir qui reçoit.")
+        self.assertEqual(sortie.designation, arrivee.designation)
+
+    def test_un_lot_ne_sort_pas_plus_qu_il_n_en_contient(self):
+        """Constaté sur une copie : 60 000,80 g saisis sur un lot de 6,80 g.
+
+        Odoo laisse le stock passer en négatif, et la sortie s'inscrivait
+        sans broncher — l'entrée dont elle se réclamait en annonçait 6,80.
+        Une inscription ne se retire pas : le refus vient avant.
+        """
+        lot = self.entree._lot_du_registre()
+        entrepot = self.env['stock.warehouse'].search(
+            [('company_id', '=', self.depart.id)], limit=1)
+        clients = self.env.ref('stock.stock_location_customers')
+        bon = self.env['stock.picking'].with_company(self.depart).create({
+            'picking_type_id': entrepot.out_type_id.id,
+            'location_id': entrepot.lot_stock_id.id,
+            'location_dest_id': clients.id,
+            'move_ids': [(0, 0, {
+                'name': self.argent.name, 'product_id': self.argent.id,
+                'product_uom_qty': 200.0,
+                'location_id': entrepot.lot_stock_id.id,
+                'location_dest_id': clients.id})],
+        })
+        bon.action_confirm()
+        bon.action_assign()
+        # 5 000 g saisis sur un lot qui en porte 1 000.
+        bon.move_ids.move_line_ids.write({'lot_id': lot.id, 'quantity': 5000.0})
+
+        with self.assertRaises(UserError):
+            bon.button_validate()
+
+        self.assertFalse(self.env['livre.police.ligne'].search([
+            ('mouvement_stock_id', 'in', bon.move_line_ids.ids)]),
+            "Une sortie impossible s'est tout de même inscrite.")

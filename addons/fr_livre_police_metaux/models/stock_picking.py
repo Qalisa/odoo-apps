@@ -26,6 +26,8 @@ métal quitterait un registre sans entrer dans l'autre, et sa revente
 ultérieure ne s'inscrirait nulle part.
 """
 
+from collections import defaultdict
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.mail import plaintext2html
@@ -129,8 +131,64 @@ class StockPicking(models.Model):
         self._police_check_transfert()
         self._police_check_reception()
         self._police_check_mouvement_justifie()
+        self._police_check_stock_suffisant()
         self._police_nommer_les_lots()
         return super().button_validate()
+
+    def _police_check_stock_suffisant(self):
+        """Un lot ne sort pas plus qu'il n'en contient.
+
+        Odoo laisse un stock passer en negatif — c'est un choix defendable
+        pour des marchandises fongibles qu'on regularise plus tard. Ici, non :
+        la sortie s'inscrit au registre a la validation, et le registre
+        affirmerait qu'un metal est parti alors qu'il n'a jamais ete la. Une
+        inscription ne se retire pas.
+
+        Le cas s'est presente sur une copie : 60 000,80 g saisis sur un lot
+        qui en portait 6,80. Le stock est tombe a -59 994,00 g, et le registre
+        a inscrit la sortie sans broncher — l'entree dont elle se reclamait en
+        annoncait 6,80.
+
+        Aucun droit n'en dispense, et c'est voulu : un stock negatif n'est
+        jamais juste. S'il manque du metal au registre, c'est une
+        regularisation ou une rectification qu'il faut, pas une sortie de plus.
+        """
+        Quant = self.env['stock.quant'].sudo()
+        for bon in self:
+            demande = defaultdict(float)
+            for ligne in bon.move_line_ids:
+                if not ligne.lot_id or ligne.state in ('done', 'cancel'):
+                    continue
+                if not ligne.product_id.product_tmpl_id.metal_regulated:
+                    continue
+                if ligne.location_id.usage != 'internal':
+                    continue
+                demande[(ligne.lot_id, ligne.location_id,
+                         ligne.company_id)] += ligne.quantity
+
+            manques = []
+            for (lot, emplacement, societe), quantite in demande.items():
+                detenu = sum(Quant.search([
+                    ('lot_id', '=', lot.id),
+                    ('location_id', 'child_of', emplacement.id),
+                    ('company_id', '=', societe.id),
+                ]).mapped('quantity'))
+                if quantite > detenu + 0.00005:
+                    manques.append(_(
+                        "%(lot)s : %(demande)s demandés, %(detenu)s détenus",
+                        lot=lot.name, demande=quantite, detenu=detenu))
+            if manques:
+                raise UserError(_(
+                    "Ce bon ferait sortir plus de métal qu'il n'y en a.\n\n"
+                    "La sortie s'inscrit au registre à la validation : elle "
+                    "affirmerait qu'un métal est parti alors qu'il n'a jamais "
+                    "été là, et une inscription ne se retire pas.\n\n"
+                    "%(manques)s\n\n"
+                    "Corrigez la quantité. Si c'est le stock qui est faux, "
+                    "c'est lui qu'il faut reprendre — « Rectifier les "
+                    "quantités » ou « Régulariser une arrivée » — avant de "
+                    "faire sortir quoi que ce soit.",
+                    manques="\n".join(manques)))
 
     def _police_check_mouvement_justifie(self):
         """Un metal reglemente ne bouge que par un chemin qui laisse une trace.

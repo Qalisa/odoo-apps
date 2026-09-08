@@ -1295,23 +1295,30 @@ class LivrePoliceLigne(models.Model):
         n'était alors pas inscrit du tout — 634,90 g d'argent sont sortis de
         la sorte le 07/09/2026.
 
-        On retente donc sur le numéro d'ordre nu. Il n'est pas ambigu : la
-        numérotation est continue par société, et la recherche l'est aussi,
-        de sorte que « 000001 » ne désigne qu'une inscription dans le
-        registre interrogé.
+        On retente alors sur le numéro d'ordre nu — mais **seulement si le nom
+        complet n'a rien donné**. Chercher les deux d'un coup fut une erreur :
+        le comptoir qui reçoit tient lui aussi une inscription « 000011 », qui
+        n'a rien à voir avec « MONDE/000011 », et c'est elle que la recherche
+        ramenait. La sortie s'inscrivait alors sous la désignation, le titre et
+        le poids d'un autre lot — 9,50 g d'or 18k devenus « 10 FRANCS OR,
+        30,6451 g ». Le repli ne vaut donc que faute de mieux.
         """
         if transfert:
             return transfert.ligne_ids.filtered(
                 lambda ligne: ligne.lot_id == mouvement.lot_id
             ).inscription_id[:1]
-        noms = [mouvement.lot_id.name]
-        if '/' in (mouvement.lot_id.name or ''):
-            noms.append(mouvement.lot_id.name.rsplit('/', 1)[-1])
-        candidates = self.sudo().search([
-            ('sens', '=', 'entree'),
-            ('numero_lot', 'in', noms),
-            ('company_id', '=', mouvement.company_id.id),
-        ])
+
+        def chercher(nom):
+            return self.sudo().search([
+                ('sens', '=', 'entree'),
+                ('numero_lot', '=', nom),
+                ('company_id', '=', mouvement.company_id.id),
+            ])
+
+        nom = mouvement.lot_id.name or ''
+        candidates = chercher(nom)
+        if not candidates and '/' in nom:
+            candidates = chercher(nom.rsplit('/', 1)[-1])
         # Un même lot peut avoir été inscrit deux fois dans le registre qui le
         # détient : un métal transféré en deux fois arrive en deux entrées,
         # chacune sous son numéro. Le départ se rattache à celle qui a encore
