@@ -122,6 +122,12 @@ class StockQuant(models.Model):
 class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
 
+    police_lot = fields.Char(
+        string="Lot", compute='_compute_police_lot', compute_sudo=True,
+        help="Le numéro d'ordre du lot. « Enlever parmi » le montre déjà, "
+             "mais composé par un widget à partir de l'emplacement et du "
+             "lot : sa colonne ne trie rien. Celle-ci le porte vraiment.",
+    )
     police_description = fields.Char(
         string="Objets", compute='_compute_police_lot', compute_sudo=True,
     )
@@ -155,7 +161,7 @@ class StockMoveLine(models.Model):
         compute='_compute_police_lot', compute_sudo=True,
     )
 
-    @api.depends('lot_id', 'quant_id')
+    @api.depends('lot_id', 'lot_name', 'quant_id')
     def _compute_police_lot(self):
         """Ce que le lot dit de lui-même, avant meme d'etre rattache.
 
@@ -170,6 +176,7 @@ class StockMoveLine(models.Model):
         """
         for ligne in self:
             lot = ligne.lot_id or ligne.quant_id.lot_id
+            ligne.police_lot = lot.name or ligne.lot_name
             ligne.police_description = lot.police_description
             ligne.police_avoir_id = lot.police_avoir_id
             ligne.police_avoir_date = lot.police_avoir_date
