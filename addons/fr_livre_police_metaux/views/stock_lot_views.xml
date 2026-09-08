@@ -14,6 +14,14 @@
         <field name="inherit_id" ref="stock.view_stock_move_line_detailed_operation_tree"/>
         <field name="arch" type="xml">
             <!--
+                Aucune colonne calculee ne porte ici `allow_order`, a la
+                difference du tableau du bouton du mouvement. Cette vue-ci
+                n'est pas qu'un x2many : le bouton « Mouvements » du bon
+                l'ouvre par une action (`action_detailed_operations`), et le
+                serveur ordonne alors en SQL — ce qu'un champ non stocke ne
+                sait pas faire. L'en-tete cliquable renvoyait une erreur.
+            -->
+            <!--
                 L'ordre est celui de la question qu'on se pose : d'ou sort le
                 metal, de quel achat, quand, aupres de qui, puis ce que c'est
                 — l'article, les objets — et seulement alors les nombres.
@@ -21,35 +29,24 @@
                 il precede la provenance.
             -->
             <xpath expr="//field[@name='quant_id']" position="after">
-                <!--
-                    « Enlever parmi » n'affiche pas son propre champ : le
-                    widget `pick_from` compose l'emplacement et le lot, parce
-                    que `quant_id` est vide sur toute ligne relue de la base.
-                    Son en-tete ne peut donc rien trier. Cette colonne-ci
-                    porte le numero d'ordre pour de bon ; elle reste masquee
-                    tant qu'on ne demande pas a s'en servir.
-                -->
-                <field name="police_lot" string="Lot"
-                       optional="hide" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
                 <field name="police_avoir_id" string="Avoir d'achat"
                        optional="show" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
+                       column_invisible="context.get('picking_code') == 'incoming'"/>
                 <field name="police_avoir_date" string="Date de l'avoir"
                        optional="show" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
+                       column_invisible="context.get('picking_code') == 'incoming'"/>
                 <field name="police_vendeur_id" string="Vendeur"
                        optional="show" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
+                       column_invisible="context.get('picking_code') == 'incoming'"/>
                 <xpath expr="//field[@name='product_id']" position="move"/>
                 <field name="police_description" string="Objets"
                        optional="show" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
+                       column_invisible="context.get('picking_code') == 'incoming'"/>
             </xpath>
             <xpath expr="//field[@name='quantity']" position="before">
                 <field name="police_quant_detenu" string="Détenu"
                        optional="show" readonly="1"
-                       column_invisible="context.get('picking_code') == 'incoming'" options="{'allow_order': True}"/>
+                       column_invisible="context.get('picking_code') == 'incoming'"/>
             </xpath>
             <!--
                 Rouge des que la saisie depasse le detenu, comme le formulaire
@@ -62,7 +59,7 @@
             </xpath>
             <xpath expr="//field[@name='quantity']" position="after">
                 <field name="police_poids" string="Poids (g)"
-                       optional="show" readonly="1" sum="Poids" options="{'allow_order': True}"/>
+                       optional="show" readonly="1" sum="Poids"/>
             </xpath>
         </field>
     </record>
