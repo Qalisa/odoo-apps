@@ -1245,14 +1245,29 @@ class LivrePoliceLigne(models.Model):
         transfert, qui sait de quelle inscription chaque lot est parti : ce
         n'est pas un repli, c'est le lien le plus sûr des deux, désigné avant
         que rien ne bouge.
+
+        Reste le cas où le lot a été qualifié par un transfert passé et
+        repart ensuite du comptoir de rachat par un autre chemin : le lot
+        s'appelle « MONDE/000001 », l'inscription d'entrée porte encore
+        « 000001 », et la recherche par le nom ne trouve rien. Le départ
+        n'était alors pas inscrit du tout — 634,90 g d'argent sont sortis de
+        la sorte le 07/09/2026.
+
+        On retente donc sur le numéro d'ordre nu. Il n'est pas ambigu : la
+        numérotation est continue par société, et la recherche l'est aussi,
+        de sorte que « 000001 » ne désigne qu'une inscription dans le
+        registre interrogé.
         """
         if transfert:
             return transfert.ligne_ids.filtered(
                 lambda ligne: ligne.lot_id == mouvement.lot_id
             ).inscription_id[:1]
+        noms = [mouvement.lot_id.name]
+        if '/' in (mouvement.lot_id.name or ''):
+            noms.append(mouvement.lot_id.name.rsplit('/', 1)[-1])
         candidates = self.sudo().search([
             ('sens', '=', 'entree'),
-            ('numero_lot', '=', mouvement.lot_id.name),
+            ('numero_lot', 'in', noms),
             ('company_id', '=', mouvement.company_id.id),
         ])
         # Un même lot peut avoir été inscrit deux fois dans le registre qui le
