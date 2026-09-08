@@ -89,6 +89,40 @@
     </record>
 
     <!--
+        Et la regle qui decide de ce que cette liste contient.
+
+        Odoo y applique « In Stock » par defaut — `quantity > 0`, la presence
+        physique. Un lot entierement reserve par un autre bon y figure donc au
+        meme titre qu'un lot intact : on le choisit, la ligne naît a zero, et
+        il reste offert au clic suivant. Le critere juste est ce qui reste
+        libre.
+
+        Le filtre est renomme avec son domaine — « En stock » ne dirait plus
+        ce qu'il fait. Celui d'origine reste disponible sous son propre nom :
+        savoir ce qu'on detient physiquement est une autre question, et elle
+        se pose aussi.
+
+        `search_default_in_stock` n'est ecrit qu'a un seul endroit dans tout
+        Odoo — le composant qui ouvre « Ajouter une ligne ». Changer ce filtre
+        ne change donc le defaut de personne d'autre.
+    -->
+    <record id="stock_quant_view_search_police" model="ir.ui.view">
+        <field name="name">stock.quant.search.livre.police</field>
+        <field name="model">stock.quant</field>
+        <field name="inherit_id" ref="stock.quant_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='in_stock']" position="attributes">
+                <attribute name="string">Disponible</attribute>
+                <attribute name="domain">[('available_quantity', '&gt;', 0.0)]</attribute>
+            </xpath>
+            <xpath expr="//filter[@name='in_stock']" position="after">
+                <filter name="police_present" string="Présent en stock"
+                        domain="[('quantity', '&gt;', 0.0)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!--
         Le meme besoin, une ligne plus loin : « Ajouter une ligne » ouvre la
         liste des quants, et c'est encore un tableau ou l'on choisit — le
         premier, meme, puisque c'est la que le lot se decide.

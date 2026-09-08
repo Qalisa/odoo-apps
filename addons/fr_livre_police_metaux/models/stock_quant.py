@@ -17,7 +17,7 @@ ne se met pas au rebut. Il se vend, se transfère, ou se fond — et la fonte es
 une vente au fondeur.
 """
 
-from odoo import _, models
+from odoo import _, fields, models
 from odoo.exceptions import UserError
 
 #: Posée par les documents du module quand ils ajustent le stock qu'ils
@@ -29,6 +29,35 @@ DROIT_CORRECTION = 'fr_livre_police_metaux.group_livre_police_correction'
 
 class StockQuant(models.Model):
     _inherit = 'stock.quant'
+
+    # Odoo laisse `available_quantity` hors de portee d'un domaine : le champ
+    # est calcule et n'a pas de `search`. C'est ce qui oblige la liste ou l'on
+    # choisit un lot a se rabattre sur la quantite physique, et a proposer des
+    # lots qu'un autre bon a deja reserves. Le rendre interrogeable suffit a
+    # corriger la regle la ou elle est ecrite — le filtre de la vue de
+    # recherche — sans toucher au composant qui ouvre cette liste.
+    available_quantity = fields.Float(search='_search_available_quantity')
+
+    #: Les seuls operateurs qu'une comparaison de quantite appelle. La liste
+    #: est aussi ce qui rend sur la concatenation dans la requete ci-dessous.
+    _POLICE_OPERATEURS = ('<', '<=', '=', '!=', '>', '>=')
+
+    def _search_available_quantity(self, operator, value):
+        """Ce qui reste libre : le detenu moins ce que d'autres bons ont pris.
+
+        Le calcul est celui d'Odoo — `quantity - reserved_quantity`, mot pour
+        mot `_compute_available_quantity`. Il se fait en SQL et non en Python :
+        un domaine peut tomber sur toute la table, et rien ne garantit qu'il
+        arrive deja restreint a un article.
+        """
+        if operator not in self._POLICE_OPERATEURS or isinstance(value, bool) \
+                or not isinstance(value, (int, float)):
+            raise UserError(_("Opération non gérée sur la quantité disponible."))
+        self.env['stock.quant'].flush_model(['quantity', 'reserved_quantity'])
+        self.env.cr.execute(
+            "SELECT id FROM stock_quant "
+            "WHERE quantity - reserved_quantity " + operator + " %s", (value,))
+        return [('id', 'in', [ligne[0] for ligne in self.env.cr.fetchall()])]
 
     def _apply_inventory(self):
         self._police_check_ajustement()
