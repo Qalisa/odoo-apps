@@ -98,17 +98,23 @@ class LivrePoliceRegularisation(models.TransientModel):
                 "qui a inscrit la sortie et celui qui doit inscrire "
                 "l'entrée.",
                 societes=", ".join(manquantes.mapped('display_name'))))
+        # Une sortie ne se régularise qu'une fois — et c'est bien la sortie
+        # qu'il faut regarder, non le lot dont elle provient. Un même lot
+        # arrive parfois en plusieurs fois : deux transferts successifs font
+        # deux entrées, chacune sous son numéro, et le registre le dit déjà.
+        # Refuser sur l'origine bloquait donc l'arrivée suivante d'un lot déjà
+        # venu une fois — ce qui s'est produit sur 634,90 g d'argent.
         deja = self.env['livre.police.ligne'].sudo().search([
-            ('company_id', '=', self.company_id.id),
-            ('origine_id', '=', (sortie.origine_id or sortie.entree_id or sortie).id),
+            ('regularise_id', '=', sortie.id),
             ('sens', '=', 'entree'),
         ], limit=1)
         if deja:
             raise UserError(_(
-                "Ce métal est déjà entré au registre de %(etablissement)s "
-                "sous le numéro %(numero)s. Une entrée ne s'inscrit pas deux "
-                "fois.",
-                etablissement=self.company_id.display_name,
+                "La sortie %(sortie)s a déjà été régularisée au registre de "
+                "%(etablissement)s, sous le numéro %(numero)s. Une entrée ne "
+                "s'inscrit pas deux fois.",
+                sortie=sortie.numero_ordre,
+                etablissement=deja.company_id.display_name,
                 numero=deja.numero_ordre))
 
     def action_inscrire(self):
@@ -145,8 +151,24 @@ class LivrePoliceRegularisation(models.TransientModel):
         if lot.name != nom or lot.company_id:
             lot.write({'name': nom, 'company_id': False})
 
-        quant = self.env['stock.quant'].sudo().with_company(
-            self.company_id).with_context(inventory_mode=True).create({
+        # `inventory_quantity` est un **comptage**, non un ajout : Odoo pose
+        # en stock la différence entre ce nombre et ce qui s'y trouve déjà.
+        # Le comptoir d'arrivée détient parfois déjà une part de ce lot —
+        # reçue par un transfert antérieur — et lui déclarer la seule
+        # quantité régularisée retrancherait le reste au lieu de l'ajouter.
+        # On compte donc ce qu'il y avait, plus ce qui arrive.
+        Quant = self.env['stock.quant'].sudo().with_company(
+            self.company_id).with_context(inventory_mode=True)
+        quant = Quant.search([
+            ('product_id', '=', produit.id),
+            ('location_id', '=', entrepot.lot_stock_id.id),
+            ('lot_id', '=', lot.id),
+            ('company_id', '=', self.company_id.id),
+        ], limit=1)
+        if quant:
+            quant.inventory_quantity = quant.quantity + self.quantite
+        else:
+            quant = Quant.create({
                 'product_id': produit.id,
                 'location_id': entrepot.lot_stock_id.id,
                 'lot_id': lot.id,

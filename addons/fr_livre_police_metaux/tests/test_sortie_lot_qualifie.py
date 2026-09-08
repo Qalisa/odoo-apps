@@ -17,6 +17,7 @@ rattache bien à l'inscription d'origine.
 """
 
 from odoo import fields
+from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -62,25 +63,22 @@ class TestSortieLotQualifie(TransactionCase):
         reprise.action_inscrire()
         cls.entree = reprise.inscription_ids
 
-    def test_un_lot_qualifie_qui_repart_s_inscrit_encore(self):
-        # Un premier transfert qualifie le lot : « 000001 » devient
-        # « COMPT/000001 », et l'inscription garde « 000001 ».
+    def _transferer(self, quantite):
+        """Un premier départ vers l'autre comptoir, qui qualifie le lot."""
         transfert = self.env['livre.police.transfert'].with_company(
             self.depart).create({
                 'company_id': self.depart.id,
                 'company_destination_id': self.arrivee.id,
                 'motif': "Premier départ, qui renomme le lot.",
                 'ligne_ids': [(0, 0, {'inscription_id': self.entree.id,
-                                      'quantite': 300.0})],
+                                      'quantite': quantite})],
             })
         transfert.action_expedier()
         transfert.action_receptionner()
+        return transfert
 
-        lot = self.entree._lot_du_registre()
-        self.assertIn('/', lot.name)
-        self.assertEqual(self.entree.numero_lot, '000001')
-
-        # Puis le reste repart par un bon fait à la main, comme au comptoir.
+    def _sortir_a_la_main(self, lot, quantite):
+        """Un bon fabriqué au comptoir, sans devis ni transfert."""
         entrepot = self.env['stock.warehouse'].search(
             [('company_id', '=', self.depart.id)], limit=1)
         bon = self.env['stock.picking'].with_company(self.depart).create({
@@ -100,12 +98,20 @@ class TestSortieLotQualifie(TransactionCase):
         bon.action_assign()
         bon.move_ids.move_line_ids.write({'lot_id': lot.id, 'quantity': 200.0})
         bon.button_validate()
-
-        sortie = self.env['livre.police.ligne'].search([
+        return self.env['livre.police.ligne'].search([
             ('company_id', '=', self.depart.id),
             ('sens', '=', 'sortie'),
             ('mouvement_stock_id', 'in', bon.move_line_ids.ids),
         ])
+
+    def test_un_lot_qualifie_qui_repart_s_inscrit_encore(self):
+        self._transferer(300.0)
+
+        lot = self.entree._lot_du_registre()
+        self.assertIn('/', lot.name)
+        self.assertEqual(self.entree.numero_lot, '000001')
+
+        sortie = self._sortir_a_la_main(lot, 200.0)
         self.assertTrue(
             sortie,
             "Le départ n'a rien inscrit : 200 g ont quitté le stock sans "
@@ -113,3 +119,50 @@ class TestSortieLotQualifie(TransactionCase):
         self.assertEqual(sortie.entree_id, self.entree)
         self.assertEqual(sortie.quantite, 200.0)
         self.assertEqual(sortie.numero_lot, lot.name)
+
+    def test_une_seconde_arrivee_du_meme_lot_se_regularise(self):
+        """L'autre moitié du même défaut, constatée sur les mêmes 634,90 g.
+
+        Le comptoir voisin avait déjà reçu une part de ce lot par transfert.
+        La régularisation refusait alors la suivante — elle cherchait « une
+        entrée de cette origine », et il y en avait une. Mais un lot arrive
+        en plusieurs fois, et le registre le dit déjà : deux transferts
+        successifs font deux entrées. Ce n'est pas l'origine qui fait
+        doublon, c'est la sortie.
+        """
+        self._transferer(300.0)
+        lot = self.entree._lot_du_registre()
+        sortie = self._sortir_a_la_main(lot, 200.0)
+
+        Regularisation = self.env['livre.police.regularisation']
+        entree = Regularisation.create({
+            'sortie_id': sortie.id,
+            'company_id': self.arrivee.id,
+            'quantite': 200.0,
+            'motif': "Porté à la main, sans document de transfert.",
+        }).action_inscrire()
+        inscription = self.env['livre.police.ligne'].browse(entree['res_id'])
+        self.assertEqual(inscription.company_id, self.arrivee)
+        self.assertEqual(inscription.quantite, 200.0)
+        self.assertEqual(inscription.regularise_id, sortie)
+
+        # Et le stock s'ajoute à ce qui était déjà là. `inventory_quantity`
+        # est un comptage : déclarer les seuls 200 g régularisés aurait
+        # retranché les 300 g reçus par le transfert au lieu de s'y ajouter.
+        entrepot = self.env['stock.warehouse'].search(
+            [('company_id', '=', self.arrivee.id)], limit=1)
+        detenu = sum(self.env['stock.quant'].sudo().search([
+            ('lot_id', '=', lot.id),
+            ('location_id', '=', entrepot.lot_stock_id.id),
+            ('company_id', '=', self.arrivee.id),
+        ]).mapped('quantity'))
+        self.assertEqual(detenu, 500.0)
+
+        # La même sortie ne se régularise pas deux fois.
+        with self.assertRaises(UserError):
+            Regularisation.create({
+                'sortie_id': sortie.id,
+                'company_id': self.arrivee.id,
+                'quantite': 200.0,
+                'motif': "Deuxième fois, qui doit être refusée.",
+            }).action_inscrire()

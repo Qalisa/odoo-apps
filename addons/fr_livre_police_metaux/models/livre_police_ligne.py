@@ -371,6 +371,20 @@ class LivrePoliceLigne(models.Model):
              "départ sur une sortie, l'arrivée sur une entrée reçue d'un "
              "autre établissement.",
     )
+    # Quelle sortie cette entree regularise, quand elle en regularise une.
+    #
+    # C'est un lien technique, comme la facture de vente : il ne dit rien que
+    # le registre atteste — la provenance nomme deja l'inscription de depart
+    # en toutes lettres — et il reste donc hors du chiffre de controle. Ce
+    # qu'il sert, c'est a savoir qu'une sortie a deja recu son entree, sans
+    # confondre deux arrivees successives d'un meme lot.
+    regularise_id = fields.Many2one(
+        'livre.police.ligne', string="Régularise la sortie", readonly=True,
+        index='btree_not_null', ondelete='restrict',
+        help="L'inscription de sortie dont cette entrée comble l'absence. "
+             "Une sortie ne se régularise qu'une fois.",
+    )
+
     facture_vente_ids = fields.Many2many(
         'account.move', string="Factures de vente", readonly=True,
         compute='_compute_facture_vente_ids',
@@ -1047,6 +1061,7 @@ class LivrePoliceLigne(models.Model):
             'company_id': mouvement.company_id.id,
             'numero_lot': mouvement.lot_id.name,
             'mouvement_stock_id': mouvement.id,
+            'regularise_id': sortie.id,
             'origine_id': origine.id,
             'origine_etablissement': origine.company_id.display_name,
             'origine_numero_ordre': origine.numero_ordre,
