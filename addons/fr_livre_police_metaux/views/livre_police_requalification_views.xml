@@ -16,6 +16,14 @@
                     son propre numéro d'ordre, et donc sa propre étiquette.
                     Sa date d'entrée reste celle du rachat.
                 </div>
+                <!-- Le champ est en lecture seule et n'a pas sa place a
+                     l'ecran ; il doit pourtant y figurer. Les mentions du lot
+                     d'origine en decoulent toutes — numero, designation,
+                     quantite inscrite, poids retire — et le client web
+                     n'evalue que les champs presents dans la vue : sans lui,
+                     le bloc de gauche s'affiche vide et le poids retire a
+                     zero, jusqu'a la validation ou le serveur les retrouve. -->
+                <field name="inscription_id" invisible="1"/>
                 <group>
                     <group string="Le lot d'origine">
                         <field name="numero_ordre"/>
