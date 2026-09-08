@@ -24,6 +24,11 @@
                        optional="show" readonly="1"
                        column_invisible="context.get('picking_code') == 'incoming'"/>
             </xpath>
+            <xpath expr="//field[@name='quantity']" position="before">
+                <field name="police_quant_detenu" string="Détenu"
+                       optional="show" readonly="1"
+                       column_invisible="context.get('picking_code') == 'incoming'"/>
+            </xpath>
             <xpath expr="//field[@name='quantity']" position="after">
                 <field name="police_poids" string="Poids (g)"
                        optional="show" readonly="1" sum="Poids"/>
@@ -110,6 +115,15 @@
                        column_invisible="not parent.show_quant"/>
                 <field name="police_vendeur_id" string="Vendeur"
                        optional="show" readonly="1" width="130px"
+                       column_invisible="not parent.show_quant"/>
+            </xpath>
+            <!--
+                Et ce que le lot contient, juste avant la quantite qu'on
+                saisit : sans lui, on saisit a l'aveugle.
+            -->
+            <xpath expr="//field[@name='quantity']" position="before">
+                <field name="police_quant_detenu" string="Détenu"
+                       optional="show" readonly="1" width="90px"
                        column_invisible="not parent.show_quant"/>
             </xpath>
             <!--

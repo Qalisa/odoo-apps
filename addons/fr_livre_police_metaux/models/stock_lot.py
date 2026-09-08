@@ -102,6 +102,45 @@ class StockMoveLine(models.Model):
     police_avoir_id = fields.Many2one(
         related='lot_id.police_avoir_id', string="Avoir d'achat", readonly=True,
     )
+    # Ce que le lot contient a l'emplacement d'ou l'on sort.
+    #
+    # La liste deroulante « Enlever parmi » l'annonce au moment du choix,
+    # puis le tableau ne montre plus qu'un numero d'ordre : on saisit une
+    # quantite sans rien a quoi la comparer. C'est ainsi que 60 000,80 g ont
+    # ete saisis sur un lot qui en portait 6,80.
+    #
+    # La colonne le redit, a cote de la quantite qu'on saisit. C'est aussi le
+    # plafond que `_police_check_stock_suffisant` fait respecter : les deux
+    # disent la meme chose, l'une avant, l'autre au refus.
+    police_quant_detenu = fields.Float(
+        string="Détenu", readonly=True, digits='Product Unit of Measure',
+        compute='_compute_police_quant_detenu',
+        help="Ce que ce lot contient à cet emplacement. La quantité sortie "
+             "ne peut pas le dépasser : le registre affirmerait qu'un métal "
+             "est parti alors qu'il n'a jamais été là.",
+    )
     police_vendeur_id = fields.Many2one(
         related='lot_id.police_vendeur_id', string="Vendeur", readonly=True,
     )
+
+    @api.depends('lot_id', 'location_id', 'company_id')
+    def _compute_police_quant_detenu(self):
+        """Ce que le lot contient la ou l'on vient le prendre.
+
+        On ne suit pas `quant_id` : il n'est renseigne que si l'operateur a
+        choisi lui-meme dans « Enlever parmi », et reste vide sur les lignes
+        qu'Odoo reserve seul — la colonne serait a zero le plus souvent.
+
+        Le calcul est celui de `_police_check_stock_suffisant`, mot pour mot :
+        la colonne annonce le plafond que le refus fera respecter.
+        """
+        Quant = self.env['stock.quant'].sudo()
+        for ligne in self:
+            if not ligne.lot_id or ligne.location_id.usage != 'internal':
+                ligne.police_quant_detenu = 0.0
+                continue
+            ligne.police_quant_detenu = sum(Quant.search([
+                ('lot_id', '=', ligne.lot_id.id),
+                ('location_id', 'child_of', ligne.location_id.id),
+                ('company_id', '=', ligne.company_id.id),
+            ]).mapped('quantity'))
