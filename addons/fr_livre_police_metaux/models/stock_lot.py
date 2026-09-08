@@ -38,6 +38,16 @@ class StockLot(models.Model):
         help="La pièce comptable qui a fait entrer ce lot, retrouvée par sa "
              "réception et le devis de rachat.",
     )
+    police_avoir_date = fields.Date(
+        string="Date de l'avoir", compute='_compute_police_avoir_date',
+        # Comme les champs `related` voisins, et pour la meme raison : la
+        # piece a deja ete cherchee en `sudo` et filtree sur les societes
+        # lisibles. Sans cela, un comptoir sans droits comptables verrait la
+        # colonne « Avoir d'achat » remplie et la date a cote vide.
+        compute_sudo=True,
+        help="Le jour de l'achat, tel que le registre le retient : la date "
+             "de facturation de l'avoir, à défaut sa date comptable.",
+    )
     police_vendeur_id = fields.Many2one(
         'res.partner', string="Vendeur",
         related='police_avoir_id.partner_id',
@@ -77,6 +87,19 @@ class StockLot(models.Model):
             lot.police_avoir_id = pieces.filtered(
                 lambda piece: piece.company_id in self.env.companies)[:1]
 
+    @api.depends('police_avoir_id')
+    def _compute_police_avoir_date(self):
+        """La date que le registre a inscrite, et pas une autre.
+
+        `invoice_date or date` est mot pour mot ce que retient
+        `_valeurs_depuis_facture` pour `date_achat`. En ecrire un second
+        garantirait qu'un jour les deux divergent, et c'est l'ecran qui
+        aurait tort contre le registre.
+        """
+        for lot in self:
+            piece = lot.police_avoir_id
+            lot.police_avoir_date = piece.invoice_date or piece.date
+
 
 class StockQuant(models.Model):
     _inherit = 'stock.quant'
@@ -89,6 +112,9 @@ class StockQuant(models.Model):
         related='lot_id.police_description', string="Objets", readonly=True)
     police_avoir_id = fields.Many2one(
         related='lot_id.police_avoir_id', string="Avoir d'achat", readonly=True)
+    police_avoir_date = fields.Date(
+        related='lot_id.police_avoir_date', string="Date de l'avoir",
+        readonly=True)
     police_vendeur_id = fields.Many2one(
         related='lot_id.police_vendeur_id', string="Vendeur", readonly=True)
 
@@ -101,6 +127,10 @@ class StockMoveLine(models.Model):
     )
     police_avoir_id = fields.Many2one(
         related='lot_id.police_avoir_id', string="Avoir d'achat", readonly=True,
+    )
+    police_avoir_date = fields.Date(
+        related='lot_id.police_avoir_date', string="Date de l'avoir",
+        readonly=True,
     )
     # Ce que le lot contient a l'emplacement d'ou l'on sort.
     #
