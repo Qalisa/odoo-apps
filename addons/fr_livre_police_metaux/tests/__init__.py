@@ -18,3 +18,4 @@ if importlib.util.find_spec('odoo') is not None:
     from . import test_date_entree_transfert
     from . import test_rectification_quantite
     from . import test_sortie_lot_qualifie
+    from . import test_rectifier_une_sortie

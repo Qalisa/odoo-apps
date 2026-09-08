@@ -653,6 +653,24 @@ class LivrePoliceLigne(models.Model):
                 "d'un nouvel enregistrement avec indication de son motif » "
                 "(CGI, ann. IV, art. 56 J sexdecies, 2° c)."))
         valeurs = dict(mentions)
+        # Ce qui fait la nature de l'inscription se reporte tel quel, sans
+        # passer par l'écran : le sens surtout — les mentions rectifiables
+        # ne le portent pas, et une sortie corrigée se serait inscrite
+        # « Entrée », le sens ayant « entree » pour valeur par défaut. Un
+        # registre ne peut pas dire d'un départ qu'il est une arrivée.
+        #
+        # Suivent l'entrée dont ce départ vide le stock, le nom du lot, et
+        # l'origine du métal : ce sont des mentions du registre, pas des
+        # corrections, et elles valent pour la rectification comme pour
+        # l'inscription reprise.
+        for nom in ('sens', 'entree_id', 'numero_lot',
+                    'origine_id', 'origine_etablissement',
+                    'origine_numero_ordre', 'origine_date_achat',
+                    'transfert_etablissement', 'transfert_motif'):
+            if nom not in valeurs:
+                champ = self._fields[nom]
+                valeurs[nom] = (self[nom].id if champ.type == 'many2one'
+                                else self[nom])
         valeurs.update({
             'numero_ordre': self._sequence(self.company_id).next_by_id(),
             'company_id': self.company_id.id,
@@ -669,7 +687,8 @@ class LivrePoliceLigne(models.Model):
         })
         return self.sudo().create(valeurs)
 
-    @api.depends('sortie_ids.poids', 'sortie_ids.date_mouvement', 'poids',
+    @api.depends('sortie_ids.poids', 'sortie_ids.date_mouvement',
+                 'sortie_ids.rectifiee', 'poids',
                  'sens', 'rectifie_id', 'rectifiee_par_ids.poids')
     def _compute_sorties(self):
         """Ce qui est reparti, ce qui reste, et le jour où il n'en reste plus.
@@ -700,7 +719,10 @@ class LivrePoliceLigne(models.Model):
                 ligne.date_sortie = False
                 ligne.etat_sortie = False
                 continue
-            sorties = ligne.sortie_ids
+            # Une sortie rectifiée compte pour sa rectification, comme une
+            # entrée : les deux portent le même départ, et les additionner
+            # ferait sortir deux fois le même métal.
+            sorties = ligne.sortie_ids.filtered(lambda s: not s.rectifiee)
             ligne.poids_sorti = sum(sorties.mapped('poids'))
             ligne.poids_restant = (
                 ligne._rectification_finale().poids - ligne.poids_sorti)
