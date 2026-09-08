@@ -152,7 +152,9 @@ class LivrePoliceRegularisation(models.TransientModel):
                 'lot_id': lot.id,
                 'inventory_quantity': self.quantite,
             })
-        quant.action_apply_inventory()
+        # Le document inscrit ce qu'il ajuste : il passe donc la garde
+        # posée sur l'ajustement nu (voir `stock_quant.py`).
+        quant.with_context(police_ajustement=True).action_apply_inventory()
         mouvement = self.env['stock.move.line'].sudo().search(
             [('lot_id', '=', lot.id), ('state', '=', 'done'),
              ('company_id', '=', self.company_id.id)],

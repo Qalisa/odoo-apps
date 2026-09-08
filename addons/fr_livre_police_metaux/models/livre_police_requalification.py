@@ -186,7 +186,8 @@ class LivrePoliceRequalification(models.TransientModel):
                 'lot_id': lot.id,
                 'inventory_quantity': self.quantite,
             })
-        quant.action_apply_inventory()
+        # La requalification inscrit ce qu'elle ajuste — voir `stock_quant.py`.
+        quant.with_context(police_ajustement=True).action_apply_inventory()
         mouvement = self.env['stock.move.line'].sudo().search(
             [('lot_id', '=', lot.id), ('state', '=', 'done')],
             order='id desc', limit=1)

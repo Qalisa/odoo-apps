@@ -61,6 +61,32 @@
             comptoir qui reçoit.</field>
     </record>
 
+    <!-- Le dernier niveau : corriger le stock d'un metal reglemente.
+
+         Le stock et le registre disent la meme chose de deux facons. Le
+         registre ne se modifie que par une inscription nouvelle portant son
+         motif (CGI, ann. IV, art. 56 J sexdecies, 2° c) ; le stock, lui,
+         s'ajuste d'un clic, et rien ne s'inscrit. C'est par la que les deux
+         divergent en silence.
+
+         Les documents du module — reprise, rectification, regularisation,
+         requalification — ajustent le stock en meme temps qu'ils inscrivent,
+         et passent donc sans ce droit. Ce qu'il ouvre, c'est l'ajustement
+         nu : celui qu'aucune inscription n'accompagne, et qu'il faut parfois
+         pour rattraper une situation qu'aucun document ne decrit.
+
+         Il est au-dessus de « responsable » : qui peut corriger le stock
+         d'un comptoir peut bien constater ce qui y arrive. -->
+    <record id="group_livre_police_correction" model="res.groups">
+        <field name="name">Livre de police - correction du stock</field>
+        <field name="category_id" ref="module_category_livre_police"/>
+        <field name="implied_ids" eval="[(4, ref('group_livre_police_responsable'))]"/>
+        <field name="comment">Permet d'ajuster le stock d'un métal soumis au
+            registre sans passer par un document — ajustement d'inventaire,
+            rebut, livraison ou réception sans justification. À réserver :
+            un stock corrigé sans inscription fait diverger le registre.</field>
+    </record>
+
     <!-- Un registre par agence, et non un registre pour le groupe.
 
          « Lorsque les personnes mentionnées à l'article R. 321-1 possèdent

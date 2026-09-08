@@ -120,12 +120,76 @@ class StockPicking(models.Model):
              "l'autre et porte son motif. C'est lui qui a créé ce bon.",
     )
 
+    #: Les chemins par lesquels un metal reglemente peut legitimement bouger.
+    #: Tout le reste est refuse — voir `_police_check_mouvement_justifie`.
+    _POLICE_DROIT_CORRECTION = 'fr_livre_police_metaux.group_livre_police_correction'
+
     def button_validate(self):
         self._police_check_inscription()
         self._police_check_transfert()
         self._police_check_reception()
+        self._police_check_mouvement_justifie()
         self._police_nommer_les_lots()
         return super().button_validate()
+
+    def _police_check_mouvement_justifie(self):
+        """Un metal reglemente ne bouge que par un chemin qui laisse une trace.
+
+        Le registre s'ecrit a partir des mouvements de stock : une entree
+        s'inscrit a la comptabilisation de l'avoir, une sortie a la validation
+        du bon. Encore faut-il que le mouvement vienne de quelque part. Un bon
+        cree a la main, sans devis ni transfert, fait sortir du metal que rien
+        ne rattache a une operation — le registre dit alors qu'il est parti,
+        sans pouvoir dire ou ni a qui. C'est arrive : 99,40 g portes d'un
+        comptoir a l'autre par une livraison faite a la main, sortis d'un
+        registre sans entrer dans l'autre.
+
+        Trois chemins restent ouverts, et un seul de plus par exception.
+
+        **Le transfert entre etablissements**, qui porte son motif et tient
+        les deux bouts.
+
+        **La vente**, reconnue a la ligne de devis dont le mouvement est ne.
+        C'est bien le devis, et non la facture, que le mouvement porte au
+        moment ou l'on valide : la livraison precede souvent la facturation.
+
+        **L'achat**, pour une entree : l'avoir de rachat, reconnu de la meme
+        facon. Une reception sans avoir ferait entrer du metal que le registre
+        n'a pas inscrit, et `_police_check_inscription` la refuse deja quand
+        elle vient d'un rachat ; ici on ferme le cas d'un bon fabrique de
+        toutes pieces, qu'aucune ligne de devis ne rattache a rien.
+
+        **Et le droit de correction**, pour ce qu'aucun document ne decrit.
+        Il ne dispense pas d'inscrire : il dispense de justifier le mouvement
+        par un document, ce qui n'est pas la meme chose.
+        """
+        if self.env.user.has_group(self._POLICE_DROIT_CORRECTION):
+            return
+        for bon in self:
+            if bon.police_transfert_id:
+                continue
+            orphelins = bon.move_ids.filtered(
+                lambda m: m.state not in ('done', 'cancel')
+                and m.product_id.product_tmpl_id.metal_regulated
+                and not m.sale_line_id)
+            if not orphelins:
+                continue
+            entrant = bon.picking_type_code == 'incoming'
+            raise UserError(_(
+                "Ce bon fait %(sens)s du métal soumis au registre sans qu'aucun "
+                "document ne le justifie.\n\n"
+                "%(chemins)s\n\n"
+                "Le registre s'écrit à partir des mouvements de stock : un "
+                "mouvement que rien ne rattache à une opération y inscrit un "
+                "départ ou une arrivée que personne ne peut expliquer.\n\n"
+                "Articles concernés : %(articles)s",
+                sens=_("entrer") if entrant else _("sortir"),
+                chemins=(_("Une entrée passe par un avoir de rachat, ou par un "
+                           "transfert entre établissements.") if entrant
+                         else _("Une sortie passe par un devis — vente ou "
+                                "expédition au fondeur — ou par un transfert "
+                                "entre établissements.")),
+                articles=", ".join(orphelins.mapped('product_id.name'))))
 
     def _police_check_reception(self):
         """Le bouton du document n'est pas le seul chemin vers la réception.

@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.35.0',
+    'version': '18.0.1.36.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -402,6 +402,36 @@ enregistrement de lot qui traverse, comme dans un transfert.
 Rien n'est retranche chez celui qui envoie : sa sortie est vraie, le metal est
 bien parti. Ce qui lui manque, c'est de dire ou — cela se rectifie de son
 cote.
+
+Par ou le metal peut bouger, et par ou il ne peut plus
+------------------------------------------------------
+
+Le registre s'ecrit a partir des mouvements de stock. Encore faut-il que le
+mouvement vienne de quelque part : un bon cree a la main fait sortir du metal
+que rien ne rattache a une operation, et le registre dit alors qu'il est
+parti sans pouvoir dire ou ni a qui.
+
+Un metal soumis au registre ne bouge donc plus que par trois chemins :
+
+- **un devis** — vente, expedition au fondeur, ou avoir de rachat pour une
+  entree. C'est le devis, et non la facture, que le mouvement porte au moment
+  de la validation : la livraison precede souvent la facturation ;
+- **un transfert entre etablissements**, qui porte son motif et tient les
+  deux bouts ;
+- **un document du module** — reprise, rectification, regularisation,
+  requalification — qui inscrit au registre ce qu'il change au stock.
+
+Deux chemins muets sont fermes du meme coup. **L'ajustement d'inventaire** ne
+laissait aucune trace au registre : c'est le plus grave des trois defauts,
+puisqu'une sortie non justifiee se lit au moins quelque part. **Le rebut** ne
+passe par aucun bon : le metal disparaissait du stock et du registre a la
+fois. Un lingot ne se jette pas — il se vend, se transfere, ou se fond, et la
+fonte est une vente au fondeur.
+
+Le droit **« Livre de police - correction du stock »** rouvre ces chemins,
+pour ce qu'aucun document ne decrit. Il ne dispense pas d'inscrire : il
+dispense de justifier le mouvement par un document, ce qui n'est pas la meme
+chose. A reserver.
 
 Requalifier une part de lot
 ---------------------------

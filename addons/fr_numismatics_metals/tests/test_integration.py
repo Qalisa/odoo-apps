@@ -438,6 +438,16 @@ class TestMetalStockWeight(TransactionCase):
             'metal_quantity_mode': 'unit', 'metal_unit_weight': 10.0,
             'metal_fineness': 900.0,
         })
+        # Le livre de police, quand il est installé, refuse d'ajuster à la
+        # main le stock d'un métal soumis au registre : le stock et le
+        # registre diraient alors deux choses. Ce test-ci porte sur le poids,
+        # pas sur ce droit-là — on le lui accorde donc, comme il faudrait le
+        # faire pour de bon.
+        correction = cls.env.ref(
+            'fr_livre_police_metaux.group_livre_police_correction',
+            raise_if_not_found=False)
+        if correction:
+            cls.env.user.groups_id |= correction
         cls._poser(cls.metz, 3.0)
         cls._poser(cls.nancy, 5.0)
 

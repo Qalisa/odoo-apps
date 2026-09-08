@@ -619,7 +619,8 @@ class LivrePoliceLigne(models.Model):
                 lot=lot.name, reste=quant.quantity, retrait=abs(ecart)))
         quant.with_company(self.company_id).with_context(
             inventory_mode=True).write({'inventory_quantity': visee})
-        quant.action_apply_inventory()
+        # La rectification inscrit ce qu'elle ajuste — voir `stock_quant.py`.
+        quant.with_context(police_ajustement=True).action_apply_inventory()
         return True
 
     def _inscrire_rectification(self, mentions, motif):
