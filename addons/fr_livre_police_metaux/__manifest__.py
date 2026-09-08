@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.33.0',
+    'version': '18.0.1.34.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -357,6 +357,34 @@ Entre les deux validations, le metal est **en transit** : sorti d'un registre,
 pas encore inscrit a l'autre. Ce n'est pas un trou, c'est l'etat reel de la
 marchandise, et les deux inscriptions le disent.
 
+Qui expedie, qui receptionne
+----------------------------
+
+Le comptoir de depart etablit le transfert et l'expedie : c'est lui qui remet
+le metal, et sa sortie s'inscrit a son registre. **Il ne le receptionne pas.**
+Constater l'arrivee appartient au comptoir qui recoit — signer les deux bouts
+d'un meme mouvement ne vaudrait rien.
+
+Chaque etablissement designe donc son **responsable**, sur sa propre fiche.
+Lui seul receptionne ce qui arrive chez lui. Le droit **« Livre de police -
+responsable »** passe outre, et il le faut : un responsable absent, ou un
+transfert etabli de travers qu'il faut mener a son terme, ne doivent pas
+laisser du metal en transit. Sans responsable designe, personne ne
+receptionne — le blocage est volontaire, une reception que personne n'a
+endossee valant moins qu'un refus qui se voit.
+
+Ce droit n'emprunte pas « Inventaire / Administrateur » : celui-la est porte
+par le cabinet comptable et par des personnes qui n'ont aucune raison de
+constater l'arrivee de metal dans un comptoir.
+
+La verification tient aux deux endroits. Le bouton du document n'est pas le
+seul chemin : l'agence d'arrivee peut valider son bon depuis l'inventaire, et
+la garde s'y applique aussi — sans quoi elle s'esquiverait d'un clic ailleurs.
+
+Le document porte enfin **qui l'a etabli**, a cote de qui l'a expedie et qui
+l'a recu. Les deux derniers disent qui a engage un registre ; le premier dit
+qui l'a demande.
+
 Le stock d'ouverture
 --------------------
 
@@ -433,6 +461,7 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
         'views/livre_police_provenance_views.xml',
         'views/livre_police_qualite_views.xml',
         'views/res_partner_views.xml',
+        'views/res_company_views.xml',
         'views/product_views.xml',
         'views/sale_order_views.xml',
         'views/account_move_views.xml',

@@ -506,6 +506,46 @@ class LivrePoliceTransfert(models.Model):
     # Réceptionner
     # ------------------------------------------------------------------
 
+    def _verifier_le_droit_de_receptionner(self):
+        """Constater l'arrivée appartient au comptoir qui reçoit.
+
+        Celui qui envoie ne constate pas lui-même que la marchandise est
+        arrivée : ce serait signer les deux bouts d'un même mouvement. Le
+        registre d'arrivée dit ce que ce comptoir a reçu, et quelqu'un en
+        répond — d'où le responsable désigné sur l'établissement.
+
+        Le droit « Livre de police - responsable » passe outre, et il le faut :
+        un responsable absent, ou un transfert établi de travers qu'il faut
+        mener à son terme, ne doivent pas laisser du métal en transit.
+
+        Sans responsable désigné, personne ne réceptionne. Le blocage est
+        volontaire : une réception que personne n'a endossée vaut moins qu'un
+        refus qui se voit.
+        """
+        for transfert in self:
+            if self.env.user.has_group(
+                    'fr_livre_police_metaux.group_livre_police_responsable'):
+                continue
+            destination = transfert.company_destination_id
+            responsable = destination.police_responsable_id
+            if responsable and responsable == self.env.user:
+                continue
+            raise UserError(_(
+                "La réception d'un transfert appartient au comptoir qui "
+                "reçoit : %(destination)s.\n\n"
+                "%(qui)s\n\n"
+                "Celui qui envoie ne constate pas lui-même que la "
+                "marchandise est arrivée — c'est le registre de "
+                "%(destination)s qui dit ce que ce comptoir a reçu.",
+                destination=destination.display_name,
+                qui=(_("Seul %(responsable)s peut le faire, ou quelqu'un "
+                       "portant le droit « Livre de police - responsable ».",
+                       responsable=responsable.display_name) if responsable
+                     else _("Aucun responsable n'est désigné sur cet "
+                            "établissement : renseignez-le sur sa fiche, ou "
+                            "faites réceptionner par quelqu'un portant le "
+                            "droit « Livre de police - responsable »."))))
+
     def action_receptionner(self):
         """Fait entrer le métal au registre de l'établissement d'arrivée."""
         self.ensure_one()
@@ -514,6 +554,7 @@ class LivrePoliceTransfert(models.Model):
                 "Seul un transfert expédié se réceptionne. Celui-ci est "
                 "« %(etat)s ».",
                 etat=dict(self._fields['state'].selection)[self.state]))
+        self._verifier_le_droit_de_receptionner()
         transfert = self._deux_etablissements()
         transfert._valider(transfert.picking_entree_id)
         return True

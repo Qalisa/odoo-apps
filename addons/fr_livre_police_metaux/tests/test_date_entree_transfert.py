@@ -37,6 +37,10 @@ class TestDateEntreeTransfert(TransactionCase):
         cls.depart = Societe.create({'name': "Comptoir qui expédie"})
         cls.arrivee = Societe.create({'name': "Comptoir qui reçoit"})
         cls.env.user.company_ids |= cls.depart | cls.arrivee
+        # Réceptionner appartient au comptoir qui reçoit : sans responsable
+        # désigné, personne ne le peut. Ce test porte sur les dates, pas sur
+        # ce droit-là — on le lui accorde donc explicitement.
+        cls.arrivee.police_responsable_id = cls.env.user
 
         cls.env.ref('stock.stock_location_inter_company').sudo().active = True
 

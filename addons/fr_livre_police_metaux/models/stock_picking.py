@@ -123,8 +123,23 @@ class StockPicking(models.Model):
     def button_validate(self):
         self._police_check_inscription()
         self._police_check_transfert()
+        self._police_check_reception()
         self._police_nommer_les_lots()
         return super().button_validate()
+
+    def _police_check_reception(self):
+        """Le bouton du document n'est pas le seul chemin vers la réception.
+
+        L'agence d'arrivée peut valider son bon depuis l'inventaire, comme
+        n'importe quelle réception — c'est même ce qu'elle fera le jour où le
+        métal arrive sans que personne ne rouvre le transfert. Le droit se
+        vérifie donc ici aussi, sans quoi la garde posée sur le document
+        s'esquiverait d'un clic ailleurs.
+        """
+        for bon in self.filtered('police_transfert_id'):
+            transfert = bon.police_transfert_id
+            if transfert.picking_entree_id == bon:
+                transfert._verifier_le_droit_de_receptionner()
 
     def _action_done(self):
         """Le métal qui part s'inscrit, une fois le transfert réellement fait.

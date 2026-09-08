@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Le responsable se pose sur la fiche de l'établissement, à côté de ce
+         qui le désigne déjà — et non dans un écran de paramétrage à part :
+         c'est une propriété du comptoir, au même titre que son adresse. -->
+    <record id="res_company_form_view_police" model="ir.ui.view">
+        <field name="name">res.company.form.police</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='currency_id']" position="after">
+                <field name="police_responsable_id"
+                       options="{'no_create': True, 'no_open': True}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

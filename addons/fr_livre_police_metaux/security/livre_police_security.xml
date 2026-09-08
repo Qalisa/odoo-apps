@@ -38,6 +38,29 @@
             modifier une ligne.</field>
     </record>
 
+    <!-- Un second niveau, au-dessus de la consultation.
+
+         Un transfert entre établissements se réceptionne par le comptoir qui
+         reçoit : celui qui envoie ne constate pas lui-même que la
+         marchandise est arrivée. Reste le cas où ce responsable est absent,
+         ou celui d'un transfert établi de travers qu'il faut mener à son
+         terme — d'où ce droit, accordé nommément, qui permet de réceptionner
+         partout.
+
+         Il n'emprunte pas « Inventaire / Administrateur » : ce droit-là est
+         porté par le cabinet comptable et par des personnes qui n'ont aucune
+         raison de constater la réception de métal dans un comptoir. Deux
+         responsabilités différentes ne se donnent pas d'un seul geste. -->
+    <record id="group_livre_police_responsable" model="res.groups">
+        <field name="name">Livre de police - responsable</field>
+        <field name="category_id" ref="module_category_livre_police"/>
+        <field name="implied_ids" eval="[(4, ref('group_livre_police'))]"/>
+        <field name="comment">Permet de réceptionner un transfert entre
+            établissements quel que soit l'établissement d'arrivée. Sans ce
+            droit, la réception n'appartient qu'au responsable désigné du
+            comptoir qui reçoit.</field>
+    </record>
+
     <!-- Un registre par agence, et non un registre pour le groupe.
 
          « Lorsque les personnes mentionnées à l'article R. 321-1 possèdent
