@@ -123,14 +123,15 @@ class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
 
     police_description = fields.Char(
-        string="Objets", related='lot_id.police_description', readonly=True,
+        string="Objets", compute='_compute_police_lot', compute_sudo=True,
     )
     police_avoir_id = fields.Many2one(
-        related='lot_id.police_avoir_id', string="Avoir d'achat", readonly=True,
+        'account.move', string="Avoir d'achat",
+        compute='_compute_police_lot', compute_sudo=True,
     )
     police_avoir_date = fields.Date(
-        related='lot_id.police_avoir_date', string="Date de l'avoir",
-        readonly=True,
+        string="Date de l'avoir",
+        compute='_compute_police_lot', compute_sudo=True,
     )
     # Ce que le lot contient a l'emplacement d'ou l'on sort.
     #
@@ -150,8 +151,29 @@ class StockMoveLine(models.Model):
              "est parti alors qu'il n'a jamais été là.",
     )
     police_vendeur_id = fields.Many2one(
-        related='lot_id.police_vendeur_id', string="Vendeur", readonly=True,
+        'res.partner', string="Vendeur",
+        compute='_compute_police_lot', compute_sudo=True,
     )
+
+    @api.depends('lot_id', 'quant_id')
+    def _compute_police_lot(self):
+        """Ce que le lot dit de lui-même, avant meme d'etre rattache.
+
+        Ces quatre colonnes suivaient `lot_id` par un `related`. Or sur une
+        ligne qu'on vient d'ajouter, `lot_id` est vide : Odoo ne le tire du
+        quant choisi qu'au serveur, a l'ecriture (`_copy_quant_info`, appelee
+        depuis `create` et `write`). Les quatre restaient donc blanches au
+        moment precis ou l'on choisit — c'est-a-dire quand elles servent.
+
+        Meme issue que pour `police_quant_detenu` : on lit le quant a defaut
+        de la ligne.
+        """
+        for ligne in self:
+            lot = ligne.lot_id or ligne.quant_id.lot_id
+            ligne.police_description = lot.police_description
+            ligne.police_avoir_id = lot.police_avoir_id
+            ligne.police_avoir_date = lot.police_avoir_date
+            ligne.police_vendeur_id = lot.police_vendeur_id
 
     @api.depends('lot_id', 'location_id', 'company_id', 'quant_id')
     def _compute_police_quant_detenu(self):

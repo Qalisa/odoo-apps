@@ -77,8 +77,11 @@ class StockMoveLine(models.Model):
              "poids unitaire. Vide sur un article hors métaux précieux.",
     )
 
-    @api.depends('product_id', 'quantity')
+    @api.depends('product_id', 'quantity', 'quant_id')
     def _compute_police_poids(self):
+        # `product_id` non plus n'est pose qu'a l'ecriture, quand la ligne
+        # naît d'un quant choisi : sans ce repli, le poids reste a zero tant
+        # que la ligne n'est pas enregistree.
         for mouvement in self:
-            mouvement.police_poids = _poids(
-                mouvement.product_id, mouvement.quantity)
+            produit = mouvement.product_id or mouvement.quant_id.product_id
+            mouvement.police_poids = _poids(produit, mouvement.quantity)
