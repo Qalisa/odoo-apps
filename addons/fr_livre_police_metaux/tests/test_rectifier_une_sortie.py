@@ -18,6 +18,12 @@ Et le **solde** aurait compté deux fois. L'entrée additionne ses sorties ;
 l'originale et sa rectification portent le même départ, et le lot serait
 sorti deux fois. C'est la règle déjà écrite pour les entrées — une
 rectification ne détient rien — qui manquait de ce côté-là.
+
+S'y ajoutait le **jour du mouvement**, qui ne figure pas davantage parmi les
+mentions rectifiables : la sortie corrigée ne disait plus quand le métal
+était parti, et l'entrée qu'elle soldait perdait sa date de sortie — que le
+registre des métaux précieux réclame nommément (CGI, ann. IV,
+art. 56 J quindecies).
 """
 
 from odoo import fields
@@ -108,6 +114,7 @@ class TestRectifierUneSortie(TransactionCase):
         self.assertEqual(rectification.transfert_etablissement,
                          "Comptoir voisin")
         self.assertEqual(rectification.rectifie_id, sortie)
+        self.assertEqual(rectification.date_mouvement, sortie.date_mouvement)
 
         # Et le lot n'est sorti qu'une fois.
         self.entree.invalidate_recordset()

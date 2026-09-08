@@ -659,11 +659,16 @@ class LivrePoliceLigne(models.Model):
         # « Entrée », le sens ayant « entree » pour valeur par défaut. Un
         # registre ne peut pas dire d'un départ qu'il est une arrivée.
         #
-        # Suivent l'entrée dont ce départ vide le stock, le nom du lot, et
-        # l'origine du métal : ce sont des mentions du registre, pas des
-        # corrections, et elles valent pour la rectification comme pour
-        # l'inscription reprise.
-        for nom in ('sens', 'entree_id', 'numero_lot',
+        # Suivent l'entrée dont ce départ vide le stock, le nom du lot, le
+        # jour du mouvement et l'origine du métal : ce sont des mentions du
+        # registre, pas des corrections, et elles valent pour la
+        # rectification comme pour l'inscription reprise.
+        #
+        # Le jour du mouvement compte double : c'est de lui que l'entrée tire
+        # sa date de sortie, et le registre des métaux précieux réclame « la
+        # date d'entrée et de sortie » (CGI, ann. IV, art. 56 J quindecies).
+        # Une sortie rectifiée sans lui soldait le lot sans dire quand.
+        for nom in ('sens', 'entree_id', 'numero_lot', 'date_mouvement',
                     'origine_id', 'origine_etablissement',
                     'origine_numero_ordre', 'origine_date_achat',
                     'transfert_etablissement', 'transfert_motif'):
