@@ -7,15 +7,34 @@
                 <sheet>
                     <!-- IMPORTANT: force field evaluation -->
                     <field name="will_be_refund" invisible="1"/>
+                    <field name="has_negative_lines" invisible="1"/>
 
                     <!-- FACTURE (ALERTE) -->
                     <div
                         class="oe_warning"
-                        invisible="will_be_refund">
+                        invisible="will_be_refund or has_negative_lines">
                         <h2 style="color: red">
                             Ce devis va être transformé en FACTURE.
                         </h2>
                         <p>Le montant du devis est <strong>POSITIF</strong>, vous allez ici <strong>vendre de la marchandise</strong> au client. Êtes-vous certain ?</p>
+                    </div>
+
+                    <!-- FACTURE MALGRE DES QUANTITES NEGATIVES -->
+                    <div
+                        class="oe_warning"
+                        invisible="will_be_refund or not has_negative_lines">
+                        <h2 style="color: red">
+                            Ce devis va être transformé en FACTURE, et non en avoir.
+                        </h2>
+                        <p>
+                            Il porte des <strong>quantités négatives</strong>, mais son
+                            <strong>montant total ne l'est pas</strong> : Odoo ne crée un avoir
+                            que sur un montant négatif.
+                        </p>
+                        <p>
+                            S'il s'agit d'un rachat au client, vérifiez le prix avant de
+                            confirmer. Continuer ?
+                        </p>
                     </div>
 
                     <!-- AVOIR (RACHAT) -->

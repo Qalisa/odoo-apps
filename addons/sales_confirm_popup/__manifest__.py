@@ -1,7 +1,7 @@
 {
     "name": "Devis - Popup de confirmation",
     "summary": "Ajoute une alerte supplémentaire, lors de la création d'un devis, sur le fait que celui-ci se transforme en avoir, ou en facture.",
-    "version": "18.0.1.0.1",
+    "version": "18.0.1.0.2",
     "author": "Qalisa",
     "depends": ["sale"],
     'license': "AGPL-3",
