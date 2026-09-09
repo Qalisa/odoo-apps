@@ -8,20 +8,20 @@
                     <!-- IMPORTANT: force field evaluation -->
                     <field name="will_be_refund" invisible="1"/>
 
-                    <!-- INVOICE (GREEN, FLASHY) -->
+                    <!-- FACTURE (ALERTE) -->
                     <div
                         class="oe_warning"
-                        invisible="not will_be_refund">
+                        invisible="will_be_refund">
                         <h2 style="color: red">
                             Ce devis va être transformé en FACTURE.
                         </h2>
                         <p>Le montant du devis est <strong>POSITIF</strong>, vous allez ici <strong>vendre de la marchandise</strong> au client. Êtes-vous certain ?</p>
                     </div>
 
-                    <!-- CREDIT NOTE (WARNING) -->
+                    <!-- AVOIR (RACHAT) -->
                     <div
                         class="oe_success"
-                        invisible="will_be_refund">
+                        invisible="not will_be_refund">
                         <p>
                             Le montant du devis étant <strong>NEGATIF</strong>, ce devis va être transformé en avoir; vous effectuez ici un rachat au client. Continuer ?
                         </p>

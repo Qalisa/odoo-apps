@@ -10,6 +10,8 @@ class SaleConfirmWizard(models.TransientModel):
         readonly=True
     )
 
+    # Vrai quand le devis deviendra un avoir, c'est-a-dire quand son
+    # montant est negatif : le comptoir rachete au client.
     will_be_refund = fields.Boolean(readonly=True)
 
     def action_confirm(self):
