@@ -5,40 +5,42 @@
         <field name="name">livre.police.requalification.form</field>
         <field name="model">livre.police.requalification</field>
         <field name="arch" type="xml">
-            <form string="Requalifier une part du lot">
+            <form string="Requalifier des parts de lots">
                 <div class="alert alert-info" role="status">
-                    Le tri révèle qu'une part du lot n'est pas de la nature
-                    sous laquelle elle a été inscrite. Rien n'entre, rien ne
-                    sort : ce métal était déjà là, sous un autre nom.
+                    Le tri révèle qu'une part de ces lots n'est pas de la
+                    nature sous laquelle elle a été inscrite. Rien n'entre,
+                    rien ne sort : ce métal était déjà là, sous d'autres noms.
                     <br/>
-                    L'inscription d'origine se réduit d'autant, par une
-                    rectification portant son motif ; la part reclassée prend
-                    son propre numéro d'ordre, et donc sa propre étiquette.
-                    Sa date d'entrée reste celle du rachat.
+                    Chaque inscription d'origine se réduit de ce qu'on lui
+                    retire, par une rectification portant le motif ; ce qui
+                    sort du tri forme <b>un seul lot</b>, sous son propre
+                    numéro d'ordre, donc sa propre étiquette. Sa date d'entrée
+                    est celle du plus récent des rachats, et la provenance les
+                    nomme tous.
                 </div>
-                <!-- Le champ est en lecture seule et n'a pas sa place a
-                     l'ecran ; il doit pourtant y figurer. Les mentions du lot
-                     d'origine en decoulent toutes — numero, designation,
-                     quantite inscrite, poids retire — et le client web
-                     n'evalue que les champs presents dans la vue : sans lui,
-                     le bloc de gauche s'affiche vide et le poids retire a
-                     zero, jusqu'a la validation ou le serveur les retrouve. -->
-                <field name="inscription_id" invisible="1"/>
-                <group>
-                    <group string="Le lot d'origine">
-                        <field name="numero_ordre"/>
-                        <field name="designation_origine"/>
-                        <field name="quantite_inscrite"/>
-                        <field name="poids_inscrit"/>
+                <field name="ligne_ids" nolabel="1">
+                    <list editable="bottom" create="0" delete="0">
+                        <field name="numero_ordre" readonly="1"/>
+                        <field name="designation" readonly="1"/>
+                        <field name="date_achat" readonly="1"/>
+                        <field name="quantite_inscrite" readonly="1"/>
+                        <field name="poids_inscrit" readonly="1"
+                               optional="show"/>
                         <field name="quantite_retiree"/>
-                        <field name="poids_retire"/>
-                    </group>
-                    <group string="Ce que cette part est réellement">
+                        <field name="poids_retire" readonly="1"/>
+                        <field name="prelevee" column_invisible="True"/>
+                    </list>
+                </field>
+                <group>
+                    <group string="Ce que ces parts sont réellement">
                         <field name="product_id"
                                options="{'no_create': True}"/>
                         <field name="quantite"/>
                         <field name="poids"/>
                         <field name="description"/>
+                    </group>
+                    <group string="Ce que le tri a ôté aux lots">
+                        <field name="poids_retire_total"/>
                     </group>
                 </group>
                 <group string="Ce que le tri a constaté">
@@ -55,14 +57,17 @@
         </field>
     </record>
 
+    <!-- L'ecran s'ouvre sur une selection : le tri sort l'or blanc de
+         plusieurs rachats a la fois, et ces inscriptions se designent
+         ensemble depuis la liste du registre. Depuis un formulaire, la
+         selection vaut un seul lot — c'est le meme ecran, a une ligne. -->
     <record id="action_requalifier_une_part" model="ir.actions.act_window">
-        <field name="name">Requalifier une part du lot</field>
+        <field name="name">Requalifier des parts de lots</field>
         <field name="res_model">livre.police.requalification</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
         <field name="binding_model_id" ref="model_livre_police_ligne"/>
-        <field name="binding_view_types">form</field>
-        <field name="context">{'default_inscription_id': active_id}</field>
+        <field name="binding_view_types">list,form</field>
         <field name="groups_id" eval="[(4, ref('fr_livre_police_metaux.group_livre_police'))]"/>
     </record>
 

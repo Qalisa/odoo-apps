@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.44.2',
+    'version': '18.0.1.45.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -433,25 +433,40 @@ pour ce qu'aucun document ne decrit. Il ne dispense pas d'inscrire : il
 dispense de justifier le mouvement par un document, ce qui n'est pas la meme
 chose. A reserver.
 
-Requalifier une part de lot
----------------------------
+Requalifier des parts de lots
+-----------------------------
 
 Un lot entre sous la nature qu'on lui prete au comptoir. Le tri, plus tard,
 revele qu'une part n'est pas de cette nature — de l'or blanc dans un lot de
 titres. Elle ne part pas au fondeur ; elle reste, et sous son vrai nom.
 
-Rien n'entre et rien ne sort : ce metal etait deja la. **Requalifier une part
-du lot** reduit l'inscription d'origine — par une rectification portant son
-motif — et inscrit la part reclassee sous son **propre numero d'ordre**, donc
-sa propre etiquette (c. pen., art. R321-4). Sa date d'entree reste celle du
-rachat : le tri n'est pas une entree. Son prix est nul, et la nature, le titre
-et le regime viennent du nouvel article — c'est tout l'objet de l'operation.
+Le tri ne porte pas sur un lot, il porte sur une tablee : l'or blanc sort de
+plusieurs rachats a la fois et finit dans un seul sachet. **Requalifier des
+parts de lots** se lance donc sur une selection du registre. Chaque
+inscription d'origine se reduit de ce qu'on lui retire — par une
+rectification portant le motif, saisi une fois pour toutes — et ce qui sort du
+tri forme **un seul lot**, sous son propre numero d'ordre, donc sa propre
+etiquette (c. pen., art. R321-4). Le reclasser lot par lot donnerait huit
+numeros d'ordre a un sachet dont plus personne ne saura separer les grains :
+le registre serait exact et la realite fausse.
 
-Le poids reclasse ne peut pas exceder le poids retire : un tri separe, il ne
-cree pas de matiere.
+Rien n'entre et rien ne sort : ce metal etait deja la. Son prix est nul, et la
+nature, le titre et le regime viennent du nouvel article — c'est tout l'objet
+de l'operation.
+
+Sa **date d'entree** est celle des rachats, jamais celle du tri : le tri n'est
+pas une entree. Quand plusieurs rachats se rejoignent, c'est **le plus
+recent** qui la donne — le plus ancien ferait dire au registre que tout ce
+metal etait la avant qu'il n'y soit. Les mentions d'origine ne se remplissent
+qu'a un seul lot trie : a plusieurs, en designer une reviendrait a choisir
+laquelle le registre va taire, et c'est la provenance qui les nomme toutes,
+avec leur date et le poids qu'elles ont cede.
+
+Le poids reclasse ne peut pas exceder le poids retire au total : un tri
+separe, il ne cree pas de matiere.
 
 Cet ecran remplace un contournement qui portait au registre trois mentions
-fausses — revendre le lot entier, puis le racheter a 0 euro au fondeur : un
+fausses — revendre les lots, puis les racheter a 0 euro au fondeur : un
 vendeur qui n'a rien vendu, une personne physique de chez lui qui aurait remis
 les objets (art. R321-3 2°), et une sortie pour du metal qui n'est jamais
 parti.

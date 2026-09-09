@@ -58,6 +58,8 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.misc import format_date, formatLang
 
+from odoo.addons.fr_numismatics_metals.tools import metals
+
 
 class LivrePoliceLigne(models.Model):
     _name = 'livre.police.ligne'
@@ -1100,51 +1102,79 @@ class LivrePoliceLigne(models.Model):
         }
 
     @api.model
-    def _valeurs_depuis_requalification(self, source, mouvement, produit,
+    def _valeurs_depuis_requalification(self, parts, mouvement, produit,
                                         poids, description, motif):
-        """Fige ce qu'une part reclassée inscrit.
+        """Fige ce que les parts triées inscrivent, réunies en un seul lot.
 
-        Le tri d'un lot révèle ce qu'il contenait : une part n'est pas de la
-        nature sous laquelle elle avait été inscrite. Rien n'entre et rien ne
-        sort — le métal était déjà là, sous un autre nom.
+        Le tri d'une tablée révèle ce que les lots contenaient : une part
+        n'est pas de la nature sous laquelle elle avait été inscrite. Rien
+        n'entre et rien ne sort — le métal était déjà là, sous d'autres noms.
 
-        Sa **date d'entrée reste celle du rachat d'origine** : ce métal est
-        entré dans ces murs ce jour-là, et le tri n'est pas une entrée. Son
-        prix est nul, et ce n'est pas un oubli : le prix vit à l'inscription
-        d'origine, que la provenance désigne nommément. Personne n'a vendu
-        quoi que ce soit ce jour-là.
+        ``parts`` porte, pour chaque lot trié, l'inscription d'où la part
+        sort, la quantité qui lui est retirée et le poids correspondant.
+
+        Sa **date d'entrée reste celle des rachats** : ce métal est entré
+        dans ces murs ces jours-là, et le tri n'est pas une entrée. Quand
+        plusieurs rachats se rejoignent, c'est **le plus récent** qui la
+        donne : le plus ancien ferait dire au registre que tout ce métal
+        était là avant qu'il n'y soit. Son prix est nul, et ce n'est pas un
+        oubli : le prix vit aux inscriptions d'origine, que la provenance
+        désigne nommément. Personne n'a vendu quoi que ce soit ce jour-là.
 
         Elle prend en revanche son **propre numéro d'ordre**, et il le faut :
         c'est un autre lot, il porte une autre étiquette, et « le numéro
         d'ordre […] figure de manière apparente sur chaque objet ou lot
         d'objets » (c. pén., art. R321-4).
 
+        Les mentions d'origine ne se remplissent qu'à un seul lot trié. À
+        plusieurs, il n'y a pas *une* origine, et en désigner une reviendrait
+        à choisir laquelle le registre va taire ; la provenance les nomme
+        alors toutes, avec leur date et le poids qu'elles ont cédé.
+
         La nature, le titre et le régime viennent du nouvel article — c'est
         tout l'objet de l'opération : dire ce que ce métal est réellement.
+
+        Le poids inscrit se déduit de ce que le coffre détient réellement, et
+        non du poids visé : l'unité de stock ne descend pas aussi bas que les
+        quatre décimales du registre, et 9,2258 g posés au stock y deviennent
+        9,23. Inscrire le poids visé à côté de cette quantité-là ferait dire à
+        une même ligne deux choses différentes — au gramme, la quantité *est*
+        le poids. Ce que l'arrondi déplace reste sous la précision du stock ;
+        ce qu'une inscription affirme d'elle-même doit rester vrai.
         """
-        origine = source.origine_id or source
+        sources = [part[0] for part in parts]
+        origine = (sources[0].origine_id or sources[0]) if len(parts) == 1 \
+            else self.browse()
         modele = produit.product_tmpl_id
         regimes = dict(modele._fields['metal_quantity_mode'].selection)
+        dates = [source.date_achat for source in sources if source.date_achat]
+        detail = " ; ".join(
+            _("%(numero)s du %(date)s (%(poids).4f g)",
+              numero=source.numero_ordre,
+              date=format_date(self.env, source.date_achat),
+              poids=poids_retire)
+            for source, quantite_retiree, poids_retire in parts)
         return {
             'sens': 'entree',
-            'date_achat': source.date_achat,
+            'date_achat': max(dates) if dates else fields.Date.context_today(self),
             'designation': produit.with_context(
                 display_default_code=False).display_name or False,
             'description': description or False,
             'provenance': _(
-                "Requalification de l'inscription %(numero)s du %(date)s. "
+                "Requalification : métal retiré des inscriptions %(sources)s. "
                 "%(motif)s",
-                numero=source.numero_ordre,
-                date=format_date(self.env, source.date_achat),
-                motif=motif),
+                sources=detail, motif=motif),
             'metal_nature': modele.metal_nature.display_name or False,
             'quantite': mouvement.quantity,
             'regime_quantite': regimes.get(modele.metal_quantity_mode) or False,
-            'poids': poids,
+            'poids': metals.derive_weight(
+                modele.metal_quantity_mode, modele.metal_unit_weight,
+                mouvement.quantity) or poids,
             'titre': modele.metal_fineness,
             'titre_lot': modele.metal_mixed_fineness,
             'prix': 0.0,
-            'currency_id': source.currency_id.id or source.company_id.currency_id.id,
+            'currency_id': (sources[0].currency_id.id
+                            or mouvement.company_id.currency_id.id),
             'company_id': mouvement.company_id.id,
             'numero_lot': mouvement.lot_id.name,
             'mouvement_stock_id': mouvement.id,
