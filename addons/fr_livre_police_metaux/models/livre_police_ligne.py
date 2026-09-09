@@ -954,7 +954,20 @@ class LivrePoliceLigne(models.Model):
 
     @api.model
     def _valeurs_depuis_ligne(self, ligne):
-        """Copie figée d'une ligne d'avoir, au moment où elle est inscrite."""
+        """Copie figée d'une ligne de rachat, au moment où elle est inscrite.
+
+        Deux pièces font entrer du métal, et `_police_entree` les connaît
+        toutes deux : l'avoir à quantité positive, et la facture à quantité
+        négative. Odoo ne bascule un devis en avoir que si son montant total
+        est négatif ; un rachat sans prix, ou mêlé à des lignes vendues,
+        reste donc une facture, et sa ligne y porte le signe moins.
+
+        Le registre, lui, ne connaît pas de signe : ses colonnes disent une
+        quantité et un poids acquis, et le sens de l'opération se lit dans la
+        colonne « sens ». D'où les valeurs absolues, comme sur le prix — un
+        rachat inscrit à −115,50 g dirait que le comptoir a acquis moins que
+        rien, et le stock, qui détient bien 115,50 g, le démentirait.
+        """
         piece = ligne.move_id
         personne = piece._police_personne()
         vendeur = piece.partner_id
@@ -1001,9 +1014,9 @@ class LivrePoliceLigne(models.Model):
             'currency_id': piece.currency_id.id,
             'mode_reglement': reglements.get(piece.police_reglement) or False,
             'metal_nature': produit.metal_nature.display_name or False,
-            'quantite': ligne.quantity,
+            'quantite': abs(ligne.quantity),
             'regime_quantite': regimes.get(produit.metal_quantity_mode) or False,
-            'poids': ligne.metal_weight,
+            'poids': abs(ligne.metal_weight),
             'titre': produit.metal_fineness,
             'titre_lot': produit.metal_mixed_fineness,
             'company_id': piece.company_id.id,
