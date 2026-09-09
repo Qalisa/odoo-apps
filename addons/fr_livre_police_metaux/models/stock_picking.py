@@ -109,6 +109,14 @@ class StockMove(models.Model):
                 continue
             if not mouvement.product_id.product_tmpl_id.metal_regulated:
                 continue
+            # Un rachat traverse un etat que ce controle ne doit pas lire. La
+            # regle de flux cree d'abord le mouvement tel que le devis le dit
+            # — demande negative, source encore interne — puis le retourne en
+            # une entree du client vers le coffre. Entre les deux, « 0 saisi
+            # pour -1 demande » est arithmetiquement un depassement et ne
+            # decrit rien : aucun metal ne sort d'un rachat.
+            if mouvement.product_uom_qty < 0:
+                continue
             if mouvement.location_id.usage != 'internal':
                 continue
             if mouvement.quantity <= mouvement.product_uom_qty + 0.00005:
