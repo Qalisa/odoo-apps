@@ -471,6 +471,20 @@ class LivrePoliceTransfert(models.Model):
         """
         self.ensure_one()
         Ligne = self.env['stock.move.line'].sudo()
+        # Odoo réserve de lui-même à la confirmation, et prend les lots qui
+        # lui tombent sous la main. Le transfert, lui, désigne les siens : ce
+        # qu'il n'a pas nommé ne part pas.
+        #
+        # Ce ménage passe **avant** la saisie, et non après. Poser d'abord nos
+        # lignes laissait le mouvement porter les deux jeux le temps d'une
+        # écriture — le lot réservé d'office et le nôtre — soit le double de
+        # ce que le bon demande. Le contrôle qui refuse de sortir plus que la
+        # demande y voyait un dépassement, et un transfert d'un seul lot ne
+        # partait plus.
+        intrus = bon.move_ids.move_line_ids.filtered(
+            lambda ml: ml.lot_id not in self.ligne_ids.lot_id)
+        if intrus:
+            intrus.unlink()
         par_produit = {mouvement.product_id: mouvement
                        for mouvement in bon.move_ids}
         for ligne in self.ligne_ids:
@@ -491,13 +505,6 @@ class LivrePoliceTransfert(models.Model):
                 'quantity': ligne.quantite,
                 'picked': True,
             })
-        # Odoo réserve de lui-même à la confirmation, et prend les lots qui
-        # lui tombent sous la main. Le transfert, lui, désigne les siens : ce
-        # qu'il n'a pas nommé ne part pas.
-        intrus = bon.move_ids.move_line_ids.filtered(
-            lambda ml: ml.lot_id not in self.ligne_ids.lot_id)
-        if intrus:
-            intrus.unlink()
         bon.move_ids.picked = True
         bon.with_context(skip_backorder=True,
                          picking_ids_not_to_backorder=bon.ids).button_validate()
