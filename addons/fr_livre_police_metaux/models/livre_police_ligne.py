@@ -602,10 +602,21 @@ class LivrePoliceLigne(models.Model):
         Ce n'est pas une sortie : rien n'est parti. C'est le constat que ce
         métal n'a jamais été détenu, et il ne s'inscrit donc pas au registre
         comme un départ — la rectification dit tout ce qu'il y a à dire.
+
+        ``ecart`` est l'écart porté à **l'inscription**, et le sens qu'il
+        prend au coffre dépend de ce que cette inscription décrit. Sur une
+        entrée, les deux vont ensemble : le coffre détient ce qu'elle
+        annonce, et lui en retirer 10 en retire 10. Sur une **sortie**, ils
+        s'opposent : elle dit ce que le coffre a perdu, et déclarer que 10 g
+        ne sont finalement pas partis les lui rend. Sans cette inversion, le
+        métal qu'on dit resté était retiré une seconde fois, et l'erreur
+        comptait double.
         """
         self.ensure_one()
         if not ecart:
             return False
+        # Ce que le coffre doit gagner ou perdre, une fois le sens rétabli.
+        mouvement = -ecart if self.sens == 'sortie' else ecart
         lot = self._lot_du_registre()
         if not lot:
             raise UserError(_(
@@ -618,6 +629,26 @@ class LivrePoliceLigne(models.Model):
             ('company_id', '=', self.company_id.id),
             ('location_id.usage', '=', 'internal'),
         ])
+        if not quants and mouvement > 0:
+            # Une sortie qui a soldé son lot n'y laisse rien : Odoo supprime
+            # le quant tombé à zéro. Le métal qu'on déclare resté doit donc
+            # revenir dans un lot qui n'a plus d'emplacement — et il revient
+            # là d'où il est parti, que la ligne de mouvement porte encore.
+            emplacement = self.mouvement_stock_id.location_id
+            if emplacement.usage != 'internal':
+                raise UserError(_(
+                    "Le lot %(lot)s n'a plus d'emplacement de stock, et la "
+                    "sortie %(numero)s ne dit pas d'où il est parti : "
+                    "l'ajustement ne saurait pas où le remettre. Faites-le à "
+                    "la main, puis rectifiez le registre.",
+                    lot=lot.name, numero=self.numero_ordre))
+            quants = self.env['stock.quant'].sudo().with_company(
+                self.company_id).create({
+                    'product_id': lot.product_id.id,
+                    'lot_id': lot.id,
+                    'location_id': emplacement.id,
+                    'quantity': 0.0,
+                })
         if len(quants) != 1:
             raise UserError(_(
                 "Le lot %(lot)s est réparti sur %(nombre)s emplacements de "
@@ -626,13 +657,13 @@ class LivrePoliceLigne(models.Model):
                 "rectifiez le registre.",
                 lot=lot.name, nombre=len(quants) or 0))
         quant = quants
-        visee = quant.quantity + ecart
+        visee = quant.quantity + mouvement
         if visee < -0.00005:
             raise UserError(_(
                 "Le stock du lot %(lot)s ne porte que %(reste)s : on ne peut "
                 "pas en retirer %(retrait)s. Une partie a déjà été vendue ou "
                 "transférée, et ces mouvements-là sont inscrits au registre.",
-                lot=lot.name, reste=quant.quantity, retrait=abs(ecart)))
+                lot=lot.name, reste=quant.quantity, retrait=abs(mouvement)))
         quant.with_company(self.company_id).with_context(
             inventory_mode=True).write({'inventory_quantity': visee})
         # La rectification inscrit ce qu'elle ajuste — voir `stock_quant.py`.
