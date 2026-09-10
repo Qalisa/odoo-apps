@@ -17,7 +17,8 @@ rectification ne corrige presque jamais tout : la recopie manuelle des
 mentions justes serait une occasion d'en fausser une seconde.
 """
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class LivrePoliceRectification(models.TransientModel):
@@ -88,6 +89,46 @@ class LivrePoliceRectification(models.TransientModel):
                             else ligne[nom])
         return valeurs
 
+    def _regime_au_gramme(self):
+        """Le libellé que porte une inscription au gramme.
+
+        Lu sur la sélection de l'article plutôt que recopié en dur : le
+        registre garde le libellé, pas la clé, et les deux doivent continuer
+        de dire la même chose si l'un des deux est réécrit.
+        """
+        return dict(self.env['product.template']._fields[
+            'metal_quantity_mode'].selection).get('gram')
+
+    @api.onchange('quantite')
+    def _onchange_quantite(self):
+        """Le poids suit la quantité, au prorata de ce qui est inscrit.
+
+        C'est le calcul que fait déjà l'écran qui rectifie des quantités en
+        série, et celui de toute sortie : au gramme la quantité *est* le
+        poids, à la pièce elle en est le multiple. Le poids reste saisissable
+        ici — cet écran corrige toutes les mentions, et une pesée fausse se
+        rectifie seule — mais il ne reste plus en arrière d'une quantité
+        changée sans qu'on y pense.
+        """
+        for wiz in self:
+            origine = wiz.ligne_id
+            if not origine.quantite:
+                continue
+            wiz.poids = origine.poids * wiz.quantite / origine.quantite
+
+    def _verifier(self):
+        """Refuse une inscription qui se contredirait elle-même."""
+        self.ensure_one()
+        if self.regime_quantite != self._regime_au_gramme():
+            return
+        if abs(self.quantite - self.poids) > 0.00005:
+            raise UserError(_(
+                "Cette inscription est au gramme : la quantité *est* le "
+                "poids, et le registre ne peut pas en porter deux différents "
+                "sur la même ligne — %(quantite).4f contre %(poids).4f g.\n\n"
+                "Reprenez l'un des deux.",
+                quantite=self.quantite, poids=self.poids))
+
     def action_rectifier(self):
         """Inscrit la correction à la suite, et laisse l'originale en place.
 
@@ -96,6 +137,7 @@ class LivrePoliceRectification(models.TransientModel):
         les fait diverger durablement.
         """
         self.ensure_one()
+        self._verifier()
         origine = self.ligne_id
         valeurs = {nom: (self[nom].id if self._fields[nom].type == 'many2one'
                          else self[nom])

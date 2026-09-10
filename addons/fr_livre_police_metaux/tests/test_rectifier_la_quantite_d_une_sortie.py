@@ -21,6 +21,7 @@ la ligne de mouvement porte encore.
 """
 
 from odoo import fields
+from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -93,9 +94,7 @@ class TestRectifierLaQuantiteDUneSortie(TransactionCase):
             ('location_id.usage', '=', 'internal'),
         ]).mapped('quantity'))
 
-    def _rectifier(self, sortie, quantite):
-        """Au gramme, la quantité *est* le poids : l'écran les porte tous
-        deux, et une inscription ne doit pas pouvoir se contredire."""
+    def _assistant(self, sortie, quantite):
         assistant = self.env['livre.police.rectification'].with_company(
             self.comptoir).with_context(default_ligne_id=sortie.id).create({
                 'ligne_id': sortie.id,
@@ -106,8 +105,12 @@ class TestRectifierLaQuantiteDUneSortie(TransactionCase):
             assistant[nom] = (sortie[nom].id if champ.type == 'many2one'
                               else sortie[nom])
         assistant.quantite = quantite
-        assistant.poids = quantite
-        assistant.action_rectifier()
+        # Ce que le client déclencherait en quittant le champ.
+        assistant._onchange_quantite()
+        return assistant
+
+    def _rectifier(self, sortie, quantite):
+        self._assistant(sortie, quantite).action_rectifier()
 
     def test_le_metal_declare_reste_revient_au_coffre(self):
         sortie = self._sortir(300.0)
@@ -136,3 +139,15 @@ class TestRectifierLaQuantiteDUneSortie(TransactionCase):
         self._rectifier(sortie, 900.0)
 
         self.assertEqual(self._en_stock(), 100.0)
+
+    def test_le_poids_suit_la_quantite_et_ne_peut_la_contredire(self):
+        sortie = self._sortir(300.0)
+
+        # Au gramme, la quantité est le poids : l'écran le propose seul.
+        assistant = self._assistant(sortie, 250.0)
+        self.assertEqual(assistant.poids, 250.0)
+
+        # Et il refuse qu'on les fasse diverger à la main.
+        assistant.poids = 300.0
+        with self.assertRaises(UserError), self.cr.savepoint():
+            assistant.action_rectifier()
