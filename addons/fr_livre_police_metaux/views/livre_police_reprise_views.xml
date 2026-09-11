@@ -150,10 +150,24 @@
         </field>
     </record>
 
+    <!-- Sous une rubrique « Configuration » du registre, et non parmi ses
+         ecrans du quotidien : une reprise d'ouverture se fait une fois, le
+         jour ou le registre informatise prend la suite du manuscrit, et la
+         laisser au milieu des operations invitait a en etablir une seconde —
+         ce qui ferait entrer le meme metal deux fois.
+         Elle garde ainsi son fil d'Ariane : « Livre de police / Configuration
+         / Reprises ». Le raccourci des parametres, lui, existe aussi (voir
+         `res_config_settings_views.xml`), mais il laisse derriere lui le
+         formulaire de configuration, qui n'a pas de nom a afficher. -->
+    <menuitem id="livre_police_config_menu"
+              name="Configuration"
+              parent="livre_police_menu_racine"
+              sequence="90"/>
+
     <menuitem id="livre_police_reprise_menu"
               name="Reprises de stock d'ouverture"
-              parent="livre_police_menu_racine"
+              parent="livre_police_config_menu"
               action="livre_police_reprise_action"
-              sequence="18"/>
+              sequence="10"/>
 
 </odoo>

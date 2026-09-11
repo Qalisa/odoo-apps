@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_police" model="ir.ui.view">
+        <field name="name">res.config.settings.form.livre.police</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Aux parametres, et non dans le menu du registre : une reprise
+                 d'ouverture se fait une fois, le jour ou le registre
+                 informatise prend la suite du manuscrit. La laisser parmi les
+                 ecrans du quotidien invitait a en etablir une seconde, ce qui
+                 ferait entrer le meme metal deux fois. Elle rejoint donc les
+                 reglages du module, a cote du chiffrement du Cerfa 2093-SD. -->
+            <xpath expr="//app[@name='account']" position="inside">
+                <block title="Livre de police" name="livre_police"
+                       groups="fr_livre_police_metaux.group_livre_police">
+                    <div class="text-muted mb-3" colspan="4">
+                        Le jour où le registre informatisé prend la suite du
+                        registre manuscrit, le coffre n'est pas vide. La
+                        <strong>reprise de stock d'ouverture</strong> y fait
+                        entrer ce qui s'y trouve : un numéro d'ordre par lot,
+                        le lot créé à ce numéro, et la quantité posée en stock
+                        — d'un seul geste, pour que les trois ne puissent pas
+                        diverger.
+                        <br/>
+                        Un document par établissement, et une seule fois :
+                        « lorsque les personnes mentionnées à l'article
+                        R. 321-1 possèdent plusieurs établissements ouverts au
+                        public, un registre est tenu pour chaque
+                        établissement » (c. pén., art. R321-6).
+                    </div>
+                    <setting string="Reprises de stock d'ouverture"
+                             help="Le stock repris du registre manuscrit, établissement par établissement.">
+                        <button name="%(livre_police_reprise_action)d"
+                                type="action" string="Ouvrir les reprises"
+                                class="btn-link" icon="oi-arrow-right"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
