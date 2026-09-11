@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.45.5',
+    'version': '18.0.1.46.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,
@@ -471,6 +471,45 @@ vendeur qui n'a rien vendu, une personne physique de chez lui qui aurait remis
 les objets (art. R321-3 2°), et une sortie pour du metal qui n'est jamais
 parti.
 
+Requalifier sur facture
+-----------------------
+
+Une vente est facturee et livree, puis le tri revele qu'une part n'est pas
+partie : elle est restee en reserve, souvent sous une autre nature que celle
+sous laquelle elle avait ete vendue. Le registre, lui, affirme que tout est
+parti.
+
+La correction juste est de **rectifier chaque sortie**, puis de requalifier ce
+qui reste : le metal retrouve alors ses lots, ses dates de rachat et sa
+filiation. Elle demande de dire ce qui n'est pas parti lot par lot, ce que le
+comptoir n'est pas toujours en mesure de fournir.
+
+**Requalification sur facture** est l'autre chemin, et il faut savoir ce qu'il
+coute : le metal rentre sous un nouveau numero d'ordre, **sans filiation** avec
+les rachats d'ou il venait. Ni leur date, ni leur vendeur, ni leur numero ne le
+suivent. C'est une perte de tracabilite, assumee par qui l'inscrit, et l'ecran
+le dit en clair avant la saisie.
+
+Ce qui la borne, c'est la facture. Elle est obligatoire : l'entree n'a pas
+d'origine au registre, mais elle a un dossier. Le client, la piece et sa date
+partent dans la **provenance** — la colonne que le modele officiel reserve a
+« l'indication de sa provenance » (arrete du 15 mai 2020, annexe I, colonne 3)
+—, ou le chiffre de controle de la page les couvre. Le lien cliquable reste a
+cote, hors du sceau, comme `facture_vente_ids` l'est deja sur une sortie : le
+sceau couvre le texte, pas le lien, et une colonne ajoutee a l'empreinte
+casserait les pages deja scellees.
+
+Les colonnes du vendeur restent vides et le prix est nul : personne n'a vendu
+quoi que ce soit ce jour-la, et le client facture n'est pas devenu vendeur.
+
+Le poids revenu ne peut pas depasser celui que la facture porte — une facture
+ne rend pas plus de metal qu'elle n'en a fait sortir. Et l'ecran est reserve au
+droit « Livre de police - correction du stock » : il rouvre ce que l'ajustement
+d'inventaire ferme.
+
+La sortie, elle, **reste inscrite**. Cet ecran ne la rectifie pas, et c'est
+precisement ce qui le distingue du chemin complet.
+
 Le stock d'ouverture
 --------------------
 
@@ -558,6 +597,7 @@ intitules exacts du modele officiel viendront avec l'edition imprimee.
         'views/livre_police_rectification_quantite_views.xml',
         'views/livre_police_regularisation_views.xml',
         'views/livre_police_requalification_views.xml',
+        'views/livre_police_requalification_facture_views.xml',
         'views/livre_police_page_views.xml',
         'views/livre_police_transfert_views.xml',
         'views/livre_police_reprise_views.xml',

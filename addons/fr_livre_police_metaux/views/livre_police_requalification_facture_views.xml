@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- La fenetre « Rechercher plus » du champ ouvre la liste par defaut
+         des factures, ou le client et la date ne sont pas forcement visibles
+         — or ce sont les deux seules colonnes qui permettent de reconnaitre
+         la bonne piece. Cette liste-ci ne sert qu'a ce champ. -->
+    <record id="account_move_view_list_police_recherche" model="ir.ui.view">
+        <field name="name">account.move.list.police.recherche</field>
+        <field name="model">account.move</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <list string="Factures" create="0" edit="0">
+                <field name="name" string="Numéro"/>
+                <field name="invoice_date" string="Date de facture"/>
+                <field name="partner_id" string="Client"/>
+                <field name="amount_total" string="Total" sum="Total"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="state" widget="badge" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="livre_police_requalification_facture_view_form" model="ir.ui.view">
+        <field name="name">livre.police.requalification.facture.form</field>
+        <field name="model">livre.police.requalification.facture</field>
+        <field name="arch" type="xml">
+            <form string="Requalification sur facture">
+                <div class="alert alert-warning" role="alert">
+                    Ce métal n'est jamais parti, mais le registre l'a dit
+                    parti et sa sortie n'est <b>pas</b> reprise. L'entrée
+                    inscrite ici n'a donc <b>aucune filiation</b> avec les
+                    rachats d'où ce métal venait : ni leur date, ni leur
+                    vendeur, ni leur numéro d'ordre ne la suivent.
+                    <br/>
+                    La correction complète consiste à rectifier chaque sortie,
+                    puis à requalifier ce qui reste — le métal retrouve alors
+                    ses lots et ses dates. Ce chemin-ci est plus court, et la
+                    perte de traçabilité est assumée par qui l'inscrit.
+                    <br/>
+                    Ce qui la borne : la facture, sa date et son client, que
+                    la provenance porte au registre.
+                </div>
+                <group>
+                    <group string="D'où ce métal revient">
+                        <field name="partner_id"
+                               options="{'no_create': True}"/>
+                        <field name="move_id"
+                               options="{'no_create': True}"
+                               context="{'list_view_ref': 'fr_livre_police_metaux.account_move_view_list_police_recherche'}"
+                               readonly="not partner_id"/>
+                        <field name="company_id" readonly="1"/>
+                        <field name="poids_facture"/>
+                    </group>
+                    <group string="Ce qui est inscrit">
+                        <field name="date_achat"/>
+                        <field name="poids_total"/>
+                    </group>
+                </group>
+                <field name="ligne_ids" nolabel="1">
+                    <list editable="bottom">
+                        <field name="product_id"
+                               options="{'no_create': True}"/>
+                        <field name="quantite"/>
+                        <field name="poids" readonly="1"/>
+                        <field name="description"/>
+                    </list>
+                </field>
+                <group string="Pourquoi ce métal revient">
+                    <field name="provenance" nolabel="1" colspan="2"
+                           placeholder="Ce qui n'est pas parti, et pourquoi la sortie n'est pas rectifiée."/>
+                </group>
+                <footer>
+                    <button string="Inscrire l'entrée" type="object"
+                            name="action_inscrire" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="livre_police_requalification_facture_action" model="ir.actions.act_window">
+        <field name="name">Requalification sur facture</field>
+        <field name="res_model">livre.police.requalification.facture</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="groups_id"
+               eval="[(4, ref('fr_livre_police_metaux.group_livre_police_correction'))]"/>
+    </record>
+
+    <menuitem id="livre_police_requalification_facture_menu"
+              name="Requalification sur facture"
+              parent="livre_police_menu_racine"
+              action="livre_police_requalification_facture_action"
+              groups="fr_livre_police_metaux.group_livre_police_correction"
+              sequence="19"/>
+
+</odoo>

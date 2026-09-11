@@ -409,6 +409,16 @@ class LivrePoliceLigne(models.Model):
             vente = ligne.mouvement_stock_id.move_id.sale_line_id
             ligne.facture_vente_ids = vente.invoice_lines.move_id
 
+    facture_origine_id = fields.Many2one(
+        'account.move', string="Facture d'origine", readonly=True,
+        index='btree_not_null', ondelete='restrict',
+        help="Sur une entrée revenue d'une vente sans que sa sortie ait été "
+             "rectifiée : la pièce qui avait fait sortir ce métal. Ce n'est "
+             "pas une mention du registre et le chiffre de contrôle ne la "
+             "couvre pas — c'est la provenance qui la nomme en toutes "
+             "lettres. Le lien n'est là que pour ouvrir la pièce.",
+    )
+
     contrepartie_nom = fields.Char(
         string="Vendeur ou acheteur", compute='_compute_contrepartie',
         help="Qui est en face. Le registre n'inscrit que le vendeur ; sur "
@@ -1228,6 +1238,54 @@ class LivrePoliceLigne(models.Model):
             'origine_date_achat': origine.date_achat,
             'page_id': self.env['livre.police.page']._page_courante(
                 mouvement.company_id).id,
+            'date_inscription': fields.Datetime.now(),
+            'inscrit_par_id': self.env.user.id,
+        }
+
+    @api.model
+    def _valeurs_depuis_requalification_facture(self, wizard, ligne,
+                                                mouvement, provenance):
+        """Fige ce qu'inscrit un métal revenu d'une vente non rectifiée.
+
+        Ce métal n'est jamais parti, mais le registre l'a dit parti et sa
+        sortie n'est pas reprise : l'entrée qui le fait revenir n'a donc
+        **aucune filiation** avec les rachats d'où il venait. Ni leur date, ni
+        leur vendeur, ni leur numéro d'ordre ne la suivent — les inventer
+        serait pire que de les taire, et c'est le prix assumé de ce chemin-là.
+
+        Les colonnes du vendeur restent vides et le prix est nul : personne
+        n'a vendu quoi que ce soit ce jour-là, et le client facturé n'est pas
+        devenu vendeur. Ce que la colonne « provenance » porte, c'est le
+        renvoi à la facture, sa date et son client — comme elle porte, sur une
+        reprise d'ouverture, le renvoi au registre manuscrit.
+
+        La nature, le titre et le régime viennent de l'article choisi : c'est
+        souvent sous une autre nature que ce métal revient.
+        """
+        modele = ligne.product_id.product_tmpl_id
+        regimes = dict(modele._fields['metal_quantity_mode'].selection)
+        return {
+            'sens': 'entree',
+            'date_achat': wizard.date_achat,
+            'designation': ligne.product_id.with_context(
+                display_default_code=False).display_name or False,
+            'description': ligne.description or False,
+            'provenance': provenance,
+            'metal_nature': modele.metal_nature.display_name or False,
+            'quantite': mouvement.quantity,
+            'regime_quantite': regimes.get(modele.metal_quantity_mode) or False,
+            'poids': metals.derive_weight(
+                modele.metal_quantity_mode, modele.metal_unit_weight,
+                mouvement.quantity) or ligne.poids,
+            'titre': modele.metal_fineness,
+            'titre_lot': modele.metal_mixed_fineness,
+            'prix': 0.0,
+            'currency_id': wizard.company_id.currency_id.id,
+            'company_id': wizard.company_id.id,
+            'mouvement_stock_id': mouvement.id,
+            'facture_origine_id': wizard.move_id.id,
+            'page_id': self.env['livre.police.page']._page_courante(
+                wizard.company_id).id,
             'date_inscription': fields.Datetime.now(),
             'inscrit_par_id': self.env.user.id,
         }
