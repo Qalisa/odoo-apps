@@ -409,6 +409,93 @@ class LivrePoliceLigne(models.Model):
             vente = ligne.mouvement_stock_id.move_id.sale_line_id
             ligne.facture_vente_ids = vente.invoice_lines.move_id
 
+    product_id = fields.Many2one(
+        'product.product', string="Article", readonly=True,
+        compute='_compute_product_id', store=True, index='btree_not_null',
+        help="L'article dont cette inscription est née. Ce n'est pas une "
+             "mention du registre — celui-ci porte la désignation, figée au "
+             "jour de l'inscription, et le chiffre de contrôle couvre "
+             "celle-là — mais un article renommé ou fusionné ne doit pas "
+             "faire perdre les lignes qui en venaient. Il sert à filtrer et "
+             "à regrouper, rien de plus.",
+    )
+
+    @api.depends('move_line_id', 'mouvement_stock_id',
+                 'rectifie_id.move_line_id', 'rectifie_id.mouvement_stock_id')
+    def _compute_product_id(self):
+        """L'article, par le chemin qui existe pour cette inscription-là.
+
+        Un rachat vient d'une ligne de pièce comptable, une sortie ou une
+        reprise d'un mouvement de stock. Une rectification ne porte ni l'une
+        ni l'autre : elle décrit le même métal que l'inscription qu'elle
+        corrige, et c'est là qu'il faut aller le chercher.
+
+        On remonte la chaîne à la main plutôt que de dépendre du champ
+        calculé du parent : sur une base existante, tout se calcule d'un
+        seul geste, et une rectification pouvait lire chez sa mère une valeur
+        qui n'était pas encore posée. La garde contre les boucles vaut ici ce
+        qu'elle vaut ailleurs — rien n'empêche en base qu'une rectification
+        en désigne une autre en amont.
+        """
+        for ligne in self:
+            source, vues = ligne, set()
+            article = self.env['product.product']
+            while source and source.id not in vues:
+                vues.add(source.id)
+                article = (source.move_line_id.product_id
+                           or source.mouvement_stock_id.product_id)
+                if article:
+                    break
+                source = source.rectifie_id
+            ligne.product_id = article
+
+    partner_id = fields.Many2one(
+        'res.partner', string="Vendeur ou acheteur", readonly=True,
+        compute='_compute_partner_id', store=True, index='btree_not_null',
+        help="Qui est en face : le vendeur sur une entrée, le client de la "
+             "facture sur une sortie. Comme l'article, ce n'est pas une "
+             "mention du registre — celui-ci porte le nom du vendeur figé au "
+             "jour de l'inscription, et le chiffre de contrôle couvre "
+             "celui-là. Il sert à filtrer et à regrouper.",
+    )
+
+    @api.depends(
+        'sens', 'move_id.partner_id',
+        'mouvement_stock_id.move_id.sale_line_id.invoice_lines.move_id.partner_id',
+        'rectifie_id.move_id', 'rectifie_id.mouvement_stock_id')
+    def _compute_partner_id(self):
+        """Le tiers de l'opération, par le chemin qu'elle a suivi.
+
+        Une entrée vient d'une pièce comptable, et son tiers y est nommé.
+        Une sortie n'en a pas : le registre n'inscrit pas l'acheteur — ni le
+        modèle officiel (c. pén., art. R321-3) ni les colonnes des métaux
+        (CGI, ann. IV, art. 56 J quindecies) ne demandent à qui l'on revend —
+        et c'est la facture de vente, au bout du mouvement, qui le sait.
+
+        Elle peut ne pas exister encore : la livraison précède souvent la
+        facturation, et le lien apparaît alors le jour où la facture est
+        faite, sans que rien du registre n'ait bougé. C'est pourquoi les
+        dépendances suivent la chaîne complète plutôt que de se figer à
+        l'inscription.
+
+        Une rectification ne porte ni pièce ni mouvement : on remonte à celle
+        qu'elle corrige, comme pour l'article.
+        """
+        for ligne in self:
+            source, vues = ligne, set()
+            tiers = self.env['res.partner']
+            while source and source.id not in vues:
+                vues.add(source.id)
+                if source.move_id:
+                    tiers = source.move_id.partner_id
+                else:
+                    vente = source.mouvement_stock_id.move_id.sale_line_id
+                    tiers = vente.invoice_lines.move_id[:1].partner_id
+                if tiers:
+                    break
+                source = source.rectifie_id
+            ligne.partner_id = tiers
+
     facture_origine_id = fields.Many2one(
         'account.move', string="Facture d'origine", readonly=True,
         index='btree_not_null', ondelete='restrict',

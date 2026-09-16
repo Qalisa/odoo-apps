@@ -46,6 +46,12 @@
                        string="Rectifie"/>
                 <field name="date_achat"/>
                 <field name="designation"/>
+                <!-- La designation est le texte fige au jour de l'inscription ;
+                     l'article, lui, se choisit dans une liste et survit a un
+                     renommage. Les deux servent : l'un pour lire, l'autre pour
+                     trier. -->
+                <field name="product_id"/>
+                <field name="partner_id"/>
                 <field name="description" class="o_lp_description"/>
                 <field name="provenance"/>
                 <field name="contrepartie_nom"/>
@@ -360,6 +366,10 @@
                             context="{'group_by': 'company_id'}"/>
                     <filter name="groupe_sens" string="Sens"
                             context="{'group_by': 'sens'}"/>
+                    <filter name="groupe_article" string="Article"
+                            context="{'group_by': 'product_id'}"/>
+                    <filter name="groupe_tiers" string="Vendeur ou acheteur"
+                            context="{'group_by': 'partner_id'}"/>
                     <filter name="groupe_nature" string="Nature du métal"
                             context="{'group_by': 'metal_nature'}"/>
                     <filter name="groupe_provenance" string="Provenance"
