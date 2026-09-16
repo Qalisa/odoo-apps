@@ -81,20 +81,40 @@
                                readonly="state != 'brouillon'"
                                placeholder="Regroupement avant fonte, réassort du comptoir, commande d'un client d'une autre agence…"/>
                     </group>
-                    <!--
-                        Le bouton vide le coffre d'un coup. Un regroupement
-                        avant fonte les prend tous : les designer un a un
-                        serait long, et en oublier un ne se verrait pas.
-                    -->
-                    <div class="mb-2" invisible="state != 'brouillon'">
-                        <button name="action_ajouter_tout_le_stock"
-                                type="object" class="btn btn-secondary btn-sm"
-                                icon="fa-plus"
-                                string="Ajouter tout le stock de l'agence"
-                                invisible="not company_id"/>
-                    </div>
                     <field name="ligne_ids" readonly="state != 'brouillon'">
                         <list editable="bottom">
+                            <!--
+                                Les deux boutons vident ou remplissent le
+                                coffre d'un coup : un regroupement avant fonte
+                                prend tous les lots, les designer un a un
+                                serait long, et en oublier un ne se verrait
+                                pas. Ils vivent dans le `control`, sur la ligne
+                                du « Ajouter une ligne », la ou le devis pose
+                                deja son bouton « Catalogue ».
+
+                                Le `confirm` n'est pas une politesse : le
+                                premier peut poser des dizaines de lignes, le
+                                second effacer une selection faite a la main
+                                dont rien ne garde trace.
+                            -->
+                            <control>
+                                <create name="ajouter_une_ligne"
+                                        string="Ajouter une ligne"/>
+                                <button name="action_ajouter_tout_le_stock"
+                                        type="object" class="px-4 btn-link"
+                                        string="Reprendre tout le stock"
+                                        context="{'transfert_id': parent.id}"
+                                        confirm="Tous les lots que cette agence détient encore seront ajoutés au transfert, à la quantité disponible. Ce qui est déjà sur le transfert n'est pas repris deux fois."
+                                        confirm-title="Reprendre tout le stock ?"
+                                        confirm-label="Tout reprendre"/>
+                                <button name="action_purger_les_lignes"
+                                        type="object" class="px-4 btn-link"
+                                        string="Tout enlever"
+                                        context="{'transfert_id': parent.id}"
+                                        confirm="Toutes les lignes de ce transfert seront retirées. Rien n'est inscrit au registre tant que le transfert n'est pas expédié, mais la sélection faite à la main sera perdue."
+                                        confirm-title="Tout enlever ?"
+                                        confirm-label="Tout enlever"/>
+                            </control>
                             <field name="company_id" column_invisible="1"/>
                             <field name="inscription_domaine" column_invisible="1"/>
                             <!--

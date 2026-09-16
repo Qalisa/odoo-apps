@@ -2,7 +2,7 @@
 
 {
     'name': "Livre de police - metaux precieux",
-    'version': '18.0.1.48.0',
+    'version': '18.0.1.49.0',
     'summary': """
 Description obligatoire des objets rachetes, article par article.
 """,

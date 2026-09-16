@@ -245,6 +245,28 @@ class LivrePoliceTransfert(models.Model):
         self.ligne_ids = ajouts
         return True
 
+    def action_purger_les_lignes(self):
+        """Retire toutes les lignes du transfert, avant qu'il ne parte.
+
+        Le pendant du bouton qui reprend tout : une selection faite de
+        travers se recommence plus vite qu'elle ne se defait ligne a ligne.
+
+        Rien n'est inscrit au registre tant que le transfert est au
+        brouillon — c'est l'expedition qui inscrit —, et il n'y a donc rien a
+        rectifier ici. Passe cet etat, en revanche, les lignes decrivent un
+        depart deja consigne et ne se retirent plus.
+        """
+        self.ensure_one()
+        if self.state != 'brouillon':
+            raise UserError(_(
+                "Ce transfert est deja parti : ses lots decrivent une sortie "
+                "inscrite au registre de %(societe)s, et ne se retirent plus.",
+                societe=self.company_id.display_name))
+        if not self.ligne_ids:
+            raise UserError(_("Ce transfert ne porte aucune ligne."))
+        self.ligne_ids.unlink()
+        return True
+
     @api.depends('ligne_ids.poids')
     def _compute_poids_total(self):
         for transfert in self:
@@ -790,6 +812,30 @@ class LivrePoliceTransfertLigne(models.Model):
             ligne.quantite_disponible = sum(
                 quants.mapped('quantity')) - sum(
                 quants.mapped('reserved_quantity'))
+
+    def _transfert_du_contexte(self):
+        """Le transfert que la fenetre a sous les yeux.
+
+        Un bouton pose dans le `control` d'une liste appartient au modele de
+        la **ligne**, non a celui du document : Odoo y resout son nom, et
+        `self` y est vide puisque aucune ligne n'est visee. Le document se
+        recupere donc par le contexte, comme le bouton « Catalogue » du devis
+        recupere sa commande.
+        """
+        transfert = self.env['livre.police.transfert'].browse(
+            self.env.context.get('transfert_id'))
+        if not transfert.exists():
+            raise UserError(_(
+                "Enregistrez le transfert avant de reprendre ou de retirer "
+                "ses lignes : tant qu'il n'existe pas, il n'a pas d'agence de "
+                "depart dont lire le stock."))
+        return transfert
+
+    def action_ajouter_tout_le_stock(self):
+        return self._transfert_du_contexte().action_ajouter_tout_le_stock()
+
+    def action_purger_les_lignes(self):
+        return self._transfert_du_contexte().action_purger_les_lignes()
 
     @api.depends('quantite', 'inscription_id')
     def _compute_poids(self):
