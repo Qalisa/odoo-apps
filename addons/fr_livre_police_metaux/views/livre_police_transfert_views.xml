@@ -1,5 +1,39 @@
 <odoo>
 
+    <!-- La fenetre de recherche du selecteur de numero d'ordre ouvrait la
+         vue de recherche du registre, qui propose « Sorties », « Sortis en
+         partie », « Rectifications »… Or seules des entrees encore en stock
+         sont choisissables ici : le domaine les ecarte deja, et ces filtres
+         ne pouvaient que rendre une liste vide. Cette vue-ci ne sert qu'a ce
+         champ, et ne propose que ce qui a un sens pour lui. -->
+    <record id="livre_police_ligne_view_search_transfert" model="ir.ui.view">
+        <field name="name">livre.police.ligne.search.transfert</field>
+        <field name="model">livre.police.ligne</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <search string="Numéros d'ordre à transférer">
+                <field name="numero_ordre"
+                       filter_domain="['|', ('numero_ordre', 'ilike', self),
+                                            ('numero_lot', 'ilike', self)]"
+                       string="N° d'ordre ou lot"/>
+                <field name="designation"/>
+                <field name="product_id"/>
+                <field name="description"/>
+                <field name="partner_id"/>
+                <filter name="transfert_partiels" string="Sortis en partie"
+                        domain="[('etat_sortie', '=', 'partiel')]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="transfert_groupe_article" string="Article"
+                            context="{'group_by': 'product_id'}"/>
+                    <filter name="transfert_groupe_tiers" string="Vendeur"
+                            context="{'group_by': 'partner_id'}"/>
+                    <filter name="transfert_groupe_jour" string="Jour de l'achat"
+                            context="{'group_by': 'date_achat:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="livre_police_transfert_view_form" model="ir.ui.view">
         <field name="name">livre.police.transfert.form</field>
         <field name="model">livre.police.transfert</field>
@@ -127,6 +161,7 @@
                             <field name="inscription_id"
                                    options="{'no_create': True, 'no_open': True}"
                                    domain="inscription_domaine"
+                                   context="{'search_view_ref': 'fr_livre_police_metaux.livre_police_ligne_view_search_transfert'}"
                                    column_invisible="parent.state != 'brouillon'"/>
                             <field name="numero_ordre" readonly="1"
                                    column_invisible="parent.state == 'brouillon'"/>

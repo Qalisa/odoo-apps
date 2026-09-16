@@ -854,6 +854,18 @@ class LivrePoliceTransfertLigne(models.Model):
     def _verifier(self):
         """Refuse ce qui ne peut pas partir, avant que rien ne soit inscrit."""
         for ligne in self:
+            # Le selecteur ne propose que des entrees, mais un domaine de vue
+            # ne tient que l'ecran : un import ou un appel RPC atteignait une
+            # sortie, et elle passait — elle porte un numero de lot, donc le
+            # lot se retrouve et le disponible se lit dessus. Le transfert
+            # aurait alors fait partir du metal en se reclamant d'une
+            # inscription qui dit deja qu'il est parti, et le registre aurait
+            # porte deux sorties pour un seul depart.
+            if ligne.inscription_id.sens != 'entree':
+                raise UserError(_(
+                    "L'inscription %(numero)s est une sortie : elle dit ce "
+                    "qui est parti, et cela ne se transfère pas.",
+                    numero=ligne.inscription_id.numero_ordre))
             if not ligne.lot_id:
                 raise UserError(_(
                     "L'inscription %(numero)s n'a pas de lot en stock.\n\n"
