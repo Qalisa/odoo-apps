@@ -116,7 +116,12 @@
                                placeholder="Regroupement avant fonte, réassort du comptoir, commande d'un client d'une autre agence…"/>
                     </group>
                     <field name="ligne_ids" readonly="state != 'brouillon'">
-                        <list editable="bottom">
+                        <!-- Le plafond est releve pour que la pagination ne
+                             coupe pas la selection : « Reprendre tout le stock »
+                             vide le coffre d'un coup, et on veut la voir
+                             entiere avant d'expedier. Odoo ne sait pas
+                             desactiver le pager, il ne sait que le repousser. -->
+                        <list editable="bottom" limit="200">
                             <!--
                                 Les deux boutons vident ou remplissent le
                                 coffre d'un coup : un regroupement avant fonte
