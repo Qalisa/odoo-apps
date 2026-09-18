@@ -87,7 +87,6 @@ class CSVWriter:
         self.output_dir.mkdir(exist_ok=True)
     
     def write_csv(self, filename: str, data: List[Dict], fieldnames: List[str]) -> None:
-        """Écrit un fichier CSV avec les données fournies."""
         filepath = self.output_dir / filename
         
         with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
@@ -142,7 +141,6 @@ class TPVTaxGenerator(BaseTaxGenerator):
             self._generate_tpv_for_years(years)
     
     def _generate_tpv_for_years(self, years: int) -> None:
-        """Génère les taxes TPV pour une année donnée."""
         years_label = TaxCalculator.format_years_label(years)
         ir_rate = TaxCalculator.calculate_tpv_rates(self.rates.tpv_ir, years)
         urssaf_rate = TaxCalculator.calculate_tpv_rates(self.rates.tpv_urssaf, years)
@@ -202,7 +200,6 @@ class TPVTaxGenerator(BaseTaxGenerator):
                 f"{percentage_discount}% d'abattement > {effective_rate}%")
     
     def _build_tpv_group_description(self, years_label: str, years: int, total_rate: float) -> str:
-        """Construit la description d'un groupe de taxes TPV."""
         percentage_discount = (years - 1) * 5
         percentage_paid = 100 - percentage_discount
         base_total = self.rates.tpv_ir + self.rates.tpv_urssaf
@@ -221,7 +218,6 @@ class FixedTaxGenerator(BaseTaxGenerator):
         self._generate_tfop_taxes()
     
     def _generate_tmp_taxes(self) -> None:
-        """Génère les taxes TMP (Métaux Précieux)."""
         tax_configs = [
             {
                 'id': 'tmp_metaux_precieux',
@@ -269,7 +265,6 @@ class FixedTaxGenerator(BaseTaxGenerator):
         self._add_tax(group_tax)
     
     def _generate_tfop_taxes(self) -> None:
-        """Génère les taxes TFOP (Objets Précieux)."""
         tax_configs = [
             {
                 'id': 'tfop_objets_precieux',
@@ -385,7 +380,6 @@ class OdooTaxCSVGenerator:
         self.csv_writer.write_csv('account.tax.group.csv', data, self.TAX_GROUP_FIELDS)
     
     def _write_taxes(self, taxes: List[TaxConfig]) -> None:
-        """Écrit le fichier des taxes."""
         data = []
         for tax in taxes:
             tax_dict = {

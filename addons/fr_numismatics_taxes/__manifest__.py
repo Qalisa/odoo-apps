@@ -9,7 +9,7 @@ liée à la revente d'objets précieux en France, selon la législation en vigue
     'author': "Qalisa",
     'website': "https://odoo-docs.qalisa.fr/",
     'license': "AGPL-3",
-    'version': "1.2.1",
+    'version': "1.2.2",
     'depends': ['l10n_fr_account'],
     'data': [
         "data/account.account.csv",
