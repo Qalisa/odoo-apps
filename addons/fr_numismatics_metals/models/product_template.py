@@ -157,27 +157,14 @@ class ProductTemplate(models.Model):
     def _police_juge_la_saisie(self):
         """La contrainte ne juge que ce qu'une personne a saisi.
 
-        Elle se tait dans deux cas.
+        Elle se tait au chargement des modules — le catalogue existant devient
+        soumis au registre sans porter des mentions qui n'existaient pas la
+        veille — et devant une écriture en super-utilisateur, qu'Odoo et les
+        scripts de reprise emploient pour leur propre compte.
 
-        **Pendant le chargement des modules.** À l'installation, Odoo calcule
-        `metal_regulated` pour tout le catalogue existant : chaque bien déjà
-        présent devient soumis au registre sans porter aucune des mentions,
-        qui n'existaient pas la veille. Refuser à cet instant n'exprimerait
-        rien — personne n'a rien déclaré — et ferait échouer l'installation.
-
-        **Devant une écriture en super-utilisateur.** Odoo crée des articles
-        pour son propre compte, et les scripts de reprise aussi. Leur opposer
-        une mention de registre n'a pas de sens : ces articles ne désignent
-        aucun objet acheté, et la contrainte y bloquait des fonctionnements
-        internes sans rien protéger.
-
-        Ce que cela ne rouvre pas : un import CSV et une duplication depuis
-        l'interface s'exécutent sous l'identité de l'utilisateur, jamais en
-        super-utilisateur. Ils restent contrôlés, ce qui était la raison
-        d'être de cette contrainte.
-
-        Les articles qui échappent ainsi au contrôle restent présumés soumis
-        au registre et figurent à l'écran « Articles à caractériser ».
+        Un import CSV et une duplication passent, eux, sous l'identité de
+        l'utilisateur : ils restent contrôlés. Ce qui échappe figure à l'écran
+        « Articles à caractériser ».
         """
         return self.env.registry.ready and not self.env.su
 

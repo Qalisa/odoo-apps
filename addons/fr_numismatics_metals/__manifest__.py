@@ -2,7 +2,7 @@
 
 {
     'name': "Numismatique - Caractéristiques métal des articles",
-    'version': '18.0.1.2.0',
+    'version': '18.0.1.2.1',
     'summary': """
 Nature, titre et poids unitaire sur les articles ; poids en grammes sur les lignes
 d'achat. Socle de données du livre de police (C. com. art. L834-6, CGI ann. IV
