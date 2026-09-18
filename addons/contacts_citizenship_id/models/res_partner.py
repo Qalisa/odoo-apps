@@ -7,9 +7,7 @@ from odoo.exceptions import ValidationError
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    # ------------------------------------------------------------------
     # Naissance
-    # ------------------------------------------------------------------
     birthdate = fields.Date(
         string='Date de Naissance',
         help="Cerfa 2093-SD — zones Q 007, Q 008 et Q 009 (jour, mois, année "
@@ -68,10 +66,8 @@ class ResPartner(models.Model):
              "renseigné ci-dessus suffit, ou préciser la ville étrangère.",
     )
 
-    # ------------------------------------------------------------------
     # Justificatif d'identité (art. R321-3 du code pénal : nature, numéro,
     # date de délivrance et autorité émettrice)
-    # ------------------------------------------------------------------
     # Champ historique conservé pour compatibilité ; migré vers id_doc_number.
     id_proof = fields.Char(
         string="Justificatif d'identité (ancien champ)",
