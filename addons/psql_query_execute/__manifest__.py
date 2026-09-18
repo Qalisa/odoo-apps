@@ -20,7 +20,7 @@
 #############################################################################
 {
     'name': "PSQL Query Execute",
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.0.1',
     'category': 'Extra Tools',
     'summary': """Odoo18 PSQL Query Execute, Run the PSQL query in the Odoo user interface.""",
     'description': """PSQL Query Execute, SQL, PSQL, psql, query, odoo query, query run, database,""",
