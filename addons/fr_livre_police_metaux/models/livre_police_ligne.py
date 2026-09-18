@@ -590,10 +590,6 @@ class LivrePoliceLigne(models.Model):
              "page, sinon le chiffre de contrôle de la page ne voudrait plus "
              "rien dire.",
     )
-    page_scellee = fields.Boolean(
-        related='page_id.scellee', string="Page scellée", readonly=True,
-    )
-
     date_inscription = fields.Datetime(
         string="Inscrit le", required=True, readonly=True,
     )
