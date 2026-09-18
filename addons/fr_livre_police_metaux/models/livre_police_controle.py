@@ -47,7 +47,6 @@ class LivrePoliceControle(models.TransientModel):
             'fr_livre_police_metaux.action_report_livre_police_controle'
         ).report_action(self)
 
-    # ------------------------------------------------------------------
 
     def _pages(self):
         self.ensure_one()

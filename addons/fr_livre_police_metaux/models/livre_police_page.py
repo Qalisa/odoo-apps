@@ -119,9 +119,7 @@ class LivrePolicePage(models.Model):
             page.poids_total = sum(page.ligne_ids.mapped('poids'))
             page.montant_total = sum(page.ligne_ids.mapped('prix'))
 
-    # ------------------------------------------------------------------
     # Ouvrir la page du jour
-    # ------------------------------------------------------------------
 
     @api.model
     def _sequence(self, societe):
@@ -163,9 +161,7 @@ class LivrePolicePage(models.Model):
             })
         return page
 
-    # ------------------------------------------------------------------
     # Sceller
-    # ------------------------------------------------------------------
 
     def _empreinte(self, controle_precedent):
         """SHA-256 du contrôle précédent suivi des mentions de la page."""

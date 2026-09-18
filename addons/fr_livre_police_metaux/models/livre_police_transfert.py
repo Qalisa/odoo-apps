@@ -28,21 +28,9 @@ c'est l'état réel de la marchandise, et les deux inscriptions le disent.
 Le lot ne change pas de nom au passage
 --------------------------------------
 
-Le sachet n'est pas réétiqueté. Il porte le numéro d'ordre que le comptoir de
-rachat lui a donné, et il le portera jusqu'à la fonte.
-
-Odoo, lui, exige que le nom d'un lot soit unique pour un article dans une
-société — et chaque agence repart de 000001. Le « 000123 » de Metz et celui de
-Nancy sont deux lots différents du même article : nommer les deux « 000123 »
-serait refusé.
-
-Le lot transféré est donc **qualifié et détaché** au départ : il devient
-« METZ/000123 » et cesse d'appartenir à une société. Le numéro du comptoir de
-rachat est intact, une recherche sur « 000123 » le retrouve toujours, et
-l'établissement qui l'a inscrit est désormais lisible sur le lot lui-même.
-Surtout, c'est le **même enregistrement de lot** qui traverse : rien n'est
-recréé à l'arrivée, la traçabilité du stock n'est pas coupée, et la quantité
-sort d'un côté exactement comme elle entre de l'autre.
+Le sachet n'est pas réétiqueté : il porte jusqu'à la fonte le numéro d'ordre
+que le comptoir de rachat lui a donné. C'est le nom en base qui se qualifie —
+voir `_qualifier_les_lots`.
 
 Un lot détaché est visible des trois établissements — c'est le prix du
 partage, et il ne concerne que les lots réellement partis. Ce qu'il ne montre
@@ -310,9 +298,7 @@ class LivrePoliceTransfert(models.Model):
             })
         return suite
 
-    # ------------------------------------------------------------------
     # Les deux établissements, et le droit d'agir sur les deux
-    # ------------------------------------------------------------------
 
     def _societes(self):
         self.ensure_one()
@@ -373,9 +359,7 @@ class LivrePoliceTransfert(models.Model):
                 "puis reprenez ce transfert."))
         return transit
 
-    # ------------------------------------------------------------------
     # Expédier
-    # ------------------------------------------------------------------
 
     def action_expedier(self):
         """Sort le métal du registre de départ, et le met en route."""
@@ -531,9 +515,7 @@ class LivrePoliceTransfert(models.Model):
         bon.with_context(skip_backorder=True,
                          picking_ids_not_to_backorder=bon.ids).button_validate()
 
-    # ------------------------------------------------------------------
     # Réceptionner
-    # ------------------------------------------------------------------
 
     def _verifier_le_droit_de_receptionner(self):
         """Constater l'arrivée appartient au comptoir qui reçoit.

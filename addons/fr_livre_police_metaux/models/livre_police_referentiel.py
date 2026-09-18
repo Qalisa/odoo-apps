@@ -57,9 +57,7 @@ class LivrePoliceReferentiel(models.AbstractModel):
          "registre ambigu."),
     ]
 
-    # ------------------------------------------------------------------
     # Emploi
-    # ------------------------------------------------------------------
     def _police_usage_domain(self):
         """Où cette valeur est employée : ``(nom du modèle, domaine)``."""
         raise NotImplementedError
@@ -78,9 +76,7 @@ class LivrePoliceReferentiel(models.AbstractModel):
         singulier, pluriel = self._police_usage_noms
         return "%s %s" % (nb, singulier if nb == 1 else pluriel)
 
-    # ------------------------------------------------------------------
     # Unicité au-delà de l'orthographe
-    # ------------------------------------------------------------------
     @api.model
     def _police_doublon(self, libelle, hormis=None):
         """Valeur existante que ``libelle`` ne ferait que réécrire."""

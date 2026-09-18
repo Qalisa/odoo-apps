@@ -41,13 +41,6 @@ indication de son motif ». Une rectification est donc une **inscription de
 plus**, qui porte son motif et renvoie à celle qu'elle corrige ; l'originale
 reste lisible, telle qu'elle a été écrite.
 
-Ce module-ci pose le registre et son affichage. Ce qu'il ne pose pas encore,
-et qui viendra :
-
-* la page quotidienne et son chiffre de contrôle chaîné ;
-* l'édition quotidienne, qui reprendra les intitulés officiels du modèle ;
-* le journal des consultations (arrêté du 15 mai 2020, art. 3, 2°).
-
 Les libellés de colonnes employés ici sont des libellés d'écran, en français
 courant. Les intitulés exacts du modèle officiel — majuscules et ponctuation
 comprises — n'entreront qu'avec l'édition imprimée, une fois relus sur
@@ -959,9 +952,7 @@ class LivrePoliceLigne(models.Model):
             'reprise_registre_papier': self.reprise_registre_papier or '',
         }
 
-    # ------------------------------------------------------------------
     # Ce qui est inscrit ne se réécrit pas
-    # ------------------------------------------------------------------
 
     def write(self, vals):
         """Le registre n'accepte aucune modification, d'aucun champ.
@@ -1049,9 +1040,7 @@ class LivrePoliceLigne(models.Model):
         code = entrepot.code or origine.company_id.name
         return "%s/%s" % (code, origine.numero_ordre)
 
-    # ------------------------------------------------------------------
     # Inscription
-    # ------------------------------------------------------------------
 
     @api.model
     def _sequence(self, societe):

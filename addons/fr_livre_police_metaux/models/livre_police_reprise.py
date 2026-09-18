@@ -194,9 +194,7 @@ class LivrePoliceReprise(models.Model):
                 societe=self.company_id.display_name))
         return entrepot
 
-    # ------------------------------------------------------------------
     # Inscrire
-    # ------------------------------------------------------------------
 
     def action_inscrire(self):
         """Inscrit le coffre au registre et le pose en stock, ligne par ligne.
