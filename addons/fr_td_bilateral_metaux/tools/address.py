@@ -92,11 +92,6 @@ def parse_street(raw):
     return out
 
 
-def format_commune(label, length=26):
-    """Libellé de commune : ASCII majuscule, troncature à droite (CDC §6.3.1.3)."""
-    return to_ascii(label)[:length].ljust(length)
-
-
 def normalize_cp(zip_raw, foreign=False):
     """Code postal 5 caractères.
 
