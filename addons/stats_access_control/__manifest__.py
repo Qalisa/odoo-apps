@@ -66,7 +66,7 @@ et rendrait les ecrans a tout le monde — ou les reprendrait a ceux a qui on
 vient de les ouvrir. Il faut alors remettre a jour ce module. L'initContainer `upgrade-addons`, qui
 met a jour nos modules a chaque demarrage du pod, le ferait de lui-meme.
     """,
-    "version": "18.0.1.3.0",
+    "version": "18.0.1.3.1",
     "category": "Sales/Sales",
     "author": "Qalisa",
     "website": "https://odoo-docs.qalisa.fr/",
