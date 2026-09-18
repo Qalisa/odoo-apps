@@ -2,7 +2,7 @@
 
 {
     'name': "Contacts - Identification civile",
-    'version': '1.4.1',
+    'version': '1.4.2',
     'summary': """
 Ajoute des informations d'état civil aux contacts (naissance structurée, pièce d'identité détaillée),
 requises pour le livre de police et le Cerfa 2093-SD.
