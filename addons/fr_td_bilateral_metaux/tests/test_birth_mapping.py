@@ -14,7 +14,13 @@ class TestBirthMapping(TransactionCase):
         cls.be = cls.env.ref("base.be")  # Belgique (étranger)
 
     def _vendor(self, **vals):
-        vals.setdefault("name", "Vendeur")
+        # Nom *et* prénom, séparément : le paramètre
+        # `partner_firstname.required_fields` vaut « firstname_lastname » en
+        # production, et `partner_firstname` refuse alors une personne à qui
+        # l'un des deux manque. Un `name` global ne suffit pas — il se scinde,
+        # et la moitié restée vide fait échouer la contrainte.
+        vals.setdefault("lastname", "Vendeur")
+        vals.setdefault("firstname", "Jean")
         vals.setdefault("company_type", "person")
         return self.env["res.partner"].create(vals)
 

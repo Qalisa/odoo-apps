@@ -52,7 +52,20 @@ class TestVendorCompletenessGate(TransactionCase):
             self._move(partner)._dmet_check_vendor_completeness()
 
     def test_missing_firstname_blocked(self):
-        partner = self._person(firstname=False, **self.id_doc)
+        # Une fiche sans prénom ne se crée plus : `partner_firstname` l'interdit
+        # depuis que les deux noms sont exigés. Elle existe pourtant — une
+        # vingtaine de fiches antérieures au réglage, en production —, et c'est
+        # précisément celles-là que ce contrôle doit arrêter au rachat. On les
+        # reproduit donc comme elles sont : vidées en base, sans repasser par
+        # la contrainte qui ne s'appliquait pas le jour de leur création.
+        partner = self._person(**self.id_doc)
+        self.env.flush_all()
+        self.env.cr.execute(
+            "UPDATE res_partner SET firstname = NULL WHERE id = %s",
+            (partner.id,))
+        partner.invalidate_recordset()
+        self.assertFalse(partner.firstname)
+
         with self.assertRaises(UserError):
             self._move(partner)._dmet_check_vendor_completeness()
 
@@ -62,8 +75,10 @@ class TestVendorCompletenessGate(TransactionCase):
             self._move(partner)._dmet_check_vendor_completeness()
 
     def test_company_is_ignored(self):
+        # `is_company`, et non `company_type` : c'est lui que
+        # `partner_firstname` regarde pour dispenser une société des deux noms.
         company = self.env["res.partner"].create({
-            "name": "Fondeur SARL", "company_type": "company",
+            "name": "Fondeur SARL", "is_company": True,
         })
         self._move(company)._dmet_check_vendor_completeness()  # ne lève pas
 
