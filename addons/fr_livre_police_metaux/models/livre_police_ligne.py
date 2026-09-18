@@ -504,16 +504,12 @@ class LivrePoliceLigne(models.Model):
     def _compute_contrepartie(self):
         """Qui est en face, dans un sens comme dans l'autre.
 
-        L'acheteur n'est une mention d'aucun des deux registres — ni le
-        modèle officiel (c. pén., art. R321-3), ni les colonnes propres aux
-        métaux (CGI, ann. IV, art. 56 J quindecies) ne demandent à qui l'on
-        revend. Une sortie laisse donc ses colonnes de vendeur vides, et
-        l'écran ne dit plus où le métal est parti, alors que la facture le
-        sait.
+        L'acheteur n'est une mention d'aucun des deux registres — ni le modèle
+        officiel (c. pén., art. R321-3), ni les colonnes des métaux (CGI,
+        ann. IV, art. 56 J quindecies) ne demandent à qui l'on revend.
 
-        Ces trois lectures comblent l'écran sans rien inscrire : calculées,
-        hors du chiffre de contrôle, et l'édition quotidienne continue de ne
-        porter que le vendeur.
+        Ces lectures comblent l'écran sans rien inscrire : calculées, hors du
+        chiffre de contrôle, et l'édition ne porte toujours que le vendeur.
         """
         for ligne in self:
             if ligne.sens == 'entree':
@@ -607,16 +603,12 @@ class LivrePoliceLigne(models.Model):
     def _compute_prix_texte(self):
         """Un prix absent se lit vide, jamais « 0,00 € ».
 
-        La colonne porte le prix d'achat — ce que le vendeur a reçu. Seule une
-        inscription née d'une pièce comptable en a un. Une sortie n'en a pas,
-        le registre ne consignant pas les reventes ; un transfert entre
-        établissements d'un même titulaire ne paie personne ; et une reprise
-        de stock d'ouverture ne consigne aucune opération, les prix d'achat
-        étant au registre manuscrit.
+        Seule une inscription née d'une pièce comptable a un prix : ni une
+        sortie, ni un transfert, ni une reprise d'ouverture n'en portent.
 
-        « 0,00 € » affirmerait qu'un prix nul a été convenu. C'est une
-        affirmation, et elle serait fausse — même raison que `titre_texte`,
-        où zéro millième désignerait un métal sans or.
+        « 0,00 € » affirmerait qu'un prix nul a été convenu, et ce serait faux
+        — même raison que `titre_texte`, où zéro millième dirait un métal sans
+        or.
         """
         for ligne in self:
             if not ligne.move_id:
@@ -628,15 +620,12 @@ class LivrePoliceLigne(models.Model):
     def _rectification_finale(self):
         """La dernière inscription de la chaîne de rectifications, ou soi.
 
-        Une inscription ne se réécrit pas : une correction s'inscrit à la
-        suite et renvoie à celle qu'elle reprend (CGI, ann. IV,
-        art. 56 J sexdecies, 2° c). Ce que le registre affirme aujourd'hui de
-        ce lot, c'est donc la dernière de la chaîne — l'originale demeurant
-        lisible telle qu'elle a été écrite.
+        Une correction s'inscrit à la suite et renvoie à celle qu'elle reprend
+        (CGI, ann. IV, art. 56 J sexdecies, 2° c) : ce que le registre affirme
+        aujourd'hui, c'est la dernière de la chaîne.
 
-        La garde contre les boucles n'est pas de la superstition : rien
-        n'empêche en base qu'une rectification en désigne une autre en amont,
-        et un registre ne doit pas pouvoir se figer sur une lecture.
+        La garde contre les boucles n'est pas superflue : rien n'empêche en
+        base qu'une rectification en désigne une autre en amont.
         """
         self.ensure_one()
         ligne, vues = self, set()
@@ -987,17 +976,13 @@ class LivrePoliceLigne(models.Model):
         """Le nom du lot une fois qu'il circule entre les établissements.
 
         Le numéro d'ordre du comptoir de rachat, précédé du code de son
-        entrepôt. Le sachet, lui, ne change pas : il porte « 000123 », et
-        c'est ce numéro-là qu'une recherche retrouve dans « METZ/000123 ».
+        entrepôt. Le sachet ne change pas : il porte « 000123 », qu'une
+        recherche retrouve dans « METZ/000123 ».
 
-        Le préfixe n'est pas décoratif. Chaque établissement repart de 000001,
-        et Odoo refuse deux lots de même nom pour un même article dans une
-        société : sans lui, le lot de Metz ne pourrait pas entrer à Nancy.
-
-        Le préfixe désigne toujours le **comptoir de rachat**, jamais le
-        dernier expéditeur : un lot passé de Metz à Nancy puis à Mondelange
-        s'appelle « METZ/000123 » d'un bout à l'autre, et ne se renomme donc
-        qu'une fois.
+        Le préfixe n'est pas décoratif : chaque établissement repart de 000001
+        et Odoo refuse deux lots de même nom. Il désigne toujours le **comptoir
+        de rachat**, jamais le dernier expéditeur — un lot ne se renomme qu'une
+        fois.
         """
         self.ensure_one()
         origine = self.origine_id or self
@@ -1036,16 +1021,11 @@ class LivrePoliceLigne(models.Model):
         """Copie figée d'une ligne de rachat, au moment où elle est inscrite.
 
         Deux pièces font entrer du métal, et `_police_entree` les connaît
-        toutes deux : l'avoir à quantité positive, et la facture à quantité
-        négative. Odoo ne bascule un devis en avoir que si son montant total
-        est négatif ; un rachat sans prix, ou mêlé à des lignes vendues,
-        reste donc une facture, et sa ligne y porte le signe moins.
+        toutes deux : l'avoir à quantité positive et la facture à quantité
+        négative — Odoo ne bascule en avoir que sur un total négatif.
 
-        Le registre, lui, ne connaît pas de signe : ses colonnes disent une
-        quantité et un poids acquis, et le sens de l'opération se lit dans la
-        colonne « sens ». D'où les valeurs absolues, comme sur le prix — un
-        rachat inscrit à −115,50 g dirait que le comptoir a acquis moins que
-        rien, et le stock, qui détient bien 115,50 g, le démentirait.
+        Le registre, lui, ne connaît pas de signe : le sens se lit dans la
+        colonne « sens ». D'où les valeurs absolues, comme sur le prix.
         """
         piece = ligne.move_id
         personne = piece._police_personne()
@@ -1141,20 +1121,13 @@ class LivrePoliceLigne(models.Model):
     def _valeurs_depuis_regularisation(self, sortie, mouvement, motif):
         """Fige ce qu'une arrivée régularisée inscrit.
 
-        Le métal est passé d'un établissement à l'autre sans emprunter le
-        document de transfert : la sortie s'est inscrite chez celui qui
-        envoie, l'entrée nulle part. Le comptoir d'arrivée détient alors du
-        métal que son registre ignore, et « un registre est tenu pour chaque
-        établissement » (c. pén., art. R321-6).
+        Le métal est passé d'un établissement à l'autre hors du document de
+        transfert : la sortie s'est inscrite, l'entrée nulle part, et « un
+        registre est tenu pour chaque établissement » (c. pén., art. R321-6).
 
-        L'entrée manquante s'inscrit donc ici, avec sa date réelle — le jour
-        où le métal a bougé, non celui où l'on s'en aperçoit. Le motif dit
-        pourquoi elle arrive après coup : sans lui, un lecteur verrait une
-        entrée sans cause.
-
-        Rien n'est retranché chez celui qui envoie : sa sortie est déjà
-        inscrite, et elle est vraie. Ce qui lui manquait, c'est de dire où le
-        métal allait — cela se rectifie de son côté, séparément.
+        L'entrée manquante s'inscrit ici avec sa date réelle, et le motif dit
+        pourquoi elle arrive après coup. Rien n'est retranché chez celui qui
+        envoie : sa sortie est vraie, il lui manquait de dire où.
         """
         origine = sortie.origine_id or sortie.entree_id or sortie
         return {
@@ -1245,18 +1218,14 @@ class LivrePoliceLigne(models.Model):
     def _valeurs_depuis_reprise(self, ligne, mouvement):
         """Fige ce qu'un lot d'ouverture inscrit.
 
-        Les colonnes du vendeur restent vides, et le prix est nul. Ce n'est
-        pas un manque : personne n'a vendu ce métal à l'établissement le jour
-        de la reprise, et le registre ne doit pas laisser croire le contraire.
-        L'acquisition est consignée au registre manuscrit, que la colonne
-        « provenance » désigne en toutes lettres — c'est la colonne que le
-        modèle officiel réserve à « l'indication de sa provenance » (arrêté du
-        15 mai 2020, annexe I, colonne 3), et un imprimé doit se lire seul.
+        Vendeur vide et prix nul : personne n'a vendu ce métal le jour de la
+        reprise. L'acquisition est au registre manuscrit, que la colonne
+        « provenance » désigne en toutes lettres — celle que le modèle officiel
+        réserve à « l'indication de sa provenance » (arrêté du 15 mai 2020,
+        annexe I, colonne 3), un imprimé devant se lire seul.
 
-        La date de l'achat est celle de l'arrêté du coffre, non celle des
-        rachats d'origine : elles sont perdues, éparpillées sur des années de
-        registre manuscrit, et en inventer une serait pire que de dire depuis
-        quand ce métal est ici sous ce numéro-là.
+        La date est celle de l'arrêté du coffre : celles des rachats d'origine
+        sont perdues, et en inventer une serait pire.
         """
         produit = ligne.product_id.product_tmpl_id
         regimes = dict(produit._fields['metal_quantity_mode'].selection)
@@ -1353,17 +1322,10 @@ class LivrePoliceLigne(models.Model):
     def _entree_du_depart(self, mouvement, transfert):
         """L'inscription d'entrée dont ce départ vide le stock.
 
-        D'ordinaire elle se retrouve par le nom du lot : c'est le lien que le
-        registre entretient avec le stock, et il tient tant que le lot garde
-        son nom.
-
-        Un départ vers un autre établissement le lui fait justement changer —
-        le lot est qualifié et détaché avant de partir, sans quoi l'agence
-        d'arrivée ne pourrait pas l'accueillir. Le nom recherché ne serait
-        donc plus celui de l'entrée. On passe alors par le document de
-        transfert, qui sait de quelle inscription chaque lot est parti : ce
-        n'est pas un repli, c'est le lien le plus sûr des deux, désigné avant
-        que rien ne bouge.
+        D'ordinaire elle se retrouve par le nom du lot. Un départ vers un autre
+        établissement le fait changer — le lot est qualifié avant de partir —
+        et l'on passe alors par le document de transfert, qui sait de quelle
+        inscription chaque lot est parti : le lien le plus sûr des deux.
 
         Reste le lot qualifié par un transfert passé qui repart ensuite du
         comptoir de rachat : il s'appelle « MONDE/000001 » quand l'entrée
@@ -1401,15 +1363,12 @@ class LivrePoliceLigne(models.Model):
     def _inscrire_sorties(self, transferts):
         """Inscrit le métal qui s'en va, lot par lot.
 
-        Un lot sort en une ou plusieurs fois. Chaque départ prend son propre
-        numéro d'ordre dans la suite de l'agence : la série est continue, et
-        c'est cette continuité que le contrôle d'intégrité vérifie.
+        Chaque départ prend son numéro d'ordre dans la suite de l'agence : la
+        série est continue, et le contrôle d'intégrité vérifie cette continuité.
 
-        Le lot porte le nom que l'inscription lui connaît — son propre numéro
-        d'ordre sur un rachat, celui du comptoir d'origine sur un métal reçu
-        d'un autre établissement. C'est par ce nom, et non par le numéro
-        d'ordre, que la sortie retrouve l'entrée : les deux coïncident au
-        comptoir de rachat et divergent après un transfert.
+        C'est par le **nom du lot**, et non par le numéro d'ordre, que la sortie
+        retrouve l'entrée : les deux coïncident au comptoir de rachat et
+        divergent après un transfert.
         """
         departs = transferts.move_line_ids.filtered(
             lambda ml: ml.state == 'done' and ml.lot_id
@@ -1439,20 +1398,16 @@ class LivrePoliceLigne(models.Model):
         """Fige ce qu'une entrée par transfert inscrit.
 
         Elle recopie de la sortie ce qui décrit la marchandise, et rien de la
-        personne qui a vendu à l'autre comptoir : son nom, son domicile et sa
-        pièce d'identité restent au registre où ils ont été recueillis. La
-        colonne « vendeur » reste donc vide, et ce n'est pas un manque —
-        personne n'a vendu quoi que ce soit à l'établissement qui reçoit.
+        personne : la colonne « vendeur » reste vide, personne n'ayant vendu à
+        l'établissement qui reçoit.
 
-        Ce qui tient sa place, c'est l'origine : l'établissement, le numéro
-        d'ordre et la date du rachat. La provenance les redit en toutes
-        lettres, parce que c'est la colonne que le modèle officiel réserve à
-        « l'indication de sa provenance » (arrêté du 15 mai 2020, annexe I,
-        colonne 3) et qu'un imprimé doit se lire seul.
+        À sa place, l'origine — établissement, numéro d'ordre, date du rachat —
+        que la provenance redit en toutes lettres, cette colonne étant celle que
+        le modèle officiel réserve à « l'indication de sa provenance » (arrêté
+        du 15 mai 2020, annexe I, colonne 3).
 
-        Le prix est nul : un transfert entre établissements d'un même
-        titulaire ne paie personne. Le prix d'achat vit à l'inscription
-        d'origine, que ces colonnes désignent nommément.
+        Le prix est nul : un transfert entre établissements d'un même titulaire
+        ne paie personne.
         """
         entree_depart = sortie.entree_id
         origine = entree_depart.origine_id or entree_depart

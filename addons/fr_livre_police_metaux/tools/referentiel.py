@@ -34,21 +34,17 @@ PARENTHESES = re.compile(r'\([^)]*\)')
 def cle_de_comparaison(libelle):
     """Forme normalisée d'un libellé, pour ne pas créer deux fois le même.
 
-    Ni la casse, ni les accents, ni la ponctuation, ni les mots de liaison, ni
-    l'accord ne distinguent deux valeurs. Ce qui reste est l'ensemble des mots
-    porteurs, trié : « HÉRITAGE / SUCCESSION » et « Héritage ou succession »
-    donnent la même clé et ne peuvent pas coexister au registre.
+    Ni la casse, ni les accents, ni la ponctuation, ni les mots de liaison ne
+    distinguent deux valeurs : reste l'ensemble trié des mots porteurs, si bien
+    que « HÉRITAGE / SUCCESSION » et « Héritage ou succession » ne peuvent pas
+    coexister.
 
-    L'écriture inclusive tombe deux fois. Sa forme entre parenthèses part
-    avant le découpage — « Salarié(e) » et « Salarié » ont la même clé ; sa
-    forme suffixée laisse une lettre isolée, qu'on écarte comme les mots de
-    liaison : « salarié-e », « salarié·e » et « Salarié (e) » ne créent pas
-    quatre professions. Aucune valeur du registre ne se nomme d'une lettre.
+    L'écriture inclusive tombe deux fois : sa forme entre parenthèses part avant
+    le découpage, sa forme suffixée laisse une lettre isolée qu'on écarte comme
+    les mots de liaison — aucune valeur du registre ne se nomme d'une lettre.
 
-    La comparaison reste orthographique. Elle ne connaît ni les synonymes ni
-    l'accord porté par le mot lui-même : « Legs » passera à côté de
-    « Héritage ou succession », « Retraitée » à côté de « Retraité », et c'est
-    au responsable de l'arbitrer depuis la liste de configuration.
+    La comparaison reste orthographique : « Legs » passera à côté de
+    « Héritage ou succession », et c'est au responsable de l'arbitrer.
     """
     texte = PARENTHESES.sub(' ', libelle or '')
     texte = unicodedata.normalize('NFKD', texte)

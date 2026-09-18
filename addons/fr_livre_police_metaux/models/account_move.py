@@ -244,15 +244,12 @@ class AccountMove(models.Model):
     def _compute_police_registre_concerne(self):
         """La colonne ne se montre que là où elle a quelque chose à recevoir.
 
-        Sur une pièce comptable, le signe de la quantité est arrêté : on sait
-        déjà si la ligne fait entrer un objet. Inutile donc de montrer la
-        colonne sur une facture de vente, ni sur une facture fournisseur —
-        l'achat de métal à un confrère se facture ainsi, mais ne relève pas du
-        registre d'objets mobiliers, qui vise l'acquisition auprès du public.
-        Une colonne vide et non modifiable se lit comme un oubli.
+        Sur une pièce comptable le signe est arrêté : inutile de la montrer
+        sur une vente, ni sur une facture fournisseur — l'achat à un confrère
+        ne relève pas du registre, qui vise l'acquisition auprès du public.
 
-        Le devis suit une autre règle (voir ``sale_order.py``) : les lignes
-        s'y saisissent, et le signe n'est pas encore connu.
+        Le devis suit une autre règle (``sale_order.py``) : le signe n'y est
+        pas encore connu.
         """
         for piece in self:
             piece.police_registre_concerne = any(
@@ -388,10 +385,9 @@ class AccountMove(models.Model):
         L'ordre inverse, lui, reste impossible : le lot prend le numéro
         d'ordre de l'inscription, et l'inscription naît ici.
 
-        Deux cas laissent le bon en l'état : un reliquat, que personne ne doit
-        décider à la place du comptoir, et une entrée que cet avoir ne couvre
-        pas. Ni l'un ni l'autre n'empêche la comptabilisation — l'échec se dit
-        dans le fil de discussion plutôt que d'annuler l'écriture.
+        Un reliquat ou une entrée que cet avoir ne couvre pas laissent le bon
+        en l'état, sans empêcher la comptabilisation : l'échec se dit dans le
+        fil de discussion plutôt que d'annuler l'écriture.
         """
         for piece in self:
             lignes = piece.invoice_line_ids.filtered('police_origin_required')

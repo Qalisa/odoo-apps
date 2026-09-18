@@ -186,15 +186,11 @@ class StockMoveLine(models.Model):
     def _compute_police_quant_detenu(self):
         """Ce que le lot contient la ou l'on vient le prendre.
 
-        On ne se fonde pas sur `quant_id` seul : il n'est renseigne que si
-        l'operateur a choisi lui-meme dans « Enlever parmi », et reste vide sur
-        les lignes qu'Odoo reserve seul — la colonne serait a zero le plus
-        souvent. Mais l'inverse est vrai sur une ligne qu'on vient d'ajouter :
-        Odoo ne tire `lot_id` du quant choisi qu'au serveur, a l'ecriture
-        (`_copy_quant_info`, appelee depuis `create` et `write`). Tant que la
-        ligne n'est pas enregistree, elle n'a ni lot, ni emplacement, ni
-        societe, et la colonne annoncait zero au moment precis ou l'on saisit.
-        On lit donc le quant a defaut de la ligne.
+        Ni `quant_id` ni la ligne ne suffisent seuls : le premier reste vide
+        sur ce qu'Odoo reserve lui-meme, et la seconde n'a ni lot ni
+        emplacement tant qu'elle n'est pas enregistree — `_copy_quant_info`
+        n'est appelee que depuis `create` et `write`. On lit donc le quant a
+        defaut de la ligne.
 
         Le calcul est celui de `_police_check_stock_suffisant`, mot pour mot :
         la colonne annonce le plafond que le refus fera respecter.

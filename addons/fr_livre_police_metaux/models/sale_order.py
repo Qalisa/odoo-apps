@@ -290,16 +290,12 @@ class SaleOrder(models.Model):
     def _compute_police_registre_concerne(self):
         """Un rachat, et non toute commande qui touche au métal.
 
-        `police_origin_expected` dit qu'un article relève du registre ;
-        `police_origin_required` dit que la ligne l'y fait entrer, ce qui
-        suppose une quantité négative. Seul le second convient ici : vendre de
-        l'or n'inscrit rien au registre des entrées, et réclamer un mode de
-        règlement à une vente invente une obligation. Le CMF L112-6 vise le
-        professionnel qui achète, pas celui qui vend.
+        `police_origin_required` suppose une quantité négative, et seul lui
+        convient ici : vendre de l'or n'inscrit rien au registre des entrées,
+        et réclamer un mode de règlement à une vente invente une obligation —
+        le CMF L112-6 vise le professionnel qui achète, pas celui qui vend.
 
-        C'est déjà la règle du côté de l'avoir, qui lit
-        `invoice_line_ids.police_origin_required` : les deux disent désormais
-        la même chose.
+        C'est déjà la règle du côté de l'avoir.
         """
         for commande in self:
             commande.police_registre_concerne = any(
@@ -325,16 +321,12 @@ class SaleOrder(models.Model):
     def _onchange_police_societe_comme_client(self):
         """Choisir un contact de société, c'est vendre pour cette société.
 
-        Le comptoir cherche la personne qu'il a devant lui, et la trouve par
-        son nom. Mais celle qui vend est la société : c'est elle qui est
-        payée, et c'est sa dénomination que l'avoir doit porter. Le client
-        bascule donc sur elle, et la personne rejoint le champ que le registre
-        lui réserve — la saisie reste celle du comptoir, l'enregistrement
-        devient le bon.
+        Le comptoir trouve la personne par son nom, mais celle qui vend est la
+        société : le client bascule sur elle, et la personne rejoint le champ
+        que le registre lui réserve.
 
-        L'ordre des deux affectations compte. ``police_representant_id`` se
-        recalcule sur tout changement de ``partner_id`` : le poser avant
-        reviendrait à le voir effacé aussitôt.
+        L'ordre des affectations compte : ``police_representant_id`` se
+        recalcule sur tout changement de ``partner_id``.
         """
         for commande in self:
             personne = commande.partner_id
@@ -494,20 +486,14 @@ class SaleOrder(models.Model):
     def action_police_reprendre_stock(self):
         """Remplace les lignes du devis par tout le stock disponible.
 
-        Vendre le stock d'une agence à un fondeur, c'est reprendre au devis
-        ce que le coffre contient — article par article, et fautif au premier
-        oubli. Le devis se remplit donc d'un coup, depuis les quantités
-        réellement présentes dans son entrepôt.
+        Reprendre le coffre article par article est fautif au premier oubli :
+        le devis se remplit d'un coup depuis l'entrepôt.
 
-        **Disponible**, et non « en stock » : ce qui est déjà réservé par une
-        autre livraison partira ailleurs, et le proposer deux fois ferait
-        sortir deux fois le même numéro d'ordre.
+        **Disponible**, et non « en stock » : ce qui est réservé ailleurs
+        sortirait deux fois sous le même numéro d'ordre. **Une ligne par
+        article**, et non par lot : c'est la livraison qui choisit les lots.
 
-        **Une ligne par article**, et non par lot : une ligne de devis ne
-        porte pas de lot, et lui en faire nommer un mentirait — c'est la
-        livraison qui choisit, lot par lot, et c'est là que le choix se lit.
-
-        Les lignes existantes sont remplacées, jamais complétées : un cumul
+        Les lignes existantes sont remplacées, jamais complétées — un cumul
         doublerait les quantités au second clic.
         """
         self.ensure_one()

@@ -143,16 +143,12 @@ class LivrePoliceTransfert(models.Model):
     def _compute_inscription_domaine(self):
         """Ce qu'on peut choisir, c'est ce que l'agence détient vraiment.
 
-        La tentation était de filtrer sur l'état de sortie du registre —
-        « en stock », « sorti en partie ». Mais cet état-là dit ce que le
-        *registre* sait : rien n'est sorti de cette inscription. Il ne dit
-        pas qu'un lot existe. Un rachat inscrit dont la réception n'a pas
-        été validée se lit « en stock » alors qu'aucun métal n'est encore
-        entré au coffre, et il s'offrait au transfert.
+        Filtrer sur l'état de sortie du registre disait ce que le *registre*
+        sait, non qu'un lot existe : un rachat dont la réception n'est pas
+        validée se lit « en stock » et s'offrait au transfert.
 
-        Le stock, lui, répond à la bonne question. Il se lit ici, une fois,
-        et le résultat prend la forme d'une liste de numéros : le refus
-        n'arrive plus à l'expédition, il n'y a simplement rien à choisir.
+        Le stock répond à la bonne question. Il se lit ici, une fois, et rend
+        une liste de numéros : il n'y a simplement rien à choisir.
         """
         for transfert in self:
             disponibles = transfert._stock_par_inscription()
@@ -442,15 +438,11 @@ class LivrePoliceTransfert(models.Model):
     def _valeurs_mouvements(self, type_operation, source, destination, societe):
         """Un mouvement par article, et non par lot.
 
-        Le lot n'est pas une caractéristique du mouvement : c'est ce que porte
-        la ligne de mouvement. Un mouvement par lot le faisait croire, et
-        Odoo tranchait à sa façon — il fusionne à la confirmation les
-        mouvements que rien ne distingue, et deux sachets d'or 18k au gramme,
-        partant du même endroit vers le même endroit sur le même bon, ne se
-        distinguent par rien. Le second disparaissait dans le premier, dont
-        la quantité s'écrivait alors sur les deux lignes : le registre
-        inscrivait deux fois le poids du plus gros, et faisait sortir du
-        métal qui n'existait pas.
+        Le lot n'est pas une caractéristique du mouvement, c'est ce que porte
+        la ligne. Un mouvement par lot laissait Odoo les fusionner à la
+        confirmation — deux sachets d'or 18k du même endroit au même endroit ne
+        se distinguent par rien — et le registre inscrivait deux fois le poids
+        du plus gros.
         """
         valeurs = []
         for produit, lignes in self.ligne_ids.grouped('product_id').items():
@@ -520,18 +512,13 @@ class LivrePoliceTransfert(models.Model):
     def _verifier_le_droit_de_receptionner(self):
         """Constater l'arrivée appartient au comptoir qui reçoit.
 
-        Celui qui envoie ne constate pas lui-même que la marchandise est
-        arrivée : ce serait signer les deux bouts d'un même mouvement. Le
-        registre d'arrivée dit ce que ce comptoir a reçu, et quelqu'un en
-        répond — d'où le responsable désigné sur l'établissement.
+        Celui qui envoie ne constate pas l'arrivée : ce serait signer les deux
+        bouts d'un même mouvement. Le registre d'arrivée dit ce que ce comptoir
+        a reçu, et le responsable désigné en répond.
 
-        Le droit « Livre de police - responsable » passe outre, et il le faut :
-        un responsable absent, ou un transfert établi de travers qu'il faut
-        mener à son terme, ne doivent pas laisser du métal en transit.
-
-        Sans responsable désigné, personne ne réceptionne. Le blocage est
-        volontaire : une réception que personne n'a endossée vaut moins qu'un
-        refus qui se voit.
+        Le droit « Livre de police - responsable » passe outre, sans quoi un
+        responsable absent laisserait du métal en transit. Sans responsable
+        désigné, personne ne réceptionne — le blocage est volontaire.
         """
         for transfert in self:
             if self.env.user.has_group(
@@ -610,15 +597,11 @@ class LivrePoliceTransfert(models.Model):
     def unlink(self):
         """Un transfert se jette tant qu'il n'a rien inscrit.
 
-        En brouillon ou annulé, il ne désigne que des intentions : aucun
-        numéro d'ordre n'a été pris, aucun bon de stock n'existe, et le
-        registre l'ignore. Le jeter ne perd donc rien — pas plus que de
-        déchirer un bon de commande qu'on n'a pas passé.
+        En brouillon ou annulé, il ne désigne que des intentions : aucun numéro
+        d'ordre pris, aucun bon de stock, le registre l'ignore.
 
-        Expédié, c'est l'inverse : il porte le motif recopié sur deux
-        inscriptions, celle de la sortie et celle de l'entrée, et ces
-        inscriptions le désignent. La base elle-même refuserait de le retirer
-        — autant le dire en clair, et dire quoi faire à la place.
+        Expédié, deux inscriptions le désignent et la base refuserait de le
+        retirer — autant le dire en clair, et dire quoi faire à la place.
         """
         engages = self.filtered(lambda t: t.state not in ('brouillon', 'annule'))
         if engages:
@@ -878,15 +861,12 @@ class LivrePoliceTransfertLigne(models.Model):
     def _qualifier_les_lots(self):
         """Détache le lot de sa société et lui donne le nom du comptoir.
 
-        Le sachet ne bouge pas : il porte « 000123 » et continuera de le
-        porter. C'est le nom en base qui se qualifie, parce qu'un même
-        « 000123 » existe dans chaque agence et qu'Odoo refuserait le second.
-        « METZ/000123 » dit le même numéro et dit d'où il vient.
+        Le sachet ne bouge pas : il porte « 000123 ». C'est le nom en base qui
+        se qualifie, un même « 000123 » existant dans chaque agence.
 
-        Le lot cesse ensuite d'appartenir à une société, et c'est ce qui
-        permet au **même** enregistrement de traverser : rien n'est recréé à
-        l'arrivée, la quantité sort d'un côté comme elle entre de l'autre, et
-        la traçabilité du stock n'est pas coupée en deux.
+        Le lot cesse ensuite d'appartenir à une société, ce qui permet au
+        **même** enregistrement de traverser : rien n'est recréé à l'arrivée,
+        et la traçabilité du stock n'est pas coupée en deux.
         """
         for ligne in self:
             lot = ligne.lot_id.sudo()

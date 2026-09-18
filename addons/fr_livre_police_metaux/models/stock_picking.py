@@ -356,15 +356,12 @@ class StockPicking(models.Model):
     def _police_check_transfert(self):
         """Refuse un passage par le transit qui ne serait pas justifié.
 
-        L'emplacement de transit est le seul chemin entre deux établissements,
-        et il n'appartient à aucun d'eux. Un métal qui y entre a donc quitté
-        un registre ; un métal qui en sort entre dans un autre. Laisser faire
-        cela sans document, ce serait rendre au registre le trou qu'on vient
-        de boucher : une sortie muette d'un côté, aucune entrée de l'autre, et
-        une revente que plus rien ne rattache à un rachat.
+        Le transit n'appartient à aucun établissement : un métal qui y entre a
+        quitté un registre, un métal qui en sort entre dans un autre. Sans
+        document, c'est une sortie muette d'un côté et aucune entrée de
+        l'autre.
 
-        La vérification porte sur les seuls articles soumis au livre de police
-        — un emballage, un consommable peuvent circuler librement.
+        Seuls les articles soumis au livre de police sont vérifiés.
         """
         sans_document = self.filtered(lambda bon: not bon.police_transfert_id)
         concernes = sans_document.move_ids.filtered(
