@@ -86,20 +86,9 @@ class StockMove(models.Model):
     def _police_check_demande_respectee(self):
         """On ne sort pas plus de métal que le mouvement n'en demande.
 
-        Odoo l'autorise, et c'est défendable ailleurs : un client emporte un
-        carton de plus, on l'ajoute au bon. Ici la sortie s'inscrit au
-        registre, et le registre est confronté à la vente : si le bon fait
-        partir 184,30 g quand la vente en porte 177,50, les deux ne se
-        répondent plus, et rien dans le dossier ne dit lequel a raison.
-
-        Ce dépassement n'est pas qu'une divergence de papier. Il ouvre la
-        boucle qui a fait naître ce contrôle : une fois la demande dépassée,
-        Odoo crée chaque ligne suivante à quantité nulle — `selectRecord`,
-        dans le composant du détail des opérations. Une ligne nulle ne
-        consomme rien, le lot reste offert au choix, et on peut l'ajouter
-        indéfiniment. Trois lignes fantômes sur un même lot en sont sorties.
-
-        Le remède est du côté de la vente : c'est elle qui dit ce qui part.
+        La sortie s'inscrit au registre, et le registre est confronté à la
+        vente : 184,30 g partis pour 177,50 vendus, et rien ne dit lequel des
+        deux a raison. Le remède est du côté de la vente, qui dit ce qui part.
         """
         if self.env.context.get('police_validation'):
             return
@@ -218,15 +207,11 @@ class StockMoveLine(models.Model):
     def _police_check_stock_a_la_saisie(self):
         """Le plafond s'oppose à la saisie, et non à la seule validation.
 
-        Refuser au moment de valider laissait le bon se remplir : la
-        réservation dépassait le détenu — 50 réservés sur 30 — et immobilisait
-        du métal qui n'existe pas, invisible sur l'écran, qui annonçait
-        « Disponible » en vert. Le bon ne cédait qu'au bout, quand tout était
-        saisi et qu'il fallait tout défaire.
+        Refuser au bout laissait la réservation dépasser le détenu — 50
+        réservés sur 30 — sous un écran qui annonçait « Disponible » en vert.
 
-        Le contrôle porte sur tout le bon, pas sur la ligne écrite : le même
-        lot peut se retrouver sur deux mouvements distincts du même bon, et
-        c'est leur somme qui compte.
+        Le contrôle porte sur tout le bon : le même lot peut se retrouver sur
+        deux mouvements, et c'est leur somme qui compte.
         """
         if self.env.context.get('police_validation'):
             return
@@ -266,24 +251,11 @@ class StockPicking(models.Model):
     def _police_check_stock_suffisant(self):
         """Un lot ne sort pas plus qu'il n'en contient.
 
-        Odoo laisse un stock passer en negatif — c'est un choix defendable
-        pour des marchandises fongibles qu'on regularise plus tard. Ici, non :
-        la sortie s'inscrit au registre a la validation, et le registre
-        affirmerait qu'un metal est parti alors qu'il n'a jamais ete la. Une
-        inscription ne se retire pas.
+        Le registre affirmerait qu'un metal est parti alors qu'il n'a jamais
+        ete la, et une inscription ne se retire pas. Aucun droit n'en dispense.
 
-        Le cas s'est presente sur une copie : 60 000,80 g saisis sur un lot
-        qui en portait 6,80. Le stock est tombe a -59 994,00 g, et le registre
-        a inscrit la sortie sans broncher — l'entree dont elle se reclamait en
-        annoncait 6,80.
-
-        Aucun droit n'en dispense, et c'est voulu : un stock negatif n'est
-        jamais juste. S'il manque du metal au registre, c'est une
-        regularisation ou une rectification qu'il faut, pas une sortie de plus.
-
-        Le meme controle se fait des la saisie, ligne par ligne — voir
-        `StockMoveLine._police_check_stock_a_la_saisie`. Celui-ci reste : le
-        stock a pu bouger ailleurs entre la saisie et la validation.
+        Double avec `StockMoveLine._police_check_stock_a_la_saisie` : le stock
+        a pu bouger ailleurs entre la saisie et la validation.
         """
         for bon in self:
             manques = bon.move_line_ids._police_manques_par_lot()
@@ -293,33 +265,13 @@ class StockPicking(models.Model):
     def _police_check_mouvement_justifie(self):
         """Un metal reglemente ne bouge que par un chemin qui laisse une trace.
 
-        Le registre s'ecrit a partir des mouvements de stock : une entree
-        s'inscrit a la comptabilisation de l'avoir, une sortie a la validation
-        du bon. Encore faut-il que le mouvement vienne de quelque part. Un bon
-        cree a la main, sans devis ni transfert, fait sortir du metal que rien
-        ne rattache a une operation — le registre dit alors qu'il est parti,
-        sans pouvoir dire ou ni a qui. C'est arrive : 99,40 g portes d'un
-        comptoir a l'autre par une livraison faite a la main, sortis d'un
-        registre sans entrer dans l'autre.
+        Un bon cree a la main ne rattache le mouvement a aucune operation : le
+        registre dit que le metal est parti sans pouvoir dire ou ni a qui.
 
-        Trois chemins restent ouverts, et un seul de plus par exception.
-
-        **Le transfert entre etablissements**, qui porte son motif et tient
-        les deux bouts.
-
-        **La vente**, reconnue a la ligne de devis dont le mouvement est ne.
-        C'est bien le devis, et non la facture, que le mouvement porte au
-        moment ou l'on valide : la livraison precede souvent la facturation.
-
-        **L'achat**, pour une entree : l'avoir de rachat, reconnu de la meme
-        facon. Une reception sans avoir ferait entrer du metal que le registre
-        n'a pas inscrit, et `_police_check_inscription` la refuse deja quand
-        elle vient d'un rachat ; ici on ferme le cas d'un bon fabrique de
-        toutes pieces, qu'aucune ligne de devis ne rattache a rien.
-
-        **Et le droit de correction**, pour ce qu'aucun document ne decrit.
-        Il ne dispense pas d'inscrire : il dispense de justifier le mouvement
-        par un document, ce qui n'est pas la meme chose.
+        Trois chemins restent ouverts — le transfert entre etablissements, la
+        vente par sa ligne de devis, l'achat par son avoir — plus le droit de
+        correction, qui dispense de justifier le mouvement par un document,
+        non d'inscrire.
         """
         if self.env.user.has_group(self._POLICE_DROIT_CORRECTION):
             return

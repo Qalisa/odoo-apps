@@ -419,16 +419,9 @@ class LivrePoliceLigne(models.Model):
         """L'article, par le chemin qui existe pour cette inscription-là.
 
         Un rachat vient d'une ligne de pièce comptable, une sortie ou une
-        reprise d'un mouvement de stock. Une rectification ne porte ni l'une
-        ni l'autre : elle décrit le même métal que l'inscription qu'elle
-        corrige, et c'est là qu'il faut aller le chercher.
-
-        On remonte la chaîne à la main plutôt que de dépendre du champ
-        calculé du parent : sur une base existante, tout se calcule d'un
-        seul geste, et une rectification pouvait lire chez sa mère une valeur
-        qui n'était pas encore posée. La garde contre les boucles vaut ici ce
-        qu'elle vaut ailleurs — rien n'empêche en base qu'une rectification
-        en désigne une autre en amont.
+        reprise d'un mouvement de stock, une rectification de l'inscription
+        qu'elle corrige. On remonte la chaîne à la main : dépendre du champ
+        calculé du parent laissait une ligne vide au calcul initial.
         """
         for ligne in self:
             source, vues = ligne, set()
@@ -460,19 +453,12 @@ class LivrePoliceLigne(models.Model):
         """Le tiers de l'opération, par le chemin qu'elle a suivi.
 
         Une entrée vient d'une pièce comptable, et son tiers y est nommé.
-        Une sortie n'en a pas : le registre n'inscrit pas l'acheteur — ni le
-        modèle officiel (c. pén., art. R321-3) ni les colonnes des métaux
-        (CGI, ann. IV, art. 56 J quindecies) ne demandent à qui l'on revend —
-        et c'est la facture de vente, au bout du mouvement, qui le sait.
+        Une sortie n'en a pas : ni le modèle officiel (c. pén., art. R321-3)
+        ni les colonnes des métaux (CGI, ann. IV, art. 56 J quindecies) ne
+        demandent à qui l'on revend, et c'est la facture de vente qui le sait.
 
-        Elle peut ne pas exister encore : la livraison précède souvent la
-        facturation, et le lien apparaît alors le jour où la facture est
-        faite, sans que rien du registre n'ait bougé. C'est pourquoi les
-        dépendances suivent la chaîne complète plutôt que de se figer à
-        l'inscription.
-
-        Une rectification ne porte ni pièce ni mouvement : on remonte à celle
-        qu'elle corrige, comme pour l'article.
+        Elle peut n'exister qu'après la livraison : les dépendances suivent
+        donc la chaîne entière au lieu de se figer à l'inscription.
         """
         for ligne in self:
             source, vues = ligne, set()
@@ -679,24 +665,14 @@ class LivrePoliceLigne(models.Model):
     def _ajuster_le_stock(self, ecart):
         """Porte au stock l'écart qu'une rectification de quantité constate.
 
-        Le registre et le stock disent la même chose de deux façons ; corriger
-        l'un sans l'autre les fait diverger, et c'est cette divergence qui
-        rend une erreur durable. L'ajustement d'inventaire est le chemin
-        d'Odoo pour du métal qui n'est pas là — le même que la reprise
-        emprunte en sens inverse.
+        Ce n'est pas une sortie : rien n'est parti, et la rectification dit
+        déjà tout. L'ajustement d'inventaire est le chemin d'Odoo pour du
+        métal qui n'est pas là.
 
-        Ce n'est pas une sortie : rien n'est parti. C'est le constat que ce
-        métal n'a jamais été détenu, et il ne s'inscrit donc pas au registre
-        comme un départ — la rectification dit tout ce qu'il y a à dire.
-
-        ``ecart`` est l'écart porté à **l'inscription**, et le sens qu'il
-        prend au coffre dépend de ce que cette inscription décrit. Sur une
-        entrée, les deux vont ensemble : le coffre détient ce qu'elle
-        annonce, et lui en retirer 10 en retire 10. Sur une **sortie**, ils
-        s'opposent : elle dit ce que le coffre a perdu, et déclarer que 10 g
-        ne sont finalement pas partis les lui rend. Sans cette inversion, le
-        métal qu'on dit resté était retiré une seconde fois, et l'erreur
-        comptait double.
+        ``ecart`` porte sur **l'inscription**, et son sens au coffre dépend
+        d'elle. Sur une entrée les deux vont ensemble ; sur une **sortie**
+        ils s'opposent — déclarer que 10 g ne sont pas partis les rend au
+        coffre. Sans cette inversion, l'erreur comptait double.
         """
         self.ensure_one()
         if not ecart:
@@ -817,24 +793,14 @@ class LivrePoliceLigne(models.Model):
     def _compute_sorties(self):
         """Ce qui est reparti, ce qui reste, et le jour où il n'en reste plus.
 
-        Trois lectures d'une même chose, qu'aucune inscription ne porte : le
-        registre dit les mouvements, pas leur solde. Le solde se recalcule, et
-        c'est pour cela qu'il n'entre pas dans le chiffre de contrôle.
+        Le registre dit les mouvements, pas leur solde : celui-ci se
+        recalcule, et n'entre donc pas dans le chiffre de contrôle.
 
-        Deux règles gouvernent les rectifications, et elles sont l'envers
-        l'une de l'autre.
-
-        **Une rectification ne détient rien.** Elle amende une inscription ;
-        c'est l'originale qui porte le numéro d'ordre apposé sur le lot
-        (c. pén., art. R321-4), et c'est donc elle qui tient le stock. Compter
-        les deux ferait exister deux fois le même métal — le registre a
-        réellement annoncé 520 g de lingots là où 60 g restaient, et c'est ce
-        constat qui a produit ce calcul-ci.
-
-        **Une inscription rectifiée compte pour ce que dit sa rectification.**
-        Son propre poids reste écrit, et se lit ; mais ce qui demeure en stock
-        se mesure sur la dernière correction, sans quoi un lot corrigé ne se
-        solderait jamais.
+        Deux règles, l'envers l'une de l'autre. **Une rectification ne détient
+        rien** — c'est l'originale qui porte le numéro d'ordre apposé sur le
+        lot (c. pén., art. R321-4). Et **une inscription rectifiée compte pour
+        ce que dit sa rectification**, sans quoi un lot corrigé ne se solderait
+        jamais.
         """
         for ligne in self:
             if ligne.rectifie_id:
@@ -1325,23 +1291,17 @@ class LivrePoliceLigne(models.Model):
     def _valeurs_depuis_sortie(self, entree, mouvement, transfert=None):
         """Fige ce qu'une sortie inscrit.
 
-        Elle ne recopie de l'entrée que ce qui décrit la marchandise : la
-        nature du métal, son titre, les objets. Le vendeur, sa pièce
-        d'identité, le prix d'achat n'ont rien à faire là — ils appartiennent
-        à l'entrée, qui reste, et les répéter donnerait à croire qu'une
-        seconde opération a eu lieu avec la même personne.
+        Elle ne recopie de l'entrée que ce qui décrit la marchandise. Le
+        vendeur, sa pièce et le prix appartiennent à l'entrée, qui reste.
 
-        L'acheteur n'y figure pas davantage. Le registre des objets mobiliers
-        décrit l'entrée (c. pén., art. R321-3) et le registre des métaux
-        réclame les dates d'entrée et de sortie (CGI, ann. IV, art. 56 J
-        quindecies) : aucun des deux ne demande à qui l'on revend. Cela vit
-        dans la facturation, que l'art. L102 B du LPF fait conserver.
+        L'acheteur n'y figure pas : le registre des objets mobiliers décrit
+        l'entrée (c. pén., art. R321-3) et celui des métaux réclame les dates
+        d'entrée et de sortie (CGI, ann. IV, art. 56 J quindecies) — aucun ne
+        demande à qui l'on revend. Cela vit dans la facturation, que l'art.
+        L102 B du LPF fait conserver.
 
-        Un départ vers un autre établissement fait exception sur un point, et
-        un seul : il dit **où** le métal va. Ce n'est pas une contrepartie —
-        personne n'a acheté — c'est la moitié d'un mouvement dont l'autre
-        moitié s'inscrit ailleurs, et sans elle la sortie serait un métal
-        évaporé.
+        Exception d'un départ vers un autre établissement : il dit **où** le
+        métal va, faute de quoi la sortie serait un métal évaporé.
         """
         quantite = mouvement.quantity
         # Le poids suit la quantité : un lot homogène sorti pour un tiers
@@ -1405,20 +1365,14 @@ class LivrePoliceLigne(models.Model):
         n'est pas un repli, c'est le lien le plus sûr des deux, désigné avant
         que rien ne bouge.
 
-        Reste le cas où le lot a été qualifié par un transfert passé et
-        repart ensuite du comptoir de rachat par un autre chemin : le lot
-        s'appelle « MONDE/000001 », l'inscription d'entrée porte encore
-        « 000001 », et la recherche par le nom ne trouve rien. Le départ
-        n'était alors pas inscrit du tout — 634,90 g d'argent sont sortis de
-        la sorte le 07/09/2026.
+        Reste le lot qualifié par un transfert passé qui repart ensuite du
+        comptoir de rachat : il s'appelle « MONDE/000001 » quand l'entrée
+        porte « 000001 », et la recherche par le nom ne trouve rien.
 
-        On retente alors sur le numéro d'ordre nu — mais **seulement si le nom
-        complet n'a rien donné**. Chercher les deux d'un coup fut une erreur :
-        le comptoir qui reçoit tient lui aussi une inscription « 000011 », qui
-        n'a rien à voir avec « MONDE/000011 », et c'est elle que la recherche
-        ramenait. La sortie s'inscrivait alors sous la désignation, le titre et
-        le poids d'un autre lot — 9,50 g d'or 18k devenus « 10 FRANCS OR,
-        30,6451 g ». Le repli ne vaut donc que faute de mieux.
+        On retente alors sur le numéro nu — mais **seulement si le nom complet
+        n'a rien donné**. Les chercher d'un coup ramenait l'inscription
+        homonyme du comptoir qui reçoit, et la sortie s'inscrivait sous le
+        titre et le poids d'un autre lot.
         """
         if transfert:
             return transfert.ligne_ids.filtered(

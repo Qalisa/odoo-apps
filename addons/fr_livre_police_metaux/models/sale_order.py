@@ -463,22 +463,13 @@ class SaleOrder(models.Model):
     def _prepare_invoice(self):
         """L'avoir s'adresse à la société ; le registre, lui, nomme la personne.
 
-        Le client de l'avoir est la société : c'est elle qui a vendu, c'est
-        elle qui est payée, et c'est sa dénomination que la pièce doit porter.
-        La personne physique, elle, n'intéresse que le registre — elle voyage
-        donc à part.
+        Le client de l'avoir est la société : c'est elle qui a vendu et qui est
+        payée. La personne n'intéresse que le registre, et voyage à part — sans
+        quoi elle serait saisie au comptoir puis perdue à la facturation.
 
-        Le représentant suit donc le devis jusqu'à la pièce, sans quoi il
-        serait saisi au comptoir puis perdu à la facturation, et le contrôle
-        posé au ``_post`` refuserait une pièce que rien ne permettrait plus de
-        compléter.
-
-        Reste le cas où le comptoir a saisi le contact comme client plutôt que
-        la société. L'avoir porterait alors le nom de la personne : le client
-        bascule sur la société, qui est celle qui a vendu.
-
-        La position fiscale n'est pas retouchée : Odoo l'a déduite du contact,
-        et un contact sans position propre hérite déjà de celle de sa société.
+        Si le comptoir a saisi le contact comme client, le client bascule sur
+        la société. La position fiscale n'est pas retouchée : un contact sans
+        position propre hérite déjà de celle de sa société.
         """
         valeurs = super()._prepare_invoice()
         if self.police_reglement:
