@@ -175,13 +175,11 @@ class ProductTemplate(models.Model):
         """Un objet soumis au registre porte ses mentions dès le catalogue.
 
         Les exiger dans la vue ne suffit pas : un import ou une duplication
-        passent à côté, et le manque n'apparaît alors qu'au comptoir — au
-        moment où l'on ne peut plus ni peser ni titrer ce qui vient d'être
-        acheté.
+        passent à côté, et le manque n'apparaît qu'au comptoir.
 
-        Le registre veut, pour chaque objet, « la nature, le nombre, le poids,
-        le titre » (CGI, ann. IV, art. 56 J quindecies). Le nombre vient de la
-        ligne d'achat ; les trois autres se tiennent ici.
+        Le registre veut « la nature, le nombre, le poids, le titre » (CGI,
+        ann. IV, art. 56 J quindecies) ; le nombre vient de la ligne d'achat,
+        les trois autres se tiennent ici.
 
         Voir `_police_juge_la_saisie` pour ce que la contrainte laisse passer.
         """
