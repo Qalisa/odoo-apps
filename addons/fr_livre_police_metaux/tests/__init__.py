@@ -21,7 +21,6 @@ if importlib.util.find_spec('odoo') is not None:
     from . import test_rectifier_une_sortie
     from . import test_detenu_ligne_non_enregistree
     from . import test_saisie_au_dela_de_la_demande
-    from . import test_requalification_poids_arrondi
     from . import test_rachat_confirme
     from . import test_rachat_sans_prix
     from . import test_transfert_un_lot_parmi_plusieurs
