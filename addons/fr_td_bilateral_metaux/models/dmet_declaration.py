@@ -120,9 +120,7 @@ class DmetDeclaration(models.Model):
     )
     date_generation = fields.Datetime(readonly=True)
 
-    # ------------------------------------------------------------------
     # Calculs
-    # ------------------------------------------------------------------
     @api.depends('millesime', 'company_id')
     def _compute_name(self):
         for rec in self:
@@ -160,9 +158,7 @@ class DmetDeclaration(models.Model):
             if comp and comp.id not in rec.company_ids.ids:
                 rec.company_ids = [(4, comp.id)]
 
-    # ------------------------------------------------------------------
     # Préparation des données
-    # ------------------------------------------------------------------
     def _period(self):
         self.ensure_one()
         return date(self.millesime, 1, 1), date(self.millesime, 12, 31)
@@ -284,9 +280,7 @@ class DmetDeclaration(models.Model):
             }))
         return vals
 
-    # ------------------------------------------------------------------
     # Actions
-    # ------------------------------------------------------------------
     def action_open_lines(self):
         """Ouvre les lignes dans une liste autonome.
 

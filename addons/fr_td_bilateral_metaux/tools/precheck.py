@@ -39,9 +39,7 @@ class Finding:
     partner_id: Optional[int] = None    # id opaque du partenaire (rattachement anomalie -> fiche)
 
 
-# --------------------------------------------------------------------------
 # Prédicats
-# --------------------------------------------------------------------------
 
 def _blank(value):
     """Vrai si vide, ou ne contenant aucun caractère alphanumérique."""
@@ -78,9 +76,7 @@ def vendor_ref(vendor, index=0):
     return nom or ("vendeur #%d" % index)
 
 
-# --------------------------------------------------------------------------
 # Contrôles
-# --------------------------------------------------------------------------
 
 def check_declarant(header, declarant):
     out = []

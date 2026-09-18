@@ -21,12 +21,10 @@ from .ascii_tools import to_ascii, digits_only
 
 RECORD_LENGTH = 550
 
-# --------------------------------------------------------------------------
 # Dessins d'enregistrement : (clé, position 1-based, longueur, classe)
 #   classe "N" -> numérique, cadré à droite, complété de zéros à gauche
 #   classe "A" -> alphanumérique, cadré à gauche, complété d'espaces à droite
 # Les séparateurs (classe "A" non renseignés) sont naturellement remplis d'espaces.
-# --------------------------------------------------------------------------
 
 FIELDS_E = [
     ("annee",            1,   4, "N"),
