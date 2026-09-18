@@ -15,26 +15,17 @@ class AccountMove(models.Model):
         """Bloque la validation d'un rachat (avoir) à un particulier tant que les
         données **obligatoires** du vendeur sont incomplètes.
 
-        Périmètre aligné sur la sélection DMET (``out_refund``), personnes
-        physiques uniquement — au sens de l'**entité commerciale** du contact
-        retenu, non du contact lui-même : la personne qui vend pour le compte
-        d'une société n'est pas un vendeur particulier, elle la représente
-        (livre de police, art. R321-3 2°). Lui réclamer date et pays de
-        naissance reviendrait à la déclarer comme vendeuse, ce qu'elle n'est
-        pas. Pour un particulier, l'entité commerciale est lui-même.
+        Périmètre : ``out_refund``, personnes physiques au sens de l'**entité
+        commerciale** — qui vend pour une société la représente (livre de
+        police, art. R321-3 2°), et lui réclamer sa naissance la déclarerait
+        vendeuse.
 
-        Champs contrôlés :
+        Contrôlés : **nom** et **prénom** (DMET Q014/Q015, R321-3), **pays de
+        naissance** (le « 99 » du DMET), **adresse** (domicile R321-3), et la
+        **pièce d'identité** complète — nature, numéro, date de délivrance et
+        autorité émettrice, le *lieu* n'étant pas exigé par le texte.
 
-        - **Nom** et **prénom** — DMET (Q014/Q015) et livre de police (R321-3) ;
-        - **Pays de naissance** — détermine le « 99 » (naissance à l'étranger) du
-          DMET ;
-        - **Adresse** (rue, code postal, ville) — domicile (R321-3) et zones
-          DMET adresse ;
-        - **Pièce d'identité** complète — livre de police (art. R321-3 : nature,
-          numéro, date de délivrance et autorité émettrice ; le *lieu* de
-          délivrance n'est pas exigé par le texte).
-
-        L'obligation naît de l'achat : on la contrôle donc au moment de valider
+        L'obligation naît de l'achat : on la contrôle donc à la validation de
         l'avoir, sans imposer ces champs à tous les contacts.
         """
         # Backfill historique : exemption explicite. Les rachats antérieurs à
