@@ -131,10 +131,11 @@
                                 du « Ajouter une ligne », la ou le devis pose
                                 deja son bouton « Catalogue ».
 
-                                Le `confirm` n'est pas une politesse : le
-                                premier peut poser des dizaines de lignes, le
-                                second effacer une selection faite a la main
-                                dont rien ne garde trace.
+                                Ni l'un ni l'autre ne part sans un second
+                                clic : le premier, qui peut poser des dizaines
+                                de lignes, demande d'abord sa periode ; le
+                                second, qui efface une selection faite a la
+                                main dont rien ne garde trace, se confirme.
                             -->
                             <control>
                                 <create name="ajouter_une_ligne"
@@ -142,10 +143,7 @@
                                 <button name="action_ajouter_tout_le_stock"
                                         type="object" class="px-4 btn-link"
                                         string="Reprendre tout le stock"
-                                        context="{'transfert_id': parent.id}"
-                                        confirm="Tous les lots que cette agence détient encore seront ajoutés au transfert, à la quantité disponible. Ce qui est déjà sur le transfert n'est pas repris deux fois."
-                                        confirm-title="Reprendre tout le stock ?"
-                                        confirm-label="Tout reprendre"/>
+                                        context="{'transfert_id': parent.id}"/>
                                 <button name="action_purger_les_lignes"
                                         type="object" class="px-4 btn-link"
                                         string="Tout enlever"
@@ -262,4 +260,33 @@
               action="livre_police_transfert_action"
               sequence="15"/>
 
+
+    <record id="livre_police_transfert_periode_view_form" model="ir.ui.view">
+        <field name="name">livre.police.transfert.periode.form</field>
+        <field name="model">livre.police.transfert.periode</field>
+        <field name="arch" type="xml">
+            <form string="Reprendre tout le stock">
+                <p>
+                    Les lots que cette agence détient encore, entrés sur cette
+                    période, seront ajoutés au transfert à la quantité
+                    disponible. Ce qui est déjà sur le transfert n'est pas
+                    repris deux fois.
+                </p>
+                <group>
+                    <label for="du" string="Entrés du"/>
+                    <div class="o_row">
+                        <field name="du" placeholder="depuis toujours"/>
+                        <span>au</span>
+                        <field name="au" placeholder="aujourd'hui"/>
+                    </div>
+                </group>
+                <footer>
+                    <button string="Reprendre" type="object"
+                            name="action_reprendre" class="btn-primary"/>
+                    <button string="Annuler" special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 </odoo>

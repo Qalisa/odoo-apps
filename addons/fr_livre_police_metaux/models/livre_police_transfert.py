@@ -202,29 +202,53 @@ class LivrePoliceTransfert(models.Model):
         return resultat
 
     def action_ajouter_tout_le_stock(self):
-        """Reprend d'un coup tout ce que l'agence de départ détient.
-
-        Un regroupement avant fonte vide le coffre : les désigner un à un
-        serait long et, surtout, en oublier un ne se verrait pas. Ce qui est
-        déjà sur le transfert n'est pas repris deux fois.
-        """
+        """Demande la période d'entrée, avant de reprendre le stock."""
         self.ensure_one()
+        self._verifier_brouillon()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _("Reprendre tout le stock"),
+            'res_model': 'livre.police.transfert.periode',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_transfert_id': self.id},
+        }
+
+    def _verifier_brouillon(self):
         if self.state != 'brouillon':
             raise UserError(_(
                 "Ce transfert est déjà parti : ses lots ne se complètent "
                 "plus. Établissez-en un second."))
+
+    def _ajouter_le_stock(self, du=False, au=False):
+        """Reprend d'un coup ce que l'agence de départ détient.
+
+        Un regroupement avant fonte vide le coffre : les désigner un à un
+        serait long et, surtout, en oublier un ne se verrait pas. Ce qui est
+        déjà sur le transfert n'est pas repris deux fois.
+
+        La période porte sur la date d'entrée dans cette agence, dans sa
+        dernière version : elle se rectifie.
+        """
+        self.ensure_one()
+        self._verifier_brouillon()
         deja = self.ligne_ids.inscription_id
+
+        def dans_la_periode(ligne):
+            entree = ligne._rectification_finale().date_achat
+            return (not du or entree >= du) and (not au or entree <= au)
+
         ajouts = [
             (0, 0, {'inscription_id': ligne.id, 'quantite': quantite})
             for ligne, (_lot, quantite) in sorted(
                 self._stock_par_inscription().items(),
                 key=lambda paire: paire[0].numero_ordre)
-            if ligne not in deja
+            if ligne not in deja and dans_la_periode(ligne)
         ]
         if not ajouts:
             raise UserError(_(
-                "L'agence de %(societe)s n'a plus de métal au coffre qui ne "
-                "soit déjà sur ce transfert.",
+                "L'agence de %(societe)s n'a plus de métal au coffre, entré "
+                "sur cette période, qui ne soit déjà sur ce transfert.",
                 societe=self.company_id.display_name))
         self.ligne_ids = ajouts
         return True
@@ -625,6 +649,38 @@ class LivrePoliceTransfert(models.Model):
             'view_mode': 'list,form',
             'domain': [('transfert_id', '=', self.id)],
         }
+
+
+class LivrePoliceTransfertPeriode(models.TransientModel):
+    """La période d'entrée de « Reprendre tout le stock ».
+
+    Elle se demande au moment de reprendre et ne reste pas sur le transfert :
+    des lignes ajoutées à la main, ou plusieurs reprises enchaînées, la
+    rendraient fausse — le transfert ne couvre pas une période, il porte des
+    lots, et chacun dit sa date d'entrée.
+    """
+    _name = 'livre.police.transfert.periode'
+    _description = "Livre de police - période de reprise du stock"
+
+    transfert_id = fields.Many2one(
+        'livre.police.transfert', required=True, ondelete='cascade')
+    du = fields.Date(
+        string="Entrés du",
+        help="Date d'entrée dans l'agence, incluse. Vide : depuis toujours.")
+    au = fields.Date(
+        string="au",
+        help="Date d'entrée dans l'agence, incluse. Vide : jusqu'à ce jour.")
+
+    @api.constrains('du', 'au')
+    def _check_ordre(self):
+        for periode in self:
+            if periode.du and periode.au and periode.du > periode.au:
+                raise ValidationError(_(
+                    "La période commence après sa fin."))
+
+    def action_reprendre(self):
+        self.ensure_one()
+        return self.transfert_id._ajouter_le_stock(self.du, self.au)
 
 
 class LivrePoliceTransfertLigne(models.Model):
