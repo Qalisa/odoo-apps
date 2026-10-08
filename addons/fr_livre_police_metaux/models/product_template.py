@@ -21,7 +21,8 @@ ci-dessous. Une case non cochée n'est pas un oubli du paramétrage, c'est
 l'affirmation que la désignation suffit à décrire ce qui entre.
 """
 
-from odoo import models, fields
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class ProductTemplate(models.Model):
@@ -48,3 +49,58 @@ class ProductTemplate(models.Model):
              "pénal ; CGI, ann. IV, art. 56 J quindecies), et aucune "
              "désignation ne la fournit.",
     )
+
+    @api.onchange('metal_regulated', 'type')
+    def _onchange_suivi_par_lot(self):
+        if self.metal_regulated and self.type == 'consu':
+            self.is_storable = True
+            self.tracking = 'lot'
+
+    @staticmethod
+    def _suivi_par_lot_d_office(vals):
+        """Un bien se presume soumis au registre : il se suit donc par lot.
+
+        Le complement ne vaut que pour ce que la saisie tait. Decocher le
+        suivi, ou declarer l'article hors registre, reste un choix explicite.
+        """
+        if (vals.get('type', 'consu') == 'consu'
+                and vals.get('metal_regulated', True)
+                and 'is_storable' not in vals):
+            vals['is_storable'] = True
+            vals.setdefault('tracking', 'lot')
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._suivi_par_lot_d_office(vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if vals.get('type') == 'consu' and not any(self.mapped('is_storable')):
+            self._suivi_par_lot_d_office(vals)
+        return super().write(vals)
+
+    @api.constrains('metal_regulated', 'type', 'is_storable', 'tracking')
+    def _check_suivi_par_lot(self):
+        """Un bien soumis au registre se suit en stock, et par lot.
+
+        Le numéro d'ordre est le nom du lot : c'est lui qui « figure de
+        manière apparente sur chaque objet ou lot d'objets » (c. pén.,
+        art. R321-4). Un article qui ne suit pas son stock s'inscrit au
+        registre, mais sa réception ne crée ni lot ni quantité — le métal
+        est entré et le coffre l'ignore. Le cas s'est produit, et Odoo
+        interdit ensuite de corriger l'article par sa fiche.
+        """
+        if not self._police_juge_la_saisie():
+            return
+        for article in self:
+            if (article.metal_regulated and article.type == 'consu'
+                    and not (article.is_storable and article.tracking == 'lot')):
+                raise ValidationError(_(
+                    "« %(article)s » est soumis au livre de police : il doit "
+                    "suivre son inventaire, par lot. Le lot porte le numéro "
+                    "d'ordre de l'inscription (c. pén., art. R321-4) ; sans "
+                    "lui, la réception inscrit le métal au registre sans le "
+                    "mettre au coffre.\n\n"
+                    "Cochez « Suivre l'inventaire » et choisissez « Par lot ».",
+                    article=article.display_name))

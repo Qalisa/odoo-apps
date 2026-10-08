@@ -26,3 +26,4 @@ if importlib.util.find_spec('odoo') is not None:
     from . import test_rachat_sans_prix
     from . import test_transfert_un_lot_parmi_plusieurs
     from . import test_rectifier_la_quantite_d_une_sortie
+from . import test_article_suivi_par_lot
