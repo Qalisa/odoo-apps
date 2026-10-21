@@ -20,6 +20,12 @@
                 </div>
                 <field name="ligne_ids" nolabel="1">
                     <list editable="bottom" create="0" delete="0">
+                        <!-- Absent de la vue, le lot trie ne repartirait pas
+                             au serveur : le navigateur n'envoie que ce qu'il
+                             affiche, et un champ en lecture seule seulement
+                             s'il est force. -->
+                        <field name="inscription_id" column_invisible="1"
+                               force_save="1"/>
                         <field name="numero_ordre" readonly="1"/>
                         <field name="designation" readonly="1"/>
                         <field name="date_achat" readonly="1"/>
