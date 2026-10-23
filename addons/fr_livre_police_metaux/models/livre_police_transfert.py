@@ -104,13 +104,15 @@ class LivrePoliceTransfert(models.Model):
         index=True,
     )
 
+    # Rien de ce qui suit ne se recopie : un transfert dupliqué n'est ni
+    # parti ni reçu, et pointerait sinon vers les bons de son modèle.
     picking_sortie_id = fields.Many2one(
         'stock.picking', string="Bon de sortie", readonly=True,
-        ondelete='restrict',
+        ondelete='restrict', copy=False,
     )
     picking_entree_id = fields.Many2one(
         'stock.picking', string="Bon d'entrée", readonly=True,
-        ondelete='restrict',
+        ondelete='restrict', copy=False,
     )
     inscription_ids = fields.One2many(
         'livre.police.ligne', 'transfert_id', string="Inscriptions", readonly=True,
@@ -119,10 +121,12 @@ class LivrePoliceTransfert(models.Model):
              "la sienne.",
     )
 
-    date_expedition = fields.Datetime(string="Expédié le", readonly=True)
-    expedie_par_id = fields.Many2one('res.users', string="Expédié par", readonly=True)
-    date_reception = fields.Datetime(string="Reçu le", readonly=True)
-    recu_par_id = fields.Many2one('res.users', string="Reçu par", readonly=True)
+    date_expedition = fields.Datetime(string="Expédié le", readonly=True, copy=False)
+    expedie_par_id = fields.Many2one(
+        'res.users', string="Expédié par", readonly=True, copy=False)
+    date_reception = fields.Datetime(string="Reçu le", readonly=True, copy=False)
+    recu_par_id = fields.Many2one(
+        'res.users', string="Reçu par", readonly=True, copy=False)
 
     poids_total = fields.Float(
         string="Poids total (g)", digits=(12, 4), compute='_compute_poids_total',

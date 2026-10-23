@@ -28,3 +28,4 @@ if importlib.util.find_spec('odoo') is not None:
     from . import test_rectifier_la_quantite_d_une_sortie
 from . import test_article_suivi_par_lot
 from . import test_requalification_depuis_l_ecran
+from . import test_transfert_duplique
