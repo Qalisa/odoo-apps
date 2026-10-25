@@ -985,7 +985,10 @@ class LivrePoliceLigne(models.Model):
         fois.
         """
         self.ensure_one()
-        origine = self.origine_id or self
+        # Le comptoir de rachat peut n'être ni l'expéditeur ni le
+        # destinataire : un transfert ne voit que ces deux-là, et lire son
+        # numéro d'ordre ne doit pas dépendre de qui transfère.
+        origine = (self.origine_id or self).sudo()
         entrepot = self.env['stock.warehouse'].sudo().search(
             [('company_id', '=', origine.company_id.id)], limit=1)
         code = entrepot.code or origine.company_id.name
