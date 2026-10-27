@@ -27,3 +27,11 @@ class ResCompany(models.Model):
              "mieux vaut un blocage explicite qu'une réception que personne "
              "n'a endossée.",
     )
+    police_lieu_conservation = fields.Text(
+        string="Lieu de conservation des objets",
+        help="Où ce comptoir garde physiquement le métal — un coffre, une "
+             "salle, une banque. Information interne, que le registre "
+             "imprime en tête de page ; aucune mention légale ne l'exige.\n\n"
+             "Chaque page la fige au scellement : changer de coffre ne "
+             "réécrit pas les pages des jours où le métal était ailleurs.",
+    )

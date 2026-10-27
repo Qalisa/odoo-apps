@@ -94,6 +94,14 @@ class LivrePolicePage(models.Model):
              "cette page et en tête de la suivante.",
     )
     scellee_le = fields.Datetime(string="Scellée le", readonly=True)
+    # Hors de l'empreinte : une mention ajoutée à `_empreinte` ferait ressortir
+    # altérées toutes les pages scellées avant elle.
+    lieu_conservation = fields.Text(
+        string="Lieu de conservation", readonly=True,
+        help="Le lieu de conservation de l'établissement au jour du "
+             "scellement. Vide sur les pages scellées avant que le champ "
+             "n'existe : on ne sait pas, après coup, où était le métal.",
+    )
     scellee_par_id = fields.Many2one(
         'res.users', string="Scellée par", readonly=True,
     )
@@ -204,6 +212,7 @@ class LivrePolicePage(models.Model):
                 'controle': page._empreinte(precedente.controle),
                 'scellee_le': fields.Datetime.now(),
                 'scellee_par_id': self.env.user.id,
+                'lieu_conservation': page.company_id.police_lieu_conservation,
             })
         return True
 

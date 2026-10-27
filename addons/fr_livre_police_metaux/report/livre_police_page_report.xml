@@ -54,6 +54,12 @@
                                     page <span t-field="page.numero"/> du
                                     <span t-field="page.date"/>
                                 </div>
+                                <!-- Une page ouverte dit le lieu d'aujourd'hui ;
+                                     une page scellée, celui de son jour. -->
+                                <t t-set="lieu" t-value="page.lieu_conservation if page.controle else page.company_id.police_lieu_conservation"/>
+                                <div t-if="lieu" style="white-space: pre-line;">
+                                    Lieu de conservation : <t t-esc="lieu"/>
+                                </div>
                             </div>
                             <div class="text-end" style="font-size: 8px;">
                                 <div>

@@ -301,6 +301,13 @@ class LivrePoliceLigne(models.Model):
              "entrée. Recopié à l'inscription : le registre nomme "
              "l'établissement tel qu'il s'appelait ce jour-là.",
     )
+    # Hors de l'empreinte, comme sur la page qui le porte : il se lit, il
+    # ne s'inscrit pas.
+    lieu_conservation = fields.Text(
+        string="Lieu de conservation", compute='_compute_lieu_conservation',
+        help="Où l'établissement garde le métal : celui figé sur la page si "
+             "elle est scellée, celui de l'établissement aujourd'hui sinon.",
+    )
     origine_id = fields.Many2one(
         'livre.police.ligne', string="Inscription d'origine", readonly=True,
         index='btree_not_null', ondelete='restrict',
@@ -775,6 +782,14 @@ class LivrePoliceLigne(models.Model):
             'inscrit_par_id': self.env.user.id,
         })
         return self.sudo().create(valeurs)
+
+    @api.depends('page_id.controle', 'page_id.lieu_conservation',
+                 'company_id.police_lieu_conservation')
+    def _compute_lieu_conservation(self):
+        for ligne in self:
+            ligne.lieu_conservation = (
+                ligne.page_id.lieu_conservation if ligne.page_id.controle
+                else ligne.company_id.police_lieu_conservation)
 
     @api.depends('sortie_ids.poids', 'sortie_ids.date_mouvement',
                  'sortie_ids.rectifiee', 'poids',

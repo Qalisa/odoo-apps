@@ -12,6 +12,8 @@
             <xpath expr="//field[@name='currency_id']" position="after">
                 <field name="police_responsable_id"
                        options="{'no_create': True, 'no_open': True}"/>
+                <field name="police_lieu_conservation"
+                       placeholder="Coffre de l'agence, salle forte…"/>
             </xpath>
         </field>
     </record>

@@ -49,6 +49,8 @@
                             <field name="poids_total"/>
                             <field name="montant_total"/>
                             <field name="currency_id" invisible="1"/>
+                            <field name="lieu_conservation" readonly="1"
+                                   invisible="not lieu_conservation"/>
                         </group>
                         <!--
                             Le contrôle en tête est celui de la page

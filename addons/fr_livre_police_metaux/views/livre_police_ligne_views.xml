@@ -42,6 +42,7 @@
                 <field name="numero_lot" optional="hide"/>
                 <field name="transfert_id" optional="hide"/>
                 <field name="transfert_etablissement" optional="show"/>
+                <field name="lieu_conservation" optional="show"/>
                 <field name="rectifie_id" optional="show"
                        string="Rectifie"/>
                 <field name="date_achat"/>
