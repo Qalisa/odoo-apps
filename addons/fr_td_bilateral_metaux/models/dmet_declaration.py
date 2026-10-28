@@ -17,6 +17,18 @@ from ..tools import openpgp
 from ..tools import precheck as precheck_tools
 from .res_config_settings import ENVIRONNEMENTS, cle_publique, resume_cle
 
+# Un rachat est un avoir comptabilise -- mais pas tout avoir. Celui qui
+# extourne une vente l'annule, rien n'est achete ; et un rachat lui-meme
+# extourne n'a pas eu lieu. La declaration porte « le cumul annuel des achats
+# effectues aupres de chacun » des vendeurs (CGI, art. 1649 bis) : ni l'un ni
+# l'autre n'y entre.
+RACHATS = [
+    ('move_type', '=', 'out_refund'),
+    ('state', '=', 'posted'),
+    ('reversed_entry_id', '=', False),
+    '!', ('reversal_move_ids.state', '=', 'posted'),
+]
+
 _SEVERITY = [
     ('bloquante', "Bloquante"),
     ('bloquante_seuil', "Bloquante à seuil"),
@@ -212,9 +224,7 @@ class DmetDeclaration(models.Model):
         """
         self.ensure_one()
         d_start, d_end = self._period()
-        domain = [
-            ('move_type', '=', 'out_refund'),
-            ('state', '=', 'posted'),
+        domain = RACHATS + [
             ('company_id', 'in', self.company_ids.ids),
             ('invoice_date', '>=', d_start),
             ('invoice_date', '<=', d_end),
@@ -300,8 +310,7 @@ class DmetDeclaration(models.Model):
             self._header(), self._declarant_dict(), vendors)
         d_start, d_end = self._period()
         stats = self.env['account.move']._read_group(
-            [('move_type', '=', 'out_refund'), ('state', '=', 'posted'),
-             ('company_id', 'in', self.company_ids.ids),
+            RACHATS + [('company_id', 'in', self.company_ids.ids),
              ('invoice_date', '>=', d_start), ('invoice_date', '<=', d_end)],
             [], ['invoice_date:min', 'invoice_date:max', '__count'],
         )
@@ -460,9 +469,7 @@ class DmetLine(models.Model):
                       vendeur=self.personne or self.partner_id.display_name),
             'res_model': 'account.move',
             'view_mode': 'list,form',
-            'domain': [
-                ('move_type', '=', 'out_refund'),
-                ('state', '=', 'posted'),
+            'domain': RACHATS + [
                 ('commercial_partner_id', '=', self.partner_id.id),
                 ('company_id', 'in', declaration.company_ids.ids),
                 ('invoice_date', '>=', debut),

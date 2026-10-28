@@ -9,3 +9,4 @@ if _ilu.find_spec('odoo') is not None:
     from . import test_integration
     from . import test_id_document_gate
     from . import test_birth_mapping
+    from . import test_avoir_extourne
