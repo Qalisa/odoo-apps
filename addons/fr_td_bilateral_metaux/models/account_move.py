@@ -47,7 +47,9 @@ class AccountMove(models.Model):
         ]
         problems = []
         for move in self:
-            if move.move_type != "out_refund":
+            # Un avoir qui extourne une pièce n'achète rien : il annule une
+            # vente, et le client n'a rien vendu au comptoir.
+            if move.move_type != "out_refund" or move.reversed_entry_id:
                 continue
             partner = move.commercial_partner_id
             if not partner or partner.is_company:
