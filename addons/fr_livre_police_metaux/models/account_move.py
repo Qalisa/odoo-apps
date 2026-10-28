@@ -218,6 +218,11 @@ class AccountMove(models.Model):
         help="Aucune personne physique n'est nommée, et le registre en veut "
              "une.",
     )
+    police_corrigeable = fields.Boolean(
+        compute='_compute_police_corrigeable',
+        help="La pièce est comptabilisée et inscrite au registre : elle se "
+             "corrige par l'écran « Corriger cette pièce ».",
+    )
     police_poste_missing = fields.Boolean(
         string="Poste manquant",
         compute='_compute_police_poste_missing',
@@ -364,6 +369,12 @@ class AccountMove(models.Model):
                     piece=piece.display_name))
 
     def _post(self, soft=True):
+        # La contre-pièce d'une annulation n'achète ni ne vend rien : elle
+        # solde une pièce dont les inscriptions viennent d'être rectifiées à
+        # zéro. L'avoir qui annule une vente ferait sinon entrer au registre
+        # le métal qu'elle avait fait sortir.
+        if self.env.context.get('police_contre_piece'):
+            return super()._post(soft=soft)
         self._police_check_representant()
         self._police_check_registre()
         self._police_check_reglement()
@@ -423,6 +434,40 @@ class AccountMove(models.Model):
                 "La réception %(bon)s n'a pas pu être validée automatiquement "
                 "et reste à faire : %(motif)s",
                 bon=bon.name, motif=motif))
+
+    def _police_inscriptions(self):
+        """Les inscriptions d'origine que la pièce a fait naître.
+
+        Un rachat s'inscrit à la comptabilisation et porte la pièce ; une
+        vente s'inscrit à la livraison, et ne se retrouve que par la commande
+        — c'est le chemin de ``facture_vente_ids``.
+        """
+        self.ensure_one()
+        return self.env['livre.police.ligne'].search([
+            ('rectifie_id', '=', False),
+            '|', ('move_id', '=', self.id),
+            ('mouvement_stock_id.move_id.sale_line_id', 'in',
+             self.invoice_line_ids.sale_line_ids.ids),
+        ])
+
+    @api.depends('state')
+    def _compute_police_corrigeable(self):
+        for piece in self:
+            piece.police_corrigeable = bool(
+                piece.state == 'posted' and piece.is_invoice()
+                # La pièce s'affiche aussi à qui ne lit pas le registre.
+                and piece.sudo()._police_inscriptions())
+
+    def action_police_corriger(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _("Corriger cette pièce"),
+            'res_model': 'livre.police.correction.piece',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_move_id': self.id},
+        }
 
     def button_draft(self):
         """Une pièce inscrite au registre ne retourne pas au brouillon.

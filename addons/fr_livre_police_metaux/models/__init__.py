@@ -21,3 +21,4 @@ from . import livre_police_requalification
 from . import livre_police_requalification_facture
 from . import livre_police_controle
 from . import livre_police_consultation
+from . import livre_police_correction_piece

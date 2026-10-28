@@ -23,3 +23,4 @@ access_livre_police_transfert_ligne,livre.police.transfert.ligne,model_livre_pol
 access_livre_police_transfert_periode,livre.police.transfert.periode,model_livre_police_transfert_periode,fr_livre_police_metaux.group_livre_police,1,1,1,1
 access_livre_police_reprise,livre.police.reprise,model_livre_police_reprise,fr_livre_police_metaux.group_livre_police,1,1,1,1
 access_livre_police_reprise_ligne,livre.police.reprise.ligne,model_livre_police_reprise_ligne,fr_livre_police_metaux.group_livre_police,1,1,1,1
+access_livre_police_correction_piece,livre.police.correction.piece,model_livre_police_correction_piece,fr_livre_police_metaux.group_livre_police,1,1,1,1
