@@ -1,7 +1,7 @@
 {
     "name": "Facturation électronique - Réception",
     "summary": "Garde le détail des lignes des factures reçues par la "
-               "plateforme agréée.",
+               "plateforme agréée, et les relève sous OdooBot.",
     "description": """
 Pourquoi
 ========
@@ -18,7 +18,12 @@ Ce que fait le module
 Quand une ligne reçue porte les deux, son libellé devient l'intitulé suivi de
 la description, à la ligne. Une ligne qui n'en porte qu'un garde celui-là.
 
-À retirer au passage à une version d'Odoo qui intègre la correction.
+Ce premier point est à retirer au passage à une version d'Odoo qui intègre la
+correction.
+
+Le bouton « Fetch E-invoicing Documents » relève sous OdooBot, comme la tâche
+planifiée : une facture reçue est écrite par la plateforme qui la livre, et non
+par la personne qui a cliqué. Celle-ci reste nommée dans le journal du serveur.
 """,
     "version": "18.0.1.0.0",
     "author": "Qalisa",
