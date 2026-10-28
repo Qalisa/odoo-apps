@@ -137,7 +137,9 @@ class LivrePoliceCorrectionPiece(models.TransientModel):
                     stock=_("le métal du rachat ressort du stock — refusé si "
                             "une partie du lot est déjà revendue ou "
                             "transférée.") if rachat else _(
-                            "le métal sorti revient dans ses lots."),
+                            "le métal sorti revient dans ses lots, par un "
+                            "retour de la livraison. La commande est annulée "
+                            "si plus rien n'y reste facturé."),
                     contre=_("une facture") if rachat else _("un avoir"))
             wiz.consequences = texte
 
@@ -180,6 +182,40 @@ class LivrePoliceCorrectionPiece(models.TransientModel):
         }
 
     # -- l'annulation ------------------------------------------------------
+
+    def _retourner(self, a_rendre):
+        """Fait revenir par un retour chaque départ de ``a_rendre``.
+
+        Les lignes du retour sont posées à la main, lot par lot : Odoo les
+        répartirait sur les lots de toute la livraison, et la pièce annulée
+        n'en couvre peut-être qu'une partie.
+        """
+        bons = {}
+        for depart, quantite in a_rendre:
+            bons.setdefault(depart.picking_id, []).append((depart, quantite))
+        for bon, departs in bons.items():
+            assistant = self.env['stock.return.picking'].create(
+                {'picking_id': bon.id})
+            for ligne in assistant.product_return_moves:
+                ligne.quantity = sum(q for d, q in departs
+                                     if d.move_id == ligne.move_id)
+            retour = assistant._create_return()
+            retour.move_line_ids.unlink()
+            for depart, quantite in departs:
+                mouvement = retour.move_ids.filtered(
+                    lambda m: m.origin_returned_move_id == depart.move_id)
+                self.env['stock.move.line'].create({
+                    'move_id': mouvement.id,
+                    'picking_id': retour.id,
+                    'product_id': depart.product_id.id,
+                    'product_uom_id': depart.product_uom_id.id,
+                    'lot_id': depart.lot_id.id,
+                    'quantity': quantite,
+                    'location_id': mouvement.location_id.id,
+                    'location_dest_id': mouvement.location_dest_id.id,
+                })
+            retour.move_ids.picked = True
+            retour.button_validate()
 
     def _verifier_annulation(self):
         piece = self.move_id
@@ -251,6 +287,7 @@ class LivrePoliceCorrectionPiece(models.TransientModel):
             lambda b: b.state not in ('done', 'cancel'))
         bons.action_cancel()
 
+        a_rendre = []
         for inscription in self.inscription_ids:
             courante = inscription._rectification_finale()
             if not courante.quantite:
@@ -262,13 +299,18 @@ class LivrePoliceCorrectionPiece(models.TransientModel):
                             'livre.police.rectification']._MENTIONS}
             mentions.update({'quantite': 0.0, 'poids': 0.0})
             inscription._inscrire_rectification(mentions, motif)
+            # Le métal vendu revient par un retour de sa livraison, qui
+            # ramène la quantité livrée de la commande et garde la trace du
+            # lot ; l'ajustement d'inventaire ne reste qu'au rachat.
+            if inscription.sens == 'sortie' and inscription.mouvement_stock_id:
+                a_rendre.append((inscription.mouvement_stock_id,
+                                 courante.quantite))
             # Un rachat dont la réception n'a pas eu lieu n'a pas de lot :
             # il n'y a rien à retirer, le bon vient d'être annulé.
-            if inscription.sens == 'sortie' or inscription._lot_du_registre():
+            elif inscription.sens == 'sortie' or inscription._lot_du_registre():
                 inscription._ajuster_le_stock(-courante.quantite)
+        self._retourner(a_rendre)
 
-        # La contre-pièce n'est pas une nouvelle vente ni un nouveau rachat :
-        # détachée de la commande, elle ne la remet pas « à facturer ».
         piece.line_ids.remove_move_reconcile()
         contre = piece.with_context(police_contre_piece=True)._reverse_moves([{
             'ref': _("Annulation de %(piece)s : %(motif)s",
@@ -276,9 +318,18 @@ class LivrePoliceCorrectionPiece(models.TransientModel):
             'invoice_date': fields.Date.context_today(self),
             'date': fields.Date.context_today(self),
         }])
-        contre.invoice_line_ids.sale_line_ids = [Command.clear()]
+        # Une commande dont plus rien ne reste facturé est annulée : elle
+        # sort des ventes, et l'avoir lui reste attaché. Sinon la
+        # contre-pièce s'en détache — facturés sur la quantité commandée,
+        # les articles repasseraient « à facturer ».
+        commandes = lignes_de_vente.order_id
+        a_annuler = commandes.filtered(lambda c: not (
+            c.invoice_ids.filtered(lambda f: f.state == 'posted') - piece))
+        if commandes - a_annuler:
+            contre.invoice_line_ids.sale_line_ids = [Command.clear()]
         contre.with_context(police_contre_piece=True,
                             move_reverse_cancel=True)._post(soft=False)
+        a_annuler._action_cancel()
 
         piece.message_post(body=_(
             "Opération annulée par %(contre)s. Motif : %(motif)s",
