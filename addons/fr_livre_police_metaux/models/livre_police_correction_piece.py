@@ -133,7 +133,7 @@ class LivrePoliceCorrectionPiece(models.TransientModel):
                     "solde la pièce. La pièce d'origine demeure.</li>"
                     "<li><b>Argent</b> : le règlement n'est annulé que si "
                     "la case est cochée, et seulement s'il n'est pas "
-                    "rapproché de la banque. Sinon il reste à rembourser ou "
+                    "rapproché d'un relevé bancaire. Sinon il reste à rembourser ou "
                     "à réaffecter.</li>"
                     "</ul>"
                     "<p>Réservé au responsable du livre de police.</p>",
@@ -267,10 +267,13 @@ class LivrePoliceCorrectionPiece(models.TransientModel):
                     annee=piece.invoice_date.year,
                     declaration=deposee.display_name))
         if self.annuler_reglement:
-            rapproches = piece._get_reconciled_payments().filtered('is_matched')
+            # Et non ``is_matched`` : un règlement passé directement au compte
+            # de banque, sans compte d'attente, l'est dès sa saisie.
+            rapproches = piece._get_reconciled_payments().filtered(
+                'reconciled_statement_line_ids')
             if rapproches:
                 raise UserError(_(
-                    "Le règlement %(paiements)s est rapproché de la banque : "
+                    "Le règlement %(paiements)s est rapproché d'un relevé bancaire : "
                     "l'argent a réellement circulé, et ce n'est pas d'ici "
                     "qu'il s'annule. Décochez la case ; le remboursement se "
                     "traitera à part.",

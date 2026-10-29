@@ -441,8 +441,13 @@ class AccountMove(models.Model):
         Un rachat s'inscrit à la comptabilisation et porte la pièce ; une
         vente s'inscrit à la livraison, et ne se retrouve que par la commande
         — c'est le chemin de ``facture_vente_ids``.
+
+        Une contre-pièce n'en fait naître aucune : rattachée à la commande
+        qu'elle annule, elle retrouverait sinon la sortie de la vente.
         """
         self.ensure_one()
+        if self.reversed_entry_id:
+            return self.env['livre.police.ligne']
         return self.env['livre.police.ligne'].search([
             ('rectifie_id', '=', False),
             '|', ('move_id', '=', self.id),
@@ -455,6 +460,9 @@ class AccountMove(models.Model):
         for piece in self:
             piece.police_corrigeable = bool(
                 piece.state == 'posted' and piece.is_invoice()
+                # Une opération annulée ne se corrige plus.
+                and not piece.reversal_move_ids.filtered(
+                    lambda m: m.state == 'posted')
                 # La pièce s'affiche aussi à qui ne lit pas le registre.
                 and piece.sudo()._police_inscriptions())
 
