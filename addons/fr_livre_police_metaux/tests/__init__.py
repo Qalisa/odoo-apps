@@ -30,3 +30,4 @@ from . import test_article_suivi_par_lot
 from . import test_requalification_depuis_l_ecran
 from . import test_transfert_duplique
 from . import test_transfert_lot_d_un_troisieme_comptoir
+from . import test_annuler_une_piece
