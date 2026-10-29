@@ -41,6 +41,9 @@ class LivrePoliceCorrectionPiece(models.TransientModel):
         'livre.police.ligne', string="Inscriptions de la pièce",
         compute='_compute_inscription_ids',
     )
+    plusieurs_inscriptions = fields.Boolean(
+        compute='_compute_inscription_ids',
+    )
     nature = fields.Selection(
         [('titre', "L'article ou le titre est faux"),
          ('mention', "Une mention est fausse (vendeur, description, prix…)"),
@@ -75,6 +78,7 @@ class LivrePoliceCorrectionPiece(models.TransientModel):
     def _compute_inscription_ids(self):
         for wiz in self:
             wiz.inscription_ids = wiz.move_id._police_inscriptions()
+            wiz.plusieurs_inscriptions = len(wiz.inscription_ids) > 1
 
     @api.model
     def default_get(self, champs):

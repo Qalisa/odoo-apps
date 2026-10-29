@@ -8,10 +8,11 @@
             <form string="Corriger cette pièce">
                 <field name="move_id" invisible="1"/>
                 <field name="inscription_ids" invisible="1"/>
+                <field name="plusieurs_inscriptions" invisible="1"/>
                 <group>
                     <field name="nature" widget="radio"/>
                     <field name="ligne_id"
-                           invisible="nature in ('titre', 'annulation') or len(inscription_ids) &lt; 2"
+                           invisible="nature in ('titre', 'annulation') or not plusieurs_inscriptions"
                            options="{'no_create': True, 'no_open': True}"/>
                 </group>
                 <div class="alert alert-warning" role="status">
