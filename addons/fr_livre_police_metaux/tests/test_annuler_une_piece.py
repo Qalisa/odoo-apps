@@ -8,6 +8,10 @@ Constaté en parcourant l'écran, avant sa mise en service :
   Odoo tient un tel règlement pour rapproché dès sa saisie ;
 - la contre-pièce d'une vente, rattachée à la commande, retrouvait la sortie
   de la vente et proposait à son tour « Corriger cette pièce ».
+
+Constaté en exploitation : un rachat portant le compte bancaire du vendeur ne
+s'annulait pas. La facture qui l'annule recopiait ce compte, et Odoo, le
+prenant pour celui du comptoir, refusait de la comptabiliser.
 """
 
 from odoo import fields
@@ -19,8 +23,8 @@ class TestAnnulerUnePiece(TransactionCase):
 
     def setUp(self):
         super().setUp()
-        self.env.user.groups_id |= self.env.ref(
-            'fr_livre_police_metaux.group_livre_police_responsable')
+        (self.env.user | self.env.ref('base.user_admin')).groups_id |= \
+            self.env.ref('fr_livre_police_metaux.group_livre_police_responsable')
         self.argent = self.env['product.template'].create({
             'name': "Argent d'essai (gr)",
             'type': 'consu', 'is_storable': True, 'tracking': 'lot',
@@ -30,7 +34,8 @@ class TestAnnulerUnePiece(TransactionCase):
         }).product_variant_id
 
     def _annuler(self, piece, **valeurs):
-        f = Form(self.env['livre.police.correction.piece'].with_context(
+        f = Form(self.env['livre.police.correction.piece'].with_user(
+            self.env.ref('base.user_admin')).with_context(
             default_move_id=piece.id))
         f.nature = 'annulation'
         f.motif = "Erreur de saisie"
@@ -38,10 +43,10 @@ class TestAnnulerUnePiece(TransactionCase):
             setattr(f, champ, valeur)
         f.save().action_continuer()
 
-    def test_annuler_le_reglement_passe_au_compte_de_banque(self):
+    def _rachat(self, **valeurs):
         societe = self.env['res.partner'].create(
             {'name': "Fondeur d'essai", 'is_company': True})
-        rachat = self.env['account.move'].create({
+        rachat = self.env['account.move'].create(dict({
             'move_type': 'out_refund',
             'partner_id': societe.id,
             'police_representant_id': self.env['res.partner'].create({
@@ -53,8 +58,12 @@ class TestAnnulerUnePiece(TransactionCase):
                 'price_unit': 1.0, 'tax_ids': [(5, 0, 0)],
                 'police_origin_id': self.env[
                     'livre.police.provenance'].search([], limit=1).id})],
-        })
+        }, **valeurs))
         rachat.action_post()
+        return rachat
+
+    def test_annuler_le_reglement_passe_au_compte_de_banque(self):
+        rachat = self._rachat()
         banque = self.env['account.journal'].search([
             ('type', '=', 'bank'),
             ('company_id', '=', self.env.company.id)], limit=1)
@@ -70,6 +79,17 @@ class TestAnnulerUnePiece(TransactionCase):
         self._annuler(rachat, annuler_reglement=True)
 
         self.assertEqual(reglement.state, 'canceled')
+
+    def test_annuler_un_rachat_paye_sur_le_compte_du_vendeur(self):
+        rachat = self._rachat(
+            partner_bank_id=self.env['res.partner.bank'].create({
+                'acc_number': 'FR7630001007941234567890185',
+                'partner_id': self.env['res.partner'].create(
+                    {'name': "Vendeur d'essai"}).id}).id)
+
+        self._annuler(rachat)
+
+        self.assertEqual(rachat.reversal_move_ids.state, 'posted')
 
     def test_une_vente_annulee_ne_se_corrige_plus(self):
         reprise = self.env['livre.police.reprise'].create({
