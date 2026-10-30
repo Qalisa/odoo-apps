@@ -324,6 +324,10 @@ class LivrePoliceCorrectionPiece(models.TransientModel):
                      piece=piece.name, motif=motif),
             'invoice_date': fields.Date.context_today(self),
             'date': fields.Date.context_today(self),
+            # Le compte bancaire d'un rachat est celui du vendeur, qu'on paie ;
+            # recopié sur la facture qui l'annule, Odoo le prendrait pour le
+            # nôtre et refuserait de la comptabiliser, faute de le savoir fiable.
+            'partner_bank_id': False,
         }])
         # Une commande dont plus rien ne reste facturé est annulée : elle
         # sort des ventes, et l'avoir lui reste attaché. Sinon la
