@@ -6,13 +6,25 @@
             <form string="Confirmation">
                 <sheet>
                     <!-- IMPORTANT: force field evaluation -->
+                    <field name="sale_order_id" invisible="1"/>
                     <field name="will_be_refund" invisible="1"/>
                     <field name="has_negative_lines" invisible="1"/>
+                    <field name="can_choose_zero_total_document" invisible="1"/>
+
+                    <div invisible="not can_choose_zero_total_document">
+                        <h2>Ce devis a un total de 0 €.</h2>
+                        <p>Il comporte des quantités négatives. Choisissez le document
+                            à créer lors de la facturation.</p>
+                        <group>
+                            <field name="zero_total_document_type" widget="radio"/>
+                        </group>
+                        <p>Le montant restera à 0 €, quel que soit le choix.</p>
+                    </div>
 
                     <!-- FACTURE (ALERTE) -->
                     <div
                         class="oe_warning"
-                        invisible="will_be_refund or has_negative_lines">
+                        invisible="can_choose_zero_total_document or will_be_refund or has_negative_lines">
                         <h2 style="color: red">
                             Ce devis va être transformé en FACTURE.
                         </h2>
@@ -22,7 +34,7 @@
                     <!-- FACTURE MALGRE DES QUANTITES NEGATIVES -->
                     <div
                         class="oe_warning"
-                        invisible="will_be_refund or not has_negative_lines">
+                        invisible="can_choose_zero_total_document or will_be_refund or not has_negative_lines">
                         <h2 style="color: red">
                             Ce devis va être transformé en FACTURE, et non en avoir.
                         </h2>
@@ -40,7 +52,7 @@
                     <!-- AVOIR (RACHAT) -->
                     <div
                         class="oe_success"
-                        invisible="not will_be_refund">
+                        invisible="can_choose_zero_total_document or not will_be_refund">
                         <p>
                             Le montant du devis étant <strong>NEGATIF</strong>, ce devis va être transformé en avoir; vous effectuez ici un rachat au client. Continuer ?
                         </p>
