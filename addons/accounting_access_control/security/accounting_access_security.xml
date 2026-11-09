@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Une catégorie à lui seul, comme « Statistiques » : dans « Droits
+         supplémentaires », Odoo masque le groupe derrière le mode
+         développeur. -->
+    <record id="module_category_sans_comptabilite" model="ir.module.category">
+        <field name="name">Comptabilité de la société</field>
+        <field name="sequence">51</field>
+    </record>
+
+    <record id="group_sans_comptabilite" model="res.groups">
+        <field name="name">Comptoir sans comptabilité</field>
+        <field name="category_id" ref="module_category_sans_comptabilite"/>
+        <field name="comment">Ne laisse voir, de la facturation, que les
+            factures, avoirs et reçus clients — ventes et rachats — et leurs
+            paiements. Ferme les factures fournisseurs, les écritures, les
+            relevés bancaires et les menus de la comptabilité. À donner avec
+            « Facturation », sans « Technique : Basique ».</field>
+    </record>
+
+    <!-- Règles globales : Odoo additionne les règles de groupe, et celle de
+         « Facturation » laisse tout voir. Chacune laisse passer qui n'est pas
+         membre du groupe. -->
+
+    <!-- Une pièce de paiement est une écriture diverse : sans elle, le
+         comptoir ne pourrait plus encaisser ni régler un vendeur. -->
+    <record id="rule_move_sans_comptabilite" model="ir.rule">
+        <field name="name">Comptoir sans comptabilité : pièces clients</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="domain_force">[(1, '=', 1)] if not user.has_group('accounting_access_control.group_sans_comptabilite') else ['|', ('move_type', 'in', ('out_invoice', 'out_refund', 'out_receipt')), ('origin_payment_id.partner_type', '=', 'customer')]</field>
+    </record>
+
+    <record id="rule_move_line_sans_comptabilite" model="ir.rule">
+        <field name="name">Comptoir sans comptabilité : lignes des pièces clients</field>
+        <field name="model_id" ref="account.model_account_move_line"/>
+        <field name="domain_force">[(1, '=', 1)] if not user.has_group('accounting_access_control.group_sans_comptabilite') else ['|', ('move_id.move_type', 'in', ('out_invoice', 'out_refund', 'out_receipt')), ('move_id.origin_payment_id.partner_type', '=', 'customer')]</field>
+    </record>
+
+    <!-- L'analyse des factures est une vue SQL à part : la règle des pièces
+         ne la filtre pas, et le tableau de bord « Facturation », ouvert à
+         tous, y lit les factures fournisseurs. -->
+    <record id="rule_invoice_report_sans_comptabilite" model="ir.rule">
+        <field name="name">Comptoir sans comptabilité : analyse des pièces clients</field>
+        <field name="model_id" ref="account.model_account_invoice_report"/>
+        <field name="domain_force">[(1, '=', 1)] if not user.has_group('accounting_access_control.group_sans_comptabilite') else [('move_type', 'in', ('out_invoice', 'out_refund', 'out_receipt'))]</field>
+    </record>
+
+    <record id="rule_payment_sans_comptabilite" model="ir.rule">
+        <field name="name">Comptoir sans comptabilité : paiements clients</field>
+        <field name="model_id" ref="account.model_account_payment"/>
+        <field name="domain_force">[(1, '=', 1)] if not user.has_group('accounting_access_control.group_sans_comptabilite') else [('partner_type', '=', 'customer')]</field>
+    </record>
+
+    <record id="rule_statement_sans_comptabilite" model="ir.rule">
+        <field name="name">Comptoir sans comptabilité : relevés bancaires</field>
+        <field name="model_id" ref="account.model_account_bank_statement"/>
+        <field name="domain_force">[(1, '=', 1)] if not user.has_group('accounting_access_control.group_sans_comptabilite') else [(0, '=', 1)]</field>
+    </record>
+
+    <record id="rule_statement_line_sans_comptabilite" model="ir.rule">
+        <field name="name">Comptoir sans comptabilité : lignes de relevé</field>
+        <field name="model_id" ref="account.model_account_bank_statement_line"/>
+        <field name="domain_force">[(1, '=', 1)] if not user.has_group('accounting_access_control.group_sans_comptabilite') else [(0, '=', 1)]</field>
+    </record>
+
+</odoo>
